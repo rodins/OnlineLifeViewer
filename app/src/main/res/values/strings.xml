@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Online Life Viewer</string>
+    <string name="nothing_found">Nothing found</string>
+    <string name="flv">Format .flv</string>
+    <string name="mp4">Format .mp4</string>
+    <string name="no_app_found">No app found to open this file</string>
+    <string name="action_search">Search</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="main">Main</string>
+    <string name="results">Results</string>
+    <string name="playlists">Playlists</string>
+    <string name="playlist">Playlist</string>
+    <string name="network_problem">Network problem</string>
+    <string name="action_lastnews">Last news</string>
+    <string name="action_kinonew">New movies</string>
+    <string name="action_kinoserial">Serials</string>
+    <string name="action_kinomult">Cartoons</string>
+    <string name="action_kinomultserial">Cartoon serials</string>
+    <string name="action_kinotv">TV-programes</string>
+    <string name="action_prev">Previous</string>
+    <string name="action_next">Next</string>
+    <string name="action_categories">Categories</string>
+    <string name="search_hint">Search video</string>
+</resources>

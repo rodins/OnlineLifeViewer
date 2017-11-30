@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OnlineLifeViewer</string>
+    <string name="action_categories">Категорії</string>
+    <string name="action_kinomult">Мультфільми</string>
+    <string name="action_kinomultserial">Мультсеріали</string>
+    <string name="action_kinonew">Нове кіно</string>
+    <string name="action_kinoserial">Серіали</string>
+    <string name="action_kinotv">Телепрограми</string>
+    <string name="action_lastnews">Оновлення</string>
+    <string name="action_next">Вперед</string>
+    <string name="action_prev">Назад</string>
+    <string name="action_refresh">Оновити</string>
+    <string name="action_search">Пошук</string>
+    <string name="main">Головна</string>
+    <string name="network_problem">Помилка мережі</string>
+    <string name="no_app_found">Немає додатку для відкриття файлу</string>
+    <string name="nothing_found">Нічого не знайдено</string>
+    <string name="playlist">Перелік</string>
+    <string name="playlists">Переліки</string>
+    <string name="results">Результати</string>
+    <string name="flv">Формат .flv</string>
+    <string name="mp4">Формат .mp4</string>
+    <string name="search_hint">Пошук відео</string>
+</resources>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_search"
+        android:icon="@mipmap/ic_action_search"
+        android:title="@string/action_search"
+        app:showAsAction="collapseActionView|ifRoom"
+        android:actionViewClass="android.widget.SearchView" />
+
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@mipmap/ic_action_refresh"
+        android:title="@string/action_refresh"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_lastnews"
+        android:title="@string/action_lastnews"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_kinonew"
+        android:title="@string/action_kinonew"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_kinoserial"
+        android:title="@string/action_kinoserial"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_kinomult"
+        android:title="@string/action_kinomult"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_kinomultserial"
+        android:title="@string/action_kinomultserial"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_kinotv"
+        android:title="@string/action_kinotv"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_categories"
+        android:title="@string/action_categories"
+        app:showAsAction="never" />
+
+</menu>
