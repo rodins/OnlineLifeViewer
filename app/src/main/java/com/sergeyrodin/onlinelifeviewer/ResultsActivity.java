@@ -5,6 +5,7 @@ import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -15,7 +16,11 @@ import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
+import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
+
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
@@ -27,7 +32,7 @@ public class ResultsActivity extends ListActivity {
     private String title;
 
     private MenuItem prev, next;
-    private String prevLink, nextLink, currentLink;
+    private URL prevLink, nextLink, currentLink;
     private int page = 0;
     private String tag = "saveResultsData";
 
@@ -43,9 +48,14 @@ public class ResultsActivity extends ListActivity {
         setTitle(title);
 
         if(savedInstanceState != null) {
-            prevLink = savedInstanceState.getString(STATE_PREVLINK);
-            nextLink = savedInstanceState.getString(STATE_NEXTLINK);
-            currentLink = savedInstanceState.getString(STATE_CURRENTLINK);
+            try {
+                prevLink = new URL(savedInstanceState.getString(STATE_PREVLINK));
+                nextLink = new URL(savedInstanceState.getString(STATE_NEXTLINK));
+                currentLink = new URL(savedInstanceState.getString(STATE_CURRENTLINK));
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+
             page = savedInstanceState.getInt(STATE_PAGE);
 
             if(page > 0) {
@@ -72,7 +82,8 @@ public class ResultsActivity extends ListActivity {
                 // Getting results from site, putting them to ListView and save them
                 refresh(link);
             }else if(Intent.ACTION_SEARCH.equals(intent.getAction())) { //Called by SearchView
-                refresh(getSearchLink());
+                String query = getIntent().getStringExtra(SearchManager.QUERY);
+                refresh(NetworkUtils.buildSearchUrl(query));
             }
         }else { //using saved results list
             ArrayList<Result> results = saveResults.getData();
@@ -87,17 +98,9 @@ public class ResultsActivity extends ListActivity {
         }
     }
 
-    private String getSearchLink() {
-        try {
-            String query = getIntent().getStringExtra(SearchManager.QUERY);
-            String link = MainActivity.DOMAIN
-                    + "?do=search&subaction=search&mode=simple&story="
-                    + URLEncoder.encode(query.trim(), "windows-1251");
-            return link;
-        }catch(UnsupportedEncodingException e) {
-            System.err.println(e);
-            return null;
-        }
+    private URL getSearchLink(int page) {
+        String query = getIntent().getStringExtra(SearchManager.QUERY);
+        return NetworkUtils.buildSearchUrl(query, page);
     }
 
     @Override
@@ -124,8 +127,15 @@ public class ResultsActivity extends ListActivity {
 
     public void setupPagerFromAsyncTask(String pl, String nl, int p, int prevPage, int nextPage) {
         page = p;
-        prevLink = pl;
-        nextLink = nl;
+        prevLink = null;
+        nextLink = null;
+        try {
+            prevLink = new URL(pl);
+            nextLink = new URL(nl);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
         if(page > 0) {
             setTitle(title + ": " + page);
         }
@@ -136,10 +146,8 @@ public class ResultsActivity extends ListActivity {
                 prev.setVisible(false);
             }else { // search page pager
                 prev.setVisible(true);
-                String link = getSearchLink();
-                prevLink = link + "&search_start=" + prevPage; // forming prev search link
+                prevLink = getSearchLink(prevPage); // forming prev search link
             }
-
         }
         if(next != null && nextLink != null) {
             next.setVisible(true);
@@ -148,8 +156,7 @@ public class ResultsActivity extends ListActivity {
                 next.setVisible(false);
             }else {
                 next.setVisible(true);
-                String link = getSearchLink();
-                nextLink = link + "&search_start=" + nextPage; //forming next search link
+                nextLink = getSearchLink(nextPage); //forming next search link
             }
         }
     }
@@ -170,16 +177,27 @@ public class ResultsActivity extends ListActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putString(STATE_PREVLINK, prevLink);
-        outState.putString(STATE_NEXTLINK, nextLink);
-        outState.putString(STATE_CURRENTLINK, currentLink);
+        outState.putString(STATE_PREVLINK, prevLink.toString());
+        outState.putString(STATE_NEXTLINK, nextLink.toString());
+        outState.putString(STATE_CURRENTLINK, currentLink.toString());
         outState.putInt(STATE_PAGE, page);
         super.onSaveInstanceState(outState);
     }
 
     private void refresh(String link) {
         setListAdapter(null);
-        currentLink = link;
-        new ResultsAsyncTask(this, tag).execute(link);
+        try {
+            currentLink = new URL(link);
+            URL url = new URL(link);
+            new ResultsAsyncTask(this, tag).execute(url);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void refresh(URL url) {
+        setListAdapter(null);
+        currentLink = url;
+        new ResultsAsyncTask(this, tag).execute(url);
     }
 }

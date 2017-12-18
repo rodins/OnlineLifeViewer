@@ -18,6 +18,8 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class MainActivity extends ListActivity {
@@ -55,8 +57,13 @@ public class MainActivity extends ListActivity {
             // Must add the progress bar to the root of the layout
             ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
             root.addView(progressBar);
-
-            new ResultsAsyncTask(this, mTag).execute(DOMAIN);
+            URL url = null;
+            try {
+                url = new URL(DOMAIN);
+                new ResultsAsyncTask(this, mTag).execute(url);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
         }else{//using saved results list
             ArrayList<Result> results = saveResults.getData();
             if(results != null) {
@@ -172,7 +179,12 @@ public class MainActivity extends ListActivity {
         if(progressBar != null) {
             progressBar.setVisibility(View.VISIBLE);
         }
-        new ResultsAsyncTask(this, mTag).execute(DOMAIN);
+        try {
+            URL url = new URL(DOMAIN);
+            new ResultsAsyncTask(this, mTag).execute(url);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

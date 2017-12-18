@@ -8,12 +8,13 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 
 /**
  * Created by root on 10.05.16.
  */
-class ResultsAsyncTask extends AsyncTask<String, Void, String> {
+class ResultsAsyncTask extends AsyncTask<URL, Void, String> {
     private ListActivity activity;
     private String tag;
 
@@ -21,7 +22,7 @@ class ResultsAsyncTask extends AsyncTask<String, Void, String> {
         this.activity = activity;
         this.tag = tag;
     }
-    protected String doInBackground(String... params) {
+    protected String doInBackground(URL... params) {
         try {
             //TODO: get and parse only useful html page part
             return new Curl().getPageString(params[0]);
