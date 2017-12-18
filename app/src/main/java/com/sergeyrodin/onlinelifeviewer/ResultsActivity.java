@@ -177,9 +177,15 @@ public class ResultsActivity extends ListActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putString(STATE_PREVLINK, prevLink.toString());
-        outState.putString(STATE_NEXTLINK, nextLink.toString());
-        outState.putString(STATE_CURRENTLINK, currentLink.toString());
+        if(prevLink != null) {
+            outState.putString(STATE_PREVLINK, prevLink.toString());
+        }
+        if(nextLink != null) {
+            outState.putString(STATE_NEXTLINK, nextLink.toString());
+        }
+        if(currentLink != null) {
+            outState.putString(STATE_CURRENTLINK, currentLink.toString());
+        }
         outState.putInt(STATE_PAGE, page);
         super.onSaveInstanceState(outState);
     }

@@ -1,5 +1,9 @@
 package com.sergeyrodin.onlinelifeviewer;
 
+import android.util.Log;
+
+import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,7 +22,7 @@ public class Curl {
 
         HttpURLConnection connection = (HttpURLConnection)url.openConnection();
         connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0 SeaMonkey/2.40");
-        if(referer != "") {
+        if(!referer.equals("")) {
             connection.setRequestProperty("Referer", referer);
         }
         String charset;
@@ -45,10 +49,9 @@ public class Curl {
     }
 
     public String getJsString(int id) throws IOException {
-        String addr = "http://dterod.com/js.php?id=" + id;
-        String referer = "http://dterod.com/player.php?newsid=" + id;
-        URL url = new URL(addr);
-        return curl(url, referer, true);
+        return curl(NetworkUtils.buildJsonUrl(id),
+                    NetworkUtils.buildRefererUrl(id),
+                    true);
     }
 
     public String getJsLinkString(URL url) throws IOException {

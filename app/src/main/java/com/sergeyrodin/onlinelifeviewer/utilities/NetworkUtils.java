@@ -13,6 +13,7 @@ import java.net.URLEncoder;
 
 public class NetworkUtils {
     final static String ONLINE_LIFE_BASE_URL = "http://online-life.club";
+
     private final static String PARAM_DO = "do";
     private final static String PARAM_SUBACTION = "subaction";
     private final static String PARAM_MODE = "mode";
@@ -20,6 +21,13 @@ public class NetworkUtils {
     private final static String PARAM_SEARCH_START = "search_start";
     private final static String search = "search";
     private final static String simple = "simple";
+
+    private final static String JSON_BASE_URL = "http://dterod.com";
+    private final static String PATH_JSON = "js.php";
+    private final static String PARAM_ID = "id";
+    private final static String PATH_PLAYER = "player.php";
+    private final static String PARAM_NEWS_ID = "newsid";
+
 
     public static URL buildSearchUrl(String query) {
         return buildSearchUrl(query, 0);
@@ -55,5 +63,21 @@ public class NetworkUtils {
         }
 
         return url;
+    }
+
+    public static URL buildJsonUrl(int id) throws MalformedURLException {
+        Uri builtUri = Uri.parse(JSON_BASE_URL).buildUpon()
+                .appendPath(PATH_JSON)
+                .appendQueryParameter(PARAM_ID, Integer.toString(id))
+                .build();
+        return new URL(builtUri.toString());
+    }
+
+    public static String buildRefererUrl(int id) {
+        Uri builtUri = Uri.parse(JSON_BASE_URL).buildUpon()
+                .appendPath(PATH_PLAYER)
+                .appendQueryParameter(PARAM_NEWS_ID, Integer.toString(id))
+                .build();
+        return builtUri.toString();
     }
 }
