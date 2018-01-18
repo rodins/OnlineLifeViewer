@@ -1,6 +1,7 @@
 package com.sergeyrodin.onlinelifeviewer.utilities;
 
 import android.net.Uri;
+import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -28,13 +29,13 @@ public class NetworkUtils {
     private final static String PATH_PLAYER = "player.php";
     private final static String PARAM_NEWS_ID = "newsid";
 
-
     public static URL buildSearchUrl(String query) {
         return buildSearchUrl(query, 0);
     }
 
     public static URL buildSearchUrl(String query, int page) {
         String story = "";
+
         try {
             story = URLEncoder.encode(query.trim(), "windows-1251");
         } catch (UnsupportedEncodingException e) {
@@ -45,8 +46,10 @@ public class NetworkUtils {
                 .appendQueryParameter(PARAM_DO, search)
                 .appendQueryParameter(PARAM_SUBACTION, search)
                 .appendQueryParameter(PARAM_MODE, simple)
-                .appendQueryParameter(PARAM_STORY, story)
                 .build();
+
+        //Only need this to be able to use story encoded in windows-1251 as appendQueryParameter only uses UTF-8
+        builtUri = Uri.parse(builtUri.toString() + "&" + PARAM_STORY + "=" + story);
 
         // add paging to url
         if(page > 0) {
@@ -54,6 +57,8 @@ public class NetworkUtils {
                                .appendQueryParameter(PARAM_SEARCH_START, page + "")
                                .build();
         }
+
+        Log.d("NetworkUtils", builtUri.toString());
 
         URL url = null;
         try {
