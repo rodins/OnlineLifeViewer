@@ -1,7 +1,6 @@
 package com.sergeyrodin.onlinelifeviewer.utilities;
 
 import android.net.Uri;
-import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -57,8 +56,6 @@ public class NetworkUtils {
                                .appendQueryParameter(PARAM_SEARCH_START, page + "")
                                .build();
         }
-
-        Log.d("NetworkUtils", builtUri.toString());
 
         URL url = null;
         try {
