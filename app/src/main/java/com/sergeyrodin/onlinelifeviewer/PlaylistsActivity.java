@@ -1,7 +1,6 @@
 package com.sergeyrodin.onlinelifeviewer;
 
 import android.app.Activity;
-import android.app.FragmentManager;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -79,7 +78,7 @@ public class PlaylistsActivity extends ListActivity {
         protected String doInBackground(String... params) {
             String js = params[0];
             try{
-                return new ListParser().getLink(js);
+                return new ListParser().getPlaylistJson(js);
             }catch (IOException e) {
                 System.err.println(e.toString());
                 return null;
