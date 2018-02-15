@@ -4,6 +4,7 @@ import android.app.FragmentManager;
 import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -15,30 +16,56 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ResultsActivity extends ListActivity {
     private final String STATE_PREVLINK = "com.sergeyrodin.PREVLINK";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_CURRENTLINK = "com.sergeyrodin.CURRENTLINK";
+    private final String STATE_TXT_NETWORK_ERROR_VISIBLE = "com.sergeyrodin.STATE_TXT_NETWORK_ERROR_VISIBLE";
     private final String STATE_PAGE = "com.sergeyrodin.PAGE";
     private String title;
 
     private MenuItem prev, next;
     private URL prevLink, nextLink, currentLink;
     private int page = 0;
-    private String tag = "saveResultsData";
+    private RetainedFragment mSaveResults;
+    private ProgressBar progressBar;
+    private TextView errorMessageTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Loading indicator and error text view
+        // Create a progress bar to display while the list loads
+        progressBar = new ProgressBar(this);
+        progressBar.setLayoutParams(
+                new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                        FrameLayout.LayoutParams.WRAP_CONTENT,
+                        Gravity.CENTER));
+        progressBar.setIndeterminate(true);
+        getListView().setEmptyView(progressBar);
+
+        errorMessageTextView = new TextView(this);
+        errorMessageTextView.setLayoutParams(
+                new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                        FrameLayout.LayoutParams.WRAP_CONTENT,
+                        Gravity.CENTER));
+
+        // Must add the progress bar to the root of the layout
+        ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
+        root.addView(errorMessageTextView);
+        root.addView(progressBar);
+
         Intent intent = getIntent();
         title = intent.getStringExtra(MainActivity.EXTRA_TITLE);
         if(title == null) {
@@ -47,35 +74,12 @@ public class ResultsActivity extends ListActivity {
 
         setTitle(title);
 
-        if(savedInstanceState != null) {
-            try {
-                prevLink = new URL(savedInstanceState.getString(STATE_PREVLINK));
-                nextLink = new URL(savedInstanceState.getString(STATE_NEXTLINK));
-                currentLink = new URL(savedInstanceState.getString(STATE_CURRENTLINK));
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-
-            page = savedInstanceState.getInt(STATE_PAGE);
-
-            if(page > 0) {
-                setTitle(title + ": " + page);
-            }
-        }
-
         FragmentManager fm = getFragmentManager();
-        RetainedFragment saveResults = (RetainedFragment)fm.findFragmentByTag(tag);
-        if(saveResults == null) { //getting new results list
-            // Create a progress bar to display while the list loads
-            ProgressBar progressBar = new ProgressBar(this);
-            progressBar.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
-                    FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-            progressBar.setIndeterminate(true);
-            getListView().setEmptyView(progressBar);
-
-            // Must add the progress bar to the root of the layout
-            ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
-            root.addView(progressBar);
+        String tag = "saveResultsData";
+        mSaveResults = (RetainedFragment)fm.findFragmentByTag(tag);
+        if(mSaveResults == null) { //getting new results list
+            mSaveResults = new RetainedFragment();
+            fm.beginTransaction().add(mSaveResults, tag).commit();
 
             String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
             if(link != null) {
@@ -86,7 +90,7 @@ public class ResultsActivity extends ListActivity {
                 refresh(NetworkUtils.buildSearchUrl(query));
             }
         }else { //using saved results list
-            ArrayList<Result> results = saveResults.getData();
+            List<Result> results = mSaveResults.getData();
             if(results != null) {
                 setListAdapter(new ResultsAdapter(this, results));
             }else {
@@ -94,6 +98,35 @@ public class ResultsActivity extends ListActivity {
                 if(currentLink != null) {
                     refresh(currentLink);
                 }
+            }
+        }
+
+        if(savedInstanceState != null) {
+            //progressBar.setVisibility(View.INVISIBLE);
+            int visibility = savedInstanceState.getInt(STATE_TXT_NETWORK_ERROR_VISIBLE);
+            Log.d(getClass().toString(), "Visibility: " + visibility);
+            errorMessageTextView.setVisibility(visibility);
+            try {
+                String strPrevLink = savedInstanceState.getString(STATE_PREVLINK);
+                String strNextLink = savedInstanceState.getString(STATE_NEXTLINK);
+                String strCurrentLink = savedInstanceState.getString(STATE_CURRENTLINK);
+                if(strPrevLink != null) {
+                    prevLink = new URL(strPrevLink);
+                }
+                if(strNextLink != null) {
+                    nextLink = new URL(strNextLink);
+                }
+                if(strCurrentLink != null) {
+                    currentLink = new URL(strCurrentLink);
+                }
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+
+            page = savedInstanceState.getInt(STATE_PAGE);
+
+            if(page > 0) {
+                setTitle(title + ": " + page);
             }
         }
     }
@@ -130,8 +163,12 @@ public class ResultsActivity extends ListActivity {
         prevLink = null;
         nextLink = null;
         try {
-            prevLink = new URL(pl);
-            nextLink = new URL(nl);
+            if(pl != null) {
+                prevLink = new URL(pl);
+            }
+            if(nl != null) {
+                nextLink = new URL(nl);
+            }
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -178,15 +215,22 @@ public class ResultsActivity extends ListActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         if(prevLink != null) {
-            outState.putString(STATE_PREVLINK, prevLink.toString());
+            String strPrevLink = prevLink.toString();
+            outState.putString(STATE_PREVLINK, strPrevLink);
         }
         if(nextLink != null) {
-            outState.putString(STATE_NEXTLINK, nextLink.toString());
+            String strNextLink = nextLink.toString();
+            outState.putString(STATE_NEXTLINK, strNextLink);
         }
         if(currentLink != null) {
             outState.putString(STATE_CURRENTLINK, currentLink.toString());
         }
         outState.putInt(STATE_PAGE, page);
+
+        int visibility = errorMessageTextView.getVisibility();
+        Log.d(getClass().toString(), "Saving visibility: " + visibility);
+        outState.putInt(STATE_TXT_NETWORK_ERROR_VISIBLE, visibility);
+
         super.onSaveInstanceState(outState);
     }
 
@@ -195,7 +239,7 @@ public class ResultsActivity extends ListActivity {
         try {
             currentLink = new URL(link);
             URL url = new URL(link);
-            new ResultsAsyncTask(this, tag).execute(url);
+            new ResultsAsyncTask().execute(url);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -204,6 +248,67 @@ public class ResultsActivity extends ListActivity {
     private void refresh(URL url) {
         setListAdapter(null);
         currentLink = url;
-        new ResultsAsyncTask(this, tag).execute(url);
+        new ResultsAsyncTask().execute(url);
+    }
+
+    private void showErrorMessage(int id){
+        errorMessageTextView.setText(id);
+        progressBar.setVisibility(View.INVISIBLE);
+        errorMessageTextView.setVisibility(View.VISIBLE);
+    }
+
+    private void showLoadingIndicator() {
+        //progressBar.setVisibility(View.VISIBLE);
+        errorMessageTextView.setVisibility(View.INVISIBLE);
+    }
+
+    public class ResultsAsyncTask extends AsyncTask<URL, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+            showLoadingIndicator();
+        }
+
+        protected String doInBackground(URL... params) {
+            try {
+                //TODO: get and parse only useful html page part
+                return new Curl().getPageString(params[0]);
+            }catch(IOException e){
+                System.err.println(e.toString());
+                return null;
+            }
+        }
+
+        protected void onPostExecute(String page) {
+            if(page == null) {
+                showErrorMessage(R.string.network_problem);
+                mSaveResults.setData(new ArrayList<Result>());//save empty list to RetainedFragment
+                return;
+            }
+
+            ResultsParser parser = new ResultsParser(page);
+            ArrayList<Result> results =  parser.getItems();
+
+            if(results.isEmpty()) {
+                showErrorMessage(R.string.nothing_found);
+                mSaveResults.setData(results);
+                return;
+            }
+
+            //Updating current ListView
+            //Saving data
+            if(mSaveResults != null) {
+                mSaveResults.setData(results);
+            }
+            setListAdapter(new ResultsAdapter(ResultsActivity.this, results));
+
+            parser.navigationInfo();
+            setupPagerFromAsyncTask(parser.getPrevLink(),
+                                    parser.getNextLink(),
+                                    parser.getPageNumber(),
+                                    parser.getPrevPage(),
+                                    parser.getNextPage());
+
+        }
     }
 }

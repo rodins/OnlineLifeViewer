@@ -3,6 +3,7 @@ package com.sergeyrodin.onlinelifeviewer;
 import android.app.FragmentManager;
 import android.app.SearchManager;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.widget.FrameLayout.LayoutParams;
 import android.app.ListActivity;
 import android.content.Intent;
@@ -18,9 +19,11 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends ListActivity {
     public static final String EXTRA_PSITEM = "com.sergeyrodin.PSITEM";
@@ -34,6 +37,8 @@ public class MainActivity extends ListActivity {
 
     private String mTag = "saveMainData";
     private String page; // needed for categories
+    private ProgressBar progressBar;
+    private RetainedFragment mSaveResults;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,27 +50,30 @@ public class MainActivity extends ListActivity {
         }
 
         FragmentManager fm = getFragmentManager();
-        RetainedFragment saveResults = (RetainedFragment)fm.findFragmentByTag(mTag);
-        if(saveResults == null){ //getting new results list
+        mSaveResults = (RetainedFragment)fm.findFragmentByTag(mTag);
+        if(mSaveResults == null){ //getting new results list
+            mSaveResults = new RetainedFragment();
+            fm.beginTransaction().add(mSaveResults, mTag).commit();
             // Create a progress bar to display while the list loads
-            ProgressBar progressBar = new ProgressBar(this);
+            progressBar = new ProgressBar(this);
             progressBar.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT,
-                    LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+                                                         LayoutParams.WRAP_CONTENT,
+                                                         Gravity.CENTER));
             progressBar.setIndeterminate(true);
             getListView().setEmptyView(progressBar);
 
             // Must add the progress bar to the root of the layout
             ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
             root.addView(progressBar);
-            URL url = null;
+
             try {
-                url = new URL(DOMAIN);
-                new ResultsAsyncTask(this, mTag).execute(url);
+                URL url = new URL(DOMAIN);
+                new ResultsAsyncTask().execute(url);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
         }else{//using saved results list
-            ArrayList<Result> results = saveResults.getData();
+            List<Result> results = mSaveResults.getData();
             if(results != null) {
                 setListAdapter(new ResultsAdapter(this, results));
             }else {
@@ -181,7 +189,7 @@ public class MainActivity extends ListActivity {
         }
         try {
             URL url = new URL(DOMAIN);
-            new ResultsAsyncTask(this, mTag).execute(url);
+            new ResultsAsyncTask().execute(url);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -191,6 +199,50 @@ public class MainActivity extends ListActivity {
     protected void onSaveInstanceState(Bundle outState) {
         outState.putString(STATE_PAGE, page);
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        ResultsAdapter adapter = (ResultsAdapter)getListAdapter();
+        if(mSaveResults != null & adapter != null) {
+            mSaveResults.setData(adapter.getResults());
+        }
+    }
+
+    class ResultsAsyncTask extends AsyncTask<URL, Void, String> {
+
+        protected String doInBackground(URL... params) {
+            try {
+                //TODO: get and parse only useful html page part
+                return new Curl().getPageString(params[0]);
+            }catch(IOException e){
+                System.err.println(e.toString());
+                return null;
+            }
+        }
+
+        protected void onPostExecute(String page) {
+                setPage(page);
+
+            if(page == null) {
+                progressBar.setVisibility(View.INVISIBLE);
+                Toast.makeText(MainActivity.this, R.string.network_problem, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            ResultsParser parser = new ResultsParser(page);
+            ArrayList<Result> results =  parser.getItems();
+
+            if(results.isEmpty()) {
+                progressBar.setVisibility(View.INVISIBLE);
+                Toast.makeText(MainActivity.this, R.string.nothing_found, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            //Updating current ListView
+            setListAdapter(new ResultsAdapter(MainActivity.this, results));
+        }
     }
 }
 

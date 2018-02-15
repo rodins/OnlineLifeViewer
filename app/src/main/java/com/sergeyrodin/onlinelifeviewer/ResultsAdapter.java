@@ -16,9 +16,11 @@ import java.util.List;
  */
 class ResultsAdapter extends ArrayAdapter<Result>{
     private View[] views;
+    private List<Result> results;
 
     ResultsAdapter(Activity activity, List<Result> results) {
         super(activity, R.layout.result_entry, results);
+        this.results = results;
         views = new View[getCount()];
     }
 
@@ -43,5 +45,9 @@ class ResultsAdapter extends ArrayAdapter<Result>{
             views[position] = view;
             return view;
         }
+    }
+
+    public List<Result> getResults() {
+        return results;
     }
 }
