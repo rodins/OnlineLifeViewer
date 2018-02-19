@@ -30,7 +30,6 @@ public class ResultsActivity extends ListActivity {
     private final String STATE_PREVLINK = "com.sergeyrodin.PREVLINK";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_CURRENTLINK = "com.sergeyrodin.CURRENTLINK";
-    private final String STATE_TXT_NETWORK_ERROR_VISIBLE = "com.sergeyrodin.STATE_TXT_NETWORK_ERROR_VISIBLE";
     private final String STATE_PAGE = "com.sergeyrodin.PAGE";
     private String title;
 
@@ -72,7 +71,32 @@ public class ResultsActivity extends ListActivity {
             title = getString(R.string.results);
         }
 
-        setTitle(title);
+        if(savedInstanceState != null) {
+            try {
+                String strPrevLink = savedInstanceState.getString(STATE_PREVLINK);
+                String strNextLink = savedInstanceState.getString(STATE_NEXTLINK);
+                String strCurrentLink = savedInstanceState.getString(STATE_CURRENTLINK);
+                if(strPrevLink != null) {
+                    prevLink = new URL(strPrevLink);
+                }
+                if(strNextLink != null) {
+                    nextLink = new URL(strNextLink);
+                }
+                if(strCurrentLink != null) {
+                    currentLink = new URL(strCurrentLink);
+                }
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+
+            page = savedInstanceState.getInt(STATE_PAGE);
+
+            if(page > 0) {
+                setTitle(title + ": " + page);
+            }
+        }else {
+            setTitle(title);
+        }
 
         FragmentManager fm = getFragmentManager();
         String tag = "saveResultsData";
@@ -98,35 +122,6 @@ public class ResultsActivity extends ListActivity {
                 if(currentLink != null) {
                     refresh(currentLink);
                 }
-            }
-        }
-
-        if(savedInstanceState != null) {
-            //progressBar.setVisibility(View.INVISIBLE);
-            int visibility = savedInstanceState.getInt(STATE_TXT_NETWORK_ERROR_VISIBLE);
-            Log.d(getClass().toString(), "Visibility: " + visibility);
-            errorMessageTextView.setVisibility(visibility);
-            try {
-                String strPrevLink = savedInstanceState.getString(STATE_PREVLINK);
-                String strNextLink = savedInstanceState.getString(STATE_NEXTLINK);
-                String strCurrentLink = savedInstanceState.getString(STATE_CURRENTLINK);
-                if(strPrevLink != null) {
-                    prevLink = new URL(strPrevLink);
-                }
-                if(strNextLink != null) {
-                    nextLink = new URL(strNextLink);
-                }
-                if(strCurrentLink != null) {
-                    currentLink = new URL(strCurrentLink);
-                }
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-
-            page = savedInstanceState.getInt(STATE_PAGE);
-
-            if(page > 0) {
-                setTitle(title + ": " + page);
             }
         }
     }
@@ -227,10 +222,6 @@ public class ResultsActivity extends ListActivity {
         }
         outState.putInt(STATE_PAGE, page);
 
-        int visibility = errorMessageTextView.getVisibility();
-        Log.d(getClass().toString(), "Saving visibility: " + visibility);
-        outState.putInt(STATE_TXT_NETWORK_ERROR_VISIBLE, visibility);
-
         super.onSaveInstanceState(outState);
     }
 
@@ -282,7 +273,7 @@ public class ResultsActivity extends ListActivity {
         protected void onPostExecute(String page) {
             if(page == null) {
                 showErrorMessage(R.string.network_problem);
-                mSaveResults.setData(new ArrayList<Result>());//save empty list to RetainedFragment
+                mSaveResults.setData(null);//save null to RetainedFragment to erase prev results
                 return;
             }
 
@@ -291,7 +282,7 @@ public class ResultsActivity extends ListActivity {
 
             if(results.isEmpty()) {
                 showErrorMessage(R.string.nothing_found);
-                mSaveResults.setData(results);
+                mSaveResults.setData(null);
                 return;
             }
 
