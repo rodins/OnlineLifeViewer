@@ -20,7 +20,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
-    <ScrollView
+    <ExpandableListView
+        android:id="@+id/android:list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </ExpandableListView>
+
+    <!--<ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -28,7 +34,7 @@
             android:id="@+id/tv_categories"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-    </ScrollView>
+    </ScrollView>-->
 
 
 </FrameLayout>
