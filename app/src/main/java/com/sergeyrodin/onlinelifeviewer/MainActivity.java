@@ -72,11 +72,13 @@ public class MainActivity extends ExpandableListActivity {
         }
     }
 
-    /*@Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
-        Result result = (Result)l.getAdapter().getItem(position);
-        new ItemClickAsyncTask(this).execute(result);
-    }*/
+    @Override
+    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+        List<Link> categories = linkRetainedFragment.getData();
+        Link selectedCategory = categories.get(groupPosition).Links.get(childPosition);
+        startResultsActivity(selectedCategory.Title, selectedCategory.Href);
+        return true;
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {//Mainly search stuff here
