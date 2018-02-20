@@ -9,8 +9,8 @@ import java.util.List;
 /**
  * Created by root on 07.05.16.
  */
-public class RetainedFragment extends Fragment {
-    private List<Result> mResults;
+public class ResultsRetainedFragment extends Fragment {
+    private List<Result> mData;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -19,11 +19,11 @@ public class RetainedFragment extends Fragment {
         setRetainInstance(true);
     }
 
-    public void setData(List<Result> results) {
-        mResults = results;
+    public void setData(List<Result> data) {
+        mData = data;
     }
 
     public List<Result> getData() {
-        return mResults;
+        return mData;
     }
 }

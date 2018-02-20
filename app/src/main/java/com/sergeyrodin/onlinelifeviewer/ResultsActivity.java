@@ -6,7 +6,6 @@ import android.app.SearchManager;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -36,7 +35,7 @@ public class ResultsActivity extends ListActivity {
     private MenuItem prev, next;
     private URL prevLink, nextLink, currentLink;
     private int page = 0;
-    private RetainedFragment mSaveResults;
+    private ResultsRetainedFragment mSaveResults;
     private ProgressBar progressBar;
     private TextView errorMessageTextView;
 
@@ -100,9 +99,9 @@ public class ResultsActivity extends ListActivity {
 
         FragmentManager fm = getFragmentManager();
         String tag = "saveResultsData";
-        mSaveResults = (RetainedFragment)fm.findFragmentByTag(tag);
+        mSaveResults = (ResultsRetainedFragment)fm.findFragmentByTag(tag);
         if(mSaveResults == null) { //getting new results list
-            mSaveResults = new RetainedFragment();
+            mSaveResults = new ResultsRetainedFragment();
             fm.beginTransaction().add(mSaveResults, tag).commit();
 
             String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
@@ -118,7 +117,7 @@ public class ResultsActivity extends ListActivity {
             if(results != null) {
                 setListAdapter(new ResultsAdapter(this, results));
             }else {
-                //if RetainedFragment is outdated refresh data
+                //if ResultsRetainedFragment is outdated refresh data
                 if(currentLink != null) {
                     refresh(currentLink);
                 }
@@ -273,7 +272,7 @@ public class ResultsActivity extends ListActivity {
         protected void onPostExecute(String page) {
             if(page == null) {
                 showErrorMessage(R.string.network_problem);
-                mSaveResults.setData(null);//save null to RetainedFragment to erase prev results
+                mSaveResults.setData(null);//save null to ResultsRetainedFragment to erase prev results
                 return;
             }
 

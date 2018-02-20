@@ -8,7 +8,7 @@
         android:showAsAction="collapseActionView|ifRoom"
         android:actionViewClass="android.widget.SearchView" />
 
-    <item
+    <!--item
         android:id="@+id/action_refresh"
         android:icon="@mipmap/ic_action_refresh"
         android:title="@string/action_refresh"
@@ -47,6 +47,6 @@
     <item
         android:id="@+id/action_categories"
         android:title="@string/action_categories"
-        android:showAsAction="never" />
+        android:showAsAction="never" />-->
 
 </menu>

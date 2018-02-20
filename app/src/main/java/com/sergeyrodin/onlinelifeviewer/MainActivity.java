@@ -1,61 +1,72 @@
 package com.sergeyrodin.onlinelifeviewer;
 
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.SearchManager;
 import android.content.Context;
 import android.os.AsyncTask;
-import android.widget.FrameLayout.LayoutParams;
-import android.app.ListActivity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Gravity;
-import android.view.MenuItem;
-import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
-import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.TextView;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
+import com.sergeyrodin.onlinelifeviewer.utilities.CategoriesParser;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
+import java.nio.charset.Charset;
 import java.util.List;
 
-public class MainActivity extends ListActivity {
+public class MainActivity extends Activity {
     public static final String EXTRA_PSITEM = "com.sergeyrodin.PSITEM";
     public static final String EXTRA_PLAYLIST = "com.sergeyrodin.PLAYLIST";
     public static final String EXTRA_LINK = "com.sergeyrodin.LINK";
     public static final String EXTRA_JS = "com.sergeyrodin.JS";
     public static final String EXTRA_PAGE = "com.sergeyrodin.PAGE";
     public static final String EXTRA_TITLE = "com.sergeyrodin.TITLE";
-    public static final String STATE_PAGE = "com.sergeyrodin.STATE_PAGE";
+    //public static final String STATE_PAGE = "com.sergeyrodin.STATE_PAGE";
     public static final String DOMAIN = "http://online-life.club";
 
     private String mTag = "saveMainData";
-    private String page; // needed for categories
+    //private String page; // needed for categories
     private ProgressBar progressBar;
-    private RetainedFragment mSaveResults;
+    private LinkRetainedFragment linkRetainedFragment;
+    private TextView tvCategories;
+    private TextView tvLoadingError;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle(R.string.main);
+        setContentView(R.layout.main);
 
-        if(savedInstanceState != null) {
+        /*if(savedInstanceState != null) {
             page = savedInstanceState.getString(STATE_PAGE);
-        }
+        }*/
+
+        progressBar = (ProgressBar)findViewById(R.id.loading_indicator);
+        tvLoadingError = (TextView)findViewById(R.id.loading_error);
+
+        tvCategories = (TextView)findViewById(R.id.tv_categories);
+
+
 
         FragmentManager fm = getFragmentManager();
-        mSaveResults = (RetainedFragment)fm.findFragmentByTag(mTag);
-        if(mSaveResults == null){ //getting new results list
-            mSaveResults = new RetainedFragment();
-            fm.beginTransaction().add(mSaveResults, mTag).commit();
+        linkRetainedFragment = (LinkRetainedFragment)fm.findFragmentByTag(mTag);
+        if(linkRetainedFragment == null){ //getting new results list
+            linkRetainedFragment = new LinkRetainedFragment();
+            fm.beginTransaction().add(linkRetainedFragment, mTag).commit();
+
+            new CategoriesAsyncTask().execute();
+
             // Create a progress bar to display while the list loads
-            progressBar = new ProgressBar(this);
+            /*progressBar = new ProgressBar(this);
             progressBar.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT,
                                                          LayoutParams.WRAP_CONTENT,
                                                          Gravity.CENTER));
@@ -71,22 +82,31 @@ public class MainActivity extends ListActivity {
                 new ResultsAsyncTask().execute(url);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
-            }
-        }else{//using saved results list
-            List<Result> results = mSaveResults.getData();
-            if(results != null) {
-                setListAdapter(new ResultsAdapter(this, results));
+            }*/
+        }else{//using saved categories list
+            List<Link> categories = linkRetainedFragment.getData();
+            if(categories != null) {
+                listToTextView(categories);
             }else {
-                refresh();
+                new CategoriesAsyncTask().execute();
             }
         }
     }
 
-    @Override
+    private void listToTextView(List<Link> categories) {
+        for (Link category : categories) {
+            tvCategories.append(category.Title + "\n");
+            for (Link subcategory : category.Links) {
+                tvCategories.append("\t" + subcategory.Title + "\n");
+            }
+        }
+    }
+
+    /*@Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         Result result = (Result)l.getAdapter().getItem(position);
         new ItemClickAsyncTask(this).execute(result);
-    }
+    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {//Mainly search stuff here
@@ -103,7 +123,7 @@ public class MainActivity extends ListActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
-    @Override
+    /*@Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.action_refresh:
@@ -133,7 +153,7 @@ public class MainActivity extends ListActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
+    }*/
 
     private void startResultsActivity(String title, String link) {
         Intent intent = new Intent(this, ResultsActivity.class);
@@ -142,7 +162,7 @@ public class MainActivity extends ListActivity {
         startActivity(intent);
     }
 
-    public void setPage(String page) {
+    /*public void setPage(String page) {
         this.page = page;
     }
 
@@ -168,9 +188,9 @@ public class MainActivity extends ListActivity {
 
     private void kinotv() {
         startResultsActivity(getString(R.string.action_kinotv), DOMAIN + "/kino-tv/");
-    }
+    }*/
 
-    private void categories() {
+    /*private void categories() {
         //Start categories activity
         if(page != null) {
             Intent intent = new Intent(this, CategoriesActivity.class);
@@ -179,9 +199,9 @@ public class MainActivity extends ListActivity {
         }else {
             Toast.makeText(this, R.string.nothing_found, Toast.LENGTH_SHORT).show();
         }
-    }
+    }*/
 
-    private void refresh() {
+    /*private void refresh() {
         setListAdapter(null);
         ProgressBar progressBar = (ProgressBar)getListView().getEmptyView();
         if(progressBar != null) {
@@ -193,24 +213,81 @@ public class MainActivity extends ListActivity {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
-    @Override
+    /*@Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putString(STATE_PAGE, page);
         super.onSaveInstanceState(outState);
+    }*/
+
+    private void showLoadingIndicator() {
+        tvCategories.setVisibility(View.INVISIBLE);
+        tvLoadingError.setVisibility(View.INVISIBLE);
+        progressBar.setVisibility(View.VISIBLE);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        ResultsAdapter adapter = (ResultsAdapter)getListAdapter();
-        if(mSaveResults != null & adapter != null) {
-            mSaveResults.setData(adapter.getResults());
+    private void showResults() {
+        tvCategories.setVisibility(View.VISIBLE);
+        tvLoadingError.setVisibility(View.INVISIBLE);
+        progressBar.setVisibility(View.INVISIBLE);
+    }
+
+    private void showLoadingError() {
+        tvCategories.setVisibility(View.INVISIBLE);
+        tvLoadingError.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.INVISIBLE);
+    }
+
+    class CategoriesAsyncTask extends AsyncTask<Void, Void, List<Link>> {
+
+        @Override
+        protected void onPreExecute() {
+            showLoadingIndicator();
+        }
+
+        @Override
+        protected List<Link> doInBackground(Void... voids) {
+            //TODO use domain from resources
+            URL url = null;
+            try {
+                url = new URL(DOMAIN);
+                HttpURLConnection connection = null;
+                BufferedReader in = null;
+                try {
+                    connection = (HttpURLConnection)url.openConnection();
+                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0 SeaMonkey/2.40");
+                    InputStream stream = connection.getInputStream();
+                    in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
+                    String html = CategoriesParser.getCategoriesPart(in);
+                    return CategoriesParser.parseCategories(html);
+                }finally {
+                    if(in != null) {
+                        in.close();
+                    }
+                    if(connection != null) {
+                        connection.disconnect();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(List<Link> categories) {
+            if(categories != null) {
+                showResults();
+                linkRetainedFragment.setData(categories);
+                listToTextView(categories);
+            }else {
+                showLoadingError();
+            }
         }
     }
 
-    class ResultsAsyncTask extends AsyncTask<URL, Void, String> {
+    /*class ResultsAsyncTask extends AsyncTask<URL, Void, String> {
 
         protected String doInBackground(URL... params) {
             try {
@@ -243,6 +320,6 @@ public class MainActivity extends ListActivity {
             //Updating current ListView
             setListAdapter(new ResultsAdapter(MainActivity.this, results));
         }
-    }
+    }*/
 }
 
