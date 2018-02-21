@@ -1,15 +1,12 @@
 package com.sergeyrodin.onlinelifeviewer;
 
-import android.app.Activity;
 import android.app.ExpandableListActivity;
 import android.app.FragmentManager;
 import android.app.SearchManager;
 import android.content.Context;
-import android.database.DataSetObserver;
 import android.os.AsyncTask;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.ViewGroup;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ProgressBar;

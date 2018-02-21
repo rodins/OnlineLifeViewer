@@ -35,7 +35,6 @@
                 android:resource="@xml/searchable" />
 
         </activity>
-        <activity android:name=".CategoriesActivity"></activity>
     </application>
 
 </manifest>
