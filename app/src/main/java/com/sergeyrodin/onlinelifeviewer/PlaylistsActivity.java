@@ -1,27 +1,18 @@
 package com.sergeyrodin.onlinelifeviewer;
 
-import android.app.Activity;
+
 import android.app.ExpandableListActivity;
-import android.app.ListActivity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.ExpandableListAdapter;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
+import android.widget.ExpandableListView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,6 +30,13 @@ public class PlaylistsActivity extends ExpandableListActivity {
     private TextView tvLoadingError;
     private ListView lvPlaylist;
 
+    private AdapterView.OnItemClickListener mMessageClickedHandler = new AdapterView.OnItemClickListener() {
+        public void onItemClick(AdapterView parent, View v, int position, long id) {
+            PlaylistItem playlistItem = mPlaylist.getItems().get(position);
+            ProcessPlaylistItem.process(PlaylistsActivity.this, playlistItem);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,13 +46,12 @@ public class PlaylistsActivity extends ExpandableListActivity {
         pbLoadingIndicator = (ProgressBar)findViewById(R.id.playlists_loading_indicator);
         tvLoadingError = (TextView)findViewById(R.id.playlists_loading_error);
         lvPlaylist = (ListView)findViewById(R.id.lv_playlist);
+        lvPlaylist.setOnItemClickListener(mMessageClickedHandler);
 
         if(savedInstanceState != null) { //restore saved info
             isPlaylists = savedInstanceState.getBoolean(STATE_MODE);
             if(isPlaylists) {
                 mPlaylists = (ArrayList<Playlist>)savedInstanceState.getSerializable(STATE_DATA);
-                /*PlaylistsAdapter adapter = new PlaylistsAdapter(PlaylistsActivity.this, mPlaylists);
-                setListAdapter(adapter);*/
                 playlistsToAdapter(mPlaylists);
                 showPlaylistsData();
             }else {
@@ -68,27 +65,8 @@ public class PlaylistsActivity extends ExpandableListActivity {
             Intent intent = getIntent();
             String js = intent.getStringExtra(MainActivity.EXTRA_JS);
             if(js != null) {
-                // Create a progress bar to display while the list loads
-                /*ProgressBar progressBar = new ProgressBar(this);
-                progressBar.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
-                        FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-                progressBar.setIndeterminate(true);
-                getListView().setEmptyView(progressBar);
-
-                // Must add the progress bar to the root of the layout
-                ViewGroup root = (ViewGroup)findViewById(android.R.id.content);
-                root.addView(progressBar);*/
-
                 new PlaylistsAsyncTask().execute(js);
-            }/*else {
-                mPlaylist = (Playlist)intent.getSerializableExtra(MainActivity.EXTRA_PLAYLIST);
-                if(mPlaylist != null) {
-                    isPlaylists = false;
-                    setTitle(R.string.playlist);
-                    PlaylistItemAdapter adapter = new PlaylistItemAdapter(this, mPlaylist);
-                    setListAdapter(adapter);
-                }
-            }*/
+            }
         }
     }
 
@@ -123,68 +101,22 @@ public class PlaylistsActivity extends ExpandableListActivity {
                     lvPlaylist.setAdapter(adapter);
                     showPlaylistData();
                 } else {
-                    //add playlists to ExpandableListView
-                    /*PlaylistsAdapter adapter = new PlaylistsAdapter(PlaylistsActivity.this, mPlaylists);
-                    setListAdapter(adapter);*/
                     playlistsToAdapter(mPlaylists);
                     showPlaylistsData();
                 }
             }else {
+                // Show error here is almost impossible
                 showLoadingError();
-                /*ProgressBar pb = (ProgressBar)getListView().getEmptyView();
-                if(pb != null) {
-                    pb.setVisibility(View.INVISIBLE);
-                }
-                Toast.makeText(PlaylistsActivity.this, R.string.nothing_found, Toast.LENGTH_SHORT).show();*/
             }
         }
     }
 
-    /*private class PlaylistsAdapter extends ArrayAdapter<Playlist> {
-        private View[] views;
-
-        PlaylistsAdapter(Activity activity, ArrayList<Playlist> playlists){
-            super(activity, R.layout.playlist_entry, playlists);
-            views = new View[playlists.size()];
-        }
-
-        @NonNull
-        @Override
-        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-            if(views[position] != null) {
-                return views[position];
-            }else {
-                LayoutInflater inflater = LayoutInflater.from(getContext());
-                View view = inflater.inflate(R.layout.playlist_entry, parent, false);
-
-                Playlist playlist = getItem(position);
-                TextView textView = (TextView)view.findViewById(R.id.entryText);
-                ImageView imageView = (ImageView)view.findViewById(R.id.entryImage);
-
-                if (playlist != null) {
-                    textView.setText(playlist.getTitle());
-                }
-                imageView.setImageResource(R.drawable.movies_folder);
-                views[position] = view;
-
-                return view;
-            }
-        }
-    }*/
-
-    /*@Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
-        Object obj = l.getAdapter().getItem(position);
-        if(obj instanceof Playlist){
-            Playlist playlist = (Playlist)obj;
-            Intent intent = new Intent(this, PlaylistsActivity.class);
-            intent.putExtra(MainActivity.EXTRA_PLAYLIST, playlist);
-            startActivity(intent);
-        }else if(obj instanceof PlaylistItem) {
-            PlaylistItem playlistItem = (PlaylistItem)obj;
-            ProcessPlaylistItem.process(this, playlistItem);
-        }
-    }*/
+    @Override
+    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+        PlaylistItem playlistItem = mPlaylists.get(groupPosition).getItems().get(childPosition);
+        ProcessPlaylistItem.process(this, playlistItem);
+        return true;
+    }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
