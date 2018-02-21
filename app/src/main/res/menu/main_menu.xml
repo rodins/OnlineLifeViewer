@@ -8,45 +8,11 @@
         android:showAsAction="collapseActionView|ifRoom"
         android:actionViewClass="android.widget.SearchView" />
 
-    <!--item
+    <item
         android:id="@+id/action_refresh"
         android:icon="@mipmap/ic_action_refresh"
+        android:visible="false"
         android:title="@string/action_refresh"
         android:showAsAction="ifRoom" />
-
-    <item
-        android:id="@+id/action_lastnews"
-        android:title="@string/action_lastnews"
-        android:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_kinonew"
-        android:title="@string/action_kinonew"
-        android:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_kinoserial"
-        android:title="@string/action_kinoserial"
-        android:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_kinomult"
-        android:title="@string/action_kinomult"
-        android:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_kinomultserial"
-        android:title="@string/action_kinomultserial"
-        android:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_kinotv"
-        android:title="@string/action_kinotv"
-        android:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_categories"
-        android:title="@string/action_categories"
-        android:showAsAction="never" />-->
 
 </menu>

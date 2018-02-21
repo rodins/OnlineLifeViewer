@@ -7,6 +7,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ProgressBar;
@@ -42,6 +43,7 @@ public class MainActivity extends ExpandableListActivity {
     private ProgressBar progressBar;
     private LinkRetainedFragment linkRetainedFragment;
     private TextView tvLoadingError;
+    private MenuItem refreshMenuItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +91,18 @@ public class MainActivity extends ExpandableListActivity {
         searchView.setSearchableInfo(
                 searchManager.getSearchableInfo(getComponentName()));
 
+        refreshMenuItem = menu.findItem(R.id.action_refresh);
+
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.action_refresh) {
+            new CategoriesAsyncTask().execute();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void startResultsActivity(String title, String link) {
@@ -103,18 +116,23 @@ public class MainActivity extends ExpandableListActivity {
         getExpandableListView().setVisibility(View.INVISIBLE);
         tvLoadingError.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.VISIBLE);
+        if(refreshMenuItem != null) {
+            refreshMenuItem.setVisible(false);
+        }
     }
 
     private void showResults() {
         getExpandableListView().setVisibility(View.VISIBLE);
         tvLoadingError.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.INVISIBLE);
+        refreshMenuItem.setVisible(false);
     }
 
     private void showLoadingError() {
         getExpandableListView().setVisibility(View.INVISIBLE);
         tvLoadingError.setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.INVISIBLE);
+        refreshMenuItem.setVisible(true);
     }
 
     private void categoriesToAdapter(List<Link> categories) {
