@@ -1,11 +1,15 @@
 package com.sergeyrodin.onlinelifeviewer;
 
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -25,7 +29,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ResultsActivity extends ListActivity {
+public class ResultsActivity extends Activity {
     private final String STATE_PREVLINK = "com.sergeyrodin.PREVLINK";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_CURRENTLINK = "com.sergeyrodin.CURRENTLINK";
@@ -36,16 +40,26 @@ public class ResultsActivity extends ListActivity {
     private URL prevLink, nextLink, currentLink;
     private int page = 0;
     private ResultsRetainedFragment mSaveResults;
-    private ProgressBar progressBar;
-    private TextView errorMessageTextView;
+    //private ProgressBar progressBar;
+    //private TextView errorMessageTextView;
+    private ResultsAdapter mAdapter;
+    private RecyclerView mResultsView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.results);
+
+        mResultsView = (RecyclerView)findViewById(R.id.rv_results);
+
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        mResultsView.setLayoutManager(layoutManager);
+
+        mResultsView.setHasFixedSize(true);
 
         // Loading indicator and error text view
         // Create a progress bar to display while the list loads
-        progressBar = new ProgressBar(this);
+        /*progressBar = new ProgressBar(this);
         progressBar.setLayoutParams(
                 new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
                         FrameLayout.LayoutParams.WRAP_CONTENT,
@@ -62,7 +76,7 @@ public class ResultsActivity extends ListActivity {
         // Must add the progress bar to the root of the layout
         ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
         root.addView(errorMessageTextView);
-        root.addView(progressBar);
+        root.addView(progressBar);*/
 
         Intent intent = getIntent();
         title = intent.getStringExtra(MainActivity.EXTRA_TITLE);
@@ -115,7 +129,8 @@ public class ResultsActivity extends ListActivity {
         }else { //using saved results list
             List<Result> results = mSaveResults.getData();
             if(results != null) {
-                setListAdapter(new ResultsAdapter(this, results));
+                mAdapter = new ResultsAdapter(results);
+                mResultsView.setAdapter(mAdapter);
             }else {
                 //if ResultsRetainedFragment is outdated refresh data
                 if(currentLink != null) {
@@ -130,11 +145,11 @@ public class ResultsActivity extends ListActivity {
         return NetworkUtils.buildSearchUrl(query, page);
     }
 
-    @Override
+    /*@Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         Result result = (Result)l.getAdapter().getItem(position);
         new ItemClickAsyncTask(this).execute(result);
-    }
+    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -225,7 +240,7 @@ public class ResultsActivity extends ListActivity {
     }
 
     private void refresh(String link) {
-        setListAdapter(null);
+        mResultsView.setAdapter(null);
         try {
             currentLink = new URL(link);
             URL url = new URL(link);
@@ -236,28 +251,28 @@ public class ResultsActivity extends ListActivity {
     }
 
     private void refresh(URL url) {
-        setListAdapter(null);
+        mResultsView.setAdapter(null);
         currentLink = url;
         new ResultsAsyncTask().execute(url);
     }
 
-    private void showErrorMessage(int id){
+    /*private void showErrorMessage(int id){
         errorMessageTextView.setText(id);
         progressBar.setVisibility(View.INVISIBLE);
         errorMessageTextView.setVisibility(View.VISIBLE);
-    }
+    }*/
 
-    private void showLoadingIndicator() {
+    /*private void showLoadingIndicator() {
         //progressBar.setVisibility(View.VISIBLE);
         errorMessageTextView.setVisibility(View.INVISIBLE);
-    }
+    }*/
 
     public class ResultsAsyncTask extends AsyncTask<URL, Void, String> {
 
-        @Override
+        /*@Override
         protected void onPreExecute() {
             showLoadingIndicator();
-        }
+        }*/
 
         protected String doInBackground(URL... params) {
             try {
@@ -271,7 +286,7 @@ public class ResultsActivity extends ListActivity {
 
         protected void onPostExecute(String page) {
             if(page == null) {
-                showErrorMessage(R.string.network_problem);
+                //showErrorMessage(R.string.network_problem);
                 mSaveResults.setData(null);//save null to ResultsRetainedFragment to erase prev results
                 return;
             }
@@ -280,7 +295,7 @@ public class ResultsActivity extends ListActivity {
             ArrayList<Result> results =  parser.getItems();
 
             if(results.isEmpty()) {
-                showErrorMessage(R.string.nothing_found);
+                //showErrorMessage(R.string.nothing_found);
                 mSaveResults.setData(null);
                 return;
             }
@@ -290,7 +305,7 @@ public class ResultsActivity extends ListActivity {
             if(mSaveResults != null) {
                 mSaveResults.setData(results);
             }
-            setListAdapter(new ResultsAdapter(ResultsActivity.this, results));
+            mResultsView.setAdapter(new ResultsAdapter(results));
 
             parser.navigationInfo();
             setupPagerFromAsyncTask(parser.getPrevLink(),

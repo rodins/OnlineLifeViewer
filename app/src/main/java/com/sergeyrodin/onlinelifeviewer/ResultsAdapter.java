@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import java.util.List;
 class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolder>{
     //private View[] views;
     private List<Result> results;
+    private final String TAG = ResultsAdapter.class.getSimpleName();
 
     ResultsAdapter(List<Result> results) {
         //super(activity, R.layout.result_entry, results);
@@ -30,12 +32,12 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
     public ResultViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.result_entry, parent, false);
-
         return new ResultViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(ResultViewHolder holder, int position) {
+        Log.d(TAG, "#" + position);
         Result result = results.get(position);
         holder.bind(result);
     }
