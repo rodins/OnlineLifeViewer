@@ -34,9 +34,7 @@ public class ImageLoadTask extends AsyncTask<Void, Void, Bitmap> {
             connection.setDoInput(true);
             connection.connect();
             InputStream input = connection.getInputStream();
-            Bitmap myBitmap = BitmapFactory.decodeStream(input);
-            result.setBitmap(myBitmap);
-            return myBitmap;
+            return BitmapFactory.decodeStream(input);
         }catch(Exception e){
             System.err.println(e.toString());
         }
@@ -49,6 +47,7 @@ public class ImageLoadTask extends AsyncTask<Void, Void, Bitmap> {
             //imageView.setImageResource(R.drawable.ic_action_link);
         }else{
             imageView.setImageBitmap(bitmap);
+            result.setBitmap(bitmap);
         }
     }
 }
