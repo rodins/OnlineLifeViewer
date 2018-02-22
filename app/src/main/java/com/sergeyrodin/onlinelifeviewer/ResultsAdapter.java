@@ -21,6 +21,7 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
     //private View[] views;
     private List<Result> results;
     private final String TAG = ResultsAdapter.class.getSimpleName();
+    private int count = 0;
 
     ResultsAdapter(List<Result> results) {
         //super(activity, R.layout.result_entry, results);
@@ -32,6 +33,7 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
     public ResultViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.result_entry, parent, false);
+        Log.d(TAG, "view holder #" + (count++));
         return new ResultViewHolder(view);
     }
 
@@ -88,6 +90,10 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
             if(result.image != null) {
                 new ImageLoadTask(result, mImageView).execute();
             }
+        }
+
+        private void bind(int position) {
+            mTitleView.setText("" + position);
         }
     }
 }

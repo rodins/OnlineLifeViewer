@@ -29,7 +29,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ResultsActivity extends Activity {
+public class ResultsActivity extends AppCompatActivity {
     private final String STATE_PREVLINK = "com.sergeyrodin.PREVLINK";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_CURRENTLINK = "com.sergeyrodin.CURRENTLINK";
