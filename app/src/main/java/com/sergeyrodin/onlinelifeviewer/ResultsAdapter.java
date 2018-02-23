@@ -18,28 +18,28 @@ import java.util.List;
  * Created by root on 10.05.16.
  */
 class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolder>{
-    //private View[] views;
     private List<Result> results;
-    private final String TAG = ResultsAdapter.class.getSimpleName();
-    private int count = 0;
 
-    ResultsAdapter(List<Result> results) {
-        //super(activity, R.layout.result_entry, results);
+    interface ListItemClickListener {
+        void onListItemClick(int index);
+    }
+
+    final private ListItemClickListener mOnClickListener;
+
+    ResultsAdapter(List<Result> results, ListItemClickListener onClickListener) {
         this.results = results;
-        //views = new View[getCount()];
+        mOnClickListener = onClickListener;
     }
 
     @Override
     public ResultViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.result_entry, parent, false);
-        Log.d(TAG, "view holder #" + (count++));
         return new ResultViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(ResultViewHolder holder, int position) {
-        Log.d(TAG, "#" + position);
         Result result = results.get(position);
         holder.bind(result);
     }
@@ -49,51 +49,29 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
         return results.size();
     }
 
-    /*@NonNull
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        if(views[position] != null) {
-            return views[position];
-        }else{
-            LayoutInflater inflater = LayoutInflater.from(getContext());
-            View view = inflater.inflate(R.layout.result_entry, parent, false);
-            Result result = getItem(position);
-            TextView textView = (TextView)view.findViewById(R.id.resultEntryTitle);
-            ImageView imageView = (ImageView)view.findViewById(R.id.resultEntryImage);
-            textView.setText(result.title);
-            if(result.image != null) {
-                new ImageLoadTask(result, imageView).execute();
-            }
-            if(result.getBitmap() != null) {
-                imageView.setImageBitmap(result.getBitmap());
-            }
-            views[position] = view;
-            return view;
-        }
-    }*/
-
-    /*public List<Result> getResults() {
-        return results;
-    }*/
-
-    class ResultViewHolder extends RecyclerView.ViewHolder {
+    class ResultViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView mTitleView;
         ImageView mImageView;
         ResultViewHolder(View itemView) {
             super(itemView);
             mTitleView = (TextView)itemView.findViewById(R.id.resultEntryTitle);
             mImageView = (ImageView)itemView.findViewById(R.id.resultEntryImage);
+            itemView.setOnClickListener(this);
         }
 
         private void bind(Result result) {
             mTitleView.setText(result.title);
-            if(result.image != null) {
+            if(result.getBitmap() != null) {
+                mImageView.setImageBitmap(result.getBitmap());
+            }else if(result.image != null){
+                mImageView.setImageBitmap(null); //TODO: add empty image placeholder
                 new ImageLoadTask(result, mImageView).execute();
             }
         }
 
-        private void bind(int position) {
-            mTitleView.setText("" + position);
+        @Override
+        public void onClick(View v) {
+            mOnClickListener.onListItemClick(getAdapterPosition());
         }
     }
 }

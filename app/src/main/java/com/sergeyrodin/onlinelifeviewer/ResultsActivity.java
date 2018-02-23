@@ -29,7 +29,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ResultsActivity extends AppCompatActivity {
+public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener {
     private final String STATE_PREVLINK = "com.sergeyrodin.PREVLINK";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_CURRENTLINK = "com.sergeyrodin.CURRENTLINK";
@@ -129,7 +129,7 @@ public class ResultsActivity extends AppCompatActivity {
         }else { //using saved results list
             List<Result> results = mSaveResults.getData();
             if(results != null) {
-                mAdapter = new ResultsAdapter(results);
+                mAdapter = new ResultsAdapter(results, this);
                 mResultsView.setAdapter(mAdapter);
             }else {
                 //if ResultsRetainedFragment is outdated refresh data
@@ -145,11 +145,11 @@ public class ResultsActivity extends AppCompatActivity {
         return NetworkUtils.buildSearchUrl(query, page);
     }
 
-    /*@Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
-        Result result = (Result)l.getAdapter().getItem(position);
+    @Override
+    public void onListItemClick(int position) {
+        Result result = mSaveResults.getData().get(position);
         new ItemClickAsyncTask(this).execute(result);
-    }*/
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -292,7 +292,7 @@ public class ResultsActivity extends AppCompatActivity {
             }
 
             ResultsParser parser = new ResultsParser(page);
-            ArrayList<Result> results =  parser.getItems();
+            List<Result> results =  parser.getItems();
 
             if(results.isEmpty()) {
                 //showErrorMessage(R.string.nothing_found);
@@ -305,7 +305,7 @@ public class ResultsActivity extends AppCompatActivity {
             if(mSaveResults != null) {
                 mSaveResults.setData(results);
             }
-            mResultsView.setAdapter(new ResultsAdapter(results));
+            mResultsView.setAdapter(new ResultsAdapter(results, ResultsActivity.this));
 
             parser.navigationInfo();
             setupPagerFromAsyncTask(parser.getPrevLink(),
