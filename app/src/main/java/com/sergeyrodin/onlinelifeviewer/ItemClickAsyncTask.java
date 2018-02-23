@@ -37,7 +37,7 @@ public class ItemClickAsyncTask extends AsyncTask<Result, Void, String> {
                 //Start process item dialog: select play or download item
                 ProcessPlaylistItem.process(mActivity, psItem);
             }else {
-                // Process playlists in PlaylistsActivity
+                // Process activity_playlists in PlaylistsActivity
                 Intent intent = new Intent(mActivity, PlaylistsActivity.class);
                 intent.putExtra(MainActivity.EXTRA_JS, js);
                 mActivity.startActivity(intent);

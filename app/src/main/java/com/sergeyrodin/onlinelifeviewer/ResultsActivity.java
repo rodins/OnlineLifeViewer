@@ -1,8 +1,6 @@
 package com.sergeyrodin.onlinelifeviewer;
 
-import android.app.Activity;
 import android.app.FragmentManager;
-import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -10,23 +8,20 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
+import org.w3c.dom.Text;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener {
@@ -40,15 +35,14 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private URL prevLink, nextLink, currentLink;
     private int page = 0;
     private ResultsRetainedFragment mSaveResults;
-    //private ProgressBar progressBar;
-    //private TextView errorMessageTextView;
-    private ResultsAdapter mAdapter;
+    private ProgressBar mLoadingIndicator;
+    private TextView mErrorMessageTextView;
     private RecyclerView mResultsView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.results);
+        setContentView(R.layout.activity_results);
 
         mResultsView = (RecyclerView)findViewById(R.id.rv_results);
 
@@ -57,26 +51,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         mResultsView.setHasFixedSize(true);
 
-        // Loading indicator and error text view
-        // Create a progress bar to display while the list loads
-        /*progressBar = new ProgressBar(this);
-        progressBar.setLayoutParams(
-                new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
-                        FrameLayout.LayoutParams.WRAP_CONTENT,
-                        Gravity.CENTER));
-        progressBar.setIndeterminate(true);
-        getListView().setEmptyView(progressBar);
-
-        errorMessageTextView = new TextView(this);
-        errorMessageTextView.setLayoutParams(
-                new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
-                        FrameLayout.LayoutParams.WRAP_CONTENT,
-                        Gravity.CENTER));
-
-        // Must add the progress bar to the root of the layout
-        ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
-        root.addView(errorMessageTextView);
-        root.addView(progressBar);*/
+        mLoadingIndicator = (ProgressBar)findViewById(R.id.results_loading_indicator);
+        mErrorMessageTextView = (TextView)findViewById(R.id.results_loading_error);
 
         Intent intent = getIntent();
         title = intent.getStringExtra(MainActivity.EXTRA_TITLE);
@@ -129,8 +105,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         }else { //using saved results list
             List<Result> results = mSaveResults.getData();
             if(results != null) {
-                mAdapter = new ResultsAdapter(results, this);
-                mResultsView.setAdapter(mAdapter);
+                mResultsView.setAdapter(new ResultsAdapter(results, this));
             }else {
                 //if ResultsRetainedFragment is outdated refresh data
                 if(currentLink != null) {
@@ -256,23 +231,31 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         new ResultsAsyncTask().execute(url);
     }
 
-    /*private void showErrorMessage(int id){
-        errorMessageTextView.setText(id);
-        progressBar.setVisibility(View.INVISIBLE);
-        errorMessageTextView.setVisibility(View.VISIBLE);
-    }*/
+    private void showErrorMessage(int id){
+        mErrorMessageTextView.setText(id);
+        mLoadingIndicator.setVisibility(View.INVISIBLE);
+        mErrorMessageTextView.setVisibility(View.VISIBLE);
+        mResultsView.setVisibility(View.INVISIBLE);
+    }
 
-    /*private void showLoadingIndicator() {
-        //progressBar.setVisibility(View.VISIBLE);
-        errorMessageTextView.setVisibility(View.INVISIBLE);
-    }*/
+    private void showLoadingIndicator() {
+        mLoadingIndicator.setVisibility(View.VISIBLE);
+        mResultsView.setVisibility(View.INVISIBLE);
+        mErrorMessageTextView.setVisibility(View.INVISIBLE);
+    }
+
+    private void showData() {
+        mLoadingIndicator.setVisibility(View.INVISIBLE);
+        mResultsView.setVisibility(View.VISIBLE);
+        mErrorMessageTextView.setVisibility(View.INVISIBLE);
+    }
 
     public class ResultsAsyncTask extends AsyncTask<URL, Void, String> {
 
-        /*@Override
+        @Override
         protected void onPreExecute() {
             showLoadingIndicator();
-        }*/
+        }
 
         protected String doInBackground(URL... params) {
             try {
@@ -286,7 +269,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         protected void onPostExecute(String page) {
             if(page == null) {
-                //showErrorMessage(R.string.network_problem);
+                showErrorMessage(R.string.network_problem);
                 mSaveResults.setData(null);//save null to ResultsRetainedFragment to erase prev results
                 return;
             }
@@ -295,7 +278,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             List<Result> results =  parser.getItems();
 
             if(results.isEmpty()) {
-                //showErrorMessage(R.string.nothing_found);
+                showErrorMessage(R.string.nothing_found);
                 mSaveResults.setData(null);
                 return;
             }
@@ -305,6 +288,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             if(mSaveResults != null) {
                 mSaveResults.setData(results);
             }
+            showData();
             mResultsView.setAdapter(new ResultsAdapter(results, ResultsActivity.this));
 
             parser.navigationInfo();

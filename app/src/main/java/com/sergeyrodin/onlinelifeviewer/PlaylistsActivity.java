@@ -40,7 +40,7 @@ public class PlaylistsActivity extends ExpandableListActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.playlists);
+        setContentView(R.layout.activity_playlists);
         setTitle(R.string.playlists);
 
         pbLoadingIndicator = (ProgressBar)findViewById(R.id.playlists_loading_indicator);

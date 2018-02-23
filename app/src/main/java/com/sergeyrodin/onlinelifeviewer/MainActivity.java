@@ -48,7 +48,7 @@ public class MainActivity extends ExpandableListActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        setContentView(R.layout.activity_main);
 
         progressBar = (ProgressBar)findViewById(R.id.loading_indicator);
         tvLoadingError = (TextView)findViewById(R.id.loading_error);
