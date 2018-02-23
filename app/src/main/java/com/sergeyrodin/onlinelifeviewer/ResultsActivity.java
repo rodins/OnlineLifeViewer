@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -15,20 +16,30 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.sergeyrodin.onlinelifeviewer.utilities.CategoriesParser;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
 import org.w3c.dom.Text;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener {
     private final String STATE_PREVLINK = "com.sergeyrodin.PREVLINK";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_CURRENTLINK = "com.sergeyrodin.CURRENTLINK";
     private final String STATE_PAGE = "com.sergeyrodin.PAGE";
+    private final String TAG = ResultsActivity.class.getSimpleName();
     private String title;
 
     private MenuItem prev, next;
@@ -38,6 +49,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private ProgressBar mLoadingIndicator;
     private TextView mErrorMessageTextView;
     private RecyclerView mResultsView;
+    private List<Result> mResults;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +61,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         mResultsView.setLayoutManager(layoutManager);
 
-        mResultsView.setHasFixedSize(true);
+        mResultsView.setHasFixedSize(false);
 
         mLoadingIndicator = (ProgressBar)findViewById(R.id.results_loading_indicator);
         mErrorMessageTextView = (TextView)findViewById(R.id.results_loading_error);
@@ -103,9 +115,9 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                 refresh(NetworkUtils.buildSearchUrl(query));
             }
         }else { //using saved results list
-            List<Result> results = mSaveResults.getData();
-            if(results != null) {
-                mResultsView.setAdapter(new ResultsAdapter(results, this));
+            mResults = mSaveResults.getData();
+            if(mResults != null) {
+                mResultsView.setAdapter(new ResultsAdapter(mResults, this));
             }else {
                 //if ResultsRetainedFragment is outdated refresh data
                 if(currentLink != null) {
@@ -122,7 +134,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     @Override
     public void onListItemClick(int position) {
-        Result result = mSaveResults.getData().get(position);
+        Result result = mResults.get(position);
         new ItemClickAsyncTask(this).execute(result);
     }
 
@@ -142,8 +154,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         return super.onCreateOptionsMenu(menu);
     }
 
-    public void setupPagerFromAsyncTask(String pl, String nl, int p, int prevPage, int nextPage) {
-        page = p;
+    public void setupPagerFromAsyncTask(String pl, String nl, int prevPage, int nextPage) {
         prevLink = null;
         nextLink = null;
         try {
@@ -250,16 +261,128 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mErrorMessageTextView.setVisibility(View.INVISIBLE);
     }
 
-    public class ResultsAsyncTask extends AsyncTask<URL, Void, String> {
+    private Result divToResult(String div) {
+        Matcher m = Pattern
+                .compile("<a\\s+href=\"http://www.online-life.club/(\\d+?)-.*?html\"\\s*?>\\n\\s*<img\\s+src=\"(.*?)\"\\s+/>(.+?)\\n?\\s*</a>")
+                .matcher(div);
+        if(m.find()) {
+            int id = Integer.parseInt(m.group(1));
+            String image = m.group(2);
+            image = image.substring(0, image.indexOf("&"));
+            String title = Html.unescape(m.group(3));
+            return new Result(title, image, id);
+        }
+        return null;
+    }
+
+    private void parseNavigation(String nav) {
+        String pl = null, nl = null;
+        int prevPage = 0, nextPage = 0;
+
+        Matcher m;
+        //find current page
+        m = Pattern.compile("<span>(.+?)</span>").matcher(nav);
+        while(m.find()) {
+            if(m.group(1).length() < 5) {
+                page = Integer.parseInt(m.group(1));
+            }
+        }
+
+        // non-search page navigation links
+        m = Pattern.compile("<a\\s+href=\"(.+?)\">(.+?)</a>").matcher(nav);
+        while(m.find()) {
+            if(m.group(2).length() == 5) {
+                pl = m.group(1);
+            }
+
+            if(m.group(2).length() == 6) {
+                nl = m.group(1);
+            }
+        }
+
+        // search page navigation links
+        m = Pattern.compile("<a.+?onclick=\".+?(\\d+).+?\">(.+?)</a>").matcher(nav);
+        while(m.find()) {
+            if(m.group(2).length() == 5) {
+                prevPage = Integer.parseInt(m.group(1));
+            }
+
+            if(m.group(2).length() == 6) {
+                nextPage = Integer.parseInt(m.group(1));
+            }
+        }
+        setupPagerFromAsyncTask(pl, nl, prevPage, nextPage);
+    }
+
+    @Override
+    protected void onDestroy() {
+        //Saving data
+        if(mSaveResults != null) {
+            mSaveResults.setData(mResults);
+        }
+        super.onDestroy();
+    }
+
+    public class ResultsAsyncTask extends AsyncTask<URL, Result, String> {
+        private ResultsAdapter adapter;
 
         @Override
         protected void onPreExecute() {
             showLoadingIndicator();
+
+            mResults = new ArrayList<>();
+            adapter = new ResultsAdapter(mResults, ResultsActivity.this);
+            mResultsView.setAdapter(adapter);
         }
 
         protected String doInBackground(URL... params) {
             try {
-                //TODO: get and parse only useful html page part
+                try {
+                    URL url = params[0];
+                    HttpURLConnection connection = null;
+                    BufferedReader in = null;
+                    try {
+                        connection = (HttpURLConnection)url.openConnection();
+                        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0 SeaMonkey/2.40");
+                        InputStream stream = connection.getInputStream();
+                        in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
+                        String line;
+                        String div = "";
+                        boolean div_found = false;
+                        while((line = in.readLine()) != null){
+                            //Log.d(TAG, "Line: " + line);
+                            if(line.contains("class=\"custom-poster\"") && !div_found) {
+                                div_found = true;
+                            }
+                            if(line.contains("</a>") && div_found) {
+                                div_found = false;
+                                div += line;
+                                Result result = divToResult(div);
+                                if(result != null) {
+                                    publishProgress(result);
+                                }
+                                div = "";
+                            }
+                            if(div_found) {
+                                div += line + "\n";
+                            }
+
+                            if(line.contains("class=\"navigation\"")) {
+                                return line;
+                            }
+                        }
+                        return "";
+                    }finally {
+                        if(in != null) {
+                            in.close();
+                        }
+                        if(connection != null) {
+                            connection.disconnect();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 return new Curl().getPageString(params[0]);
             }catch(IOException e){
                 System.err.println(e.toString());
@@ -267,37 +390,30 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             }
         }
 
-        protected void onPostExecute(String page) {
-            if(page == null) {
+        @Override
+        protected void onProgressUpdate(Result... values) {
+            showData();
+            Result result = values[0];
+            mResults.add(result);
+            adapter.notifyItemInserted(mResults.size()-1);
+        }
+
+        protected void onPostExecute(String navigation) {
+            if(navigation == null) {
                 showErrorMessage(R.string.network_problem);
                 mSaveResults.setData(null);//save null to ResultsRetainedFragment to erase prev results
                 return;
             }
 
-            ResultsParser parser = new ResultsParser(page);
-            List<Result> results =  parser.getItems();
-
-            if(results.isEmpty()) {
+            if(mResults.isEmpty()) {
                 showErrorMessage(R.string.nothing_found);
                 mSaveResults.setData(null);
                 return;
             }
 
-            //Updating current ListView
-            //Saving data
-            if(mSaveResults != null) {
-                mSaveResults.setData(results);
+            if(!navigation.isEmpty()) {
+                parseNavigation(navigation);
             }
-            showData();
-            mResultsView.setAdapter(new ResultsAdapter(results, ResultsActivity.this));
-
-            parser.navigationInfo();
-            setupPagerFromAsyncTask(parser.getPrevLink(),
-                                    parser.getNextLink(),
-                                    parser.getPageNumber(),
-                                    parser.getPrevPage(),
-                                    parser.getNextPage());
-
         }
     }
 }
