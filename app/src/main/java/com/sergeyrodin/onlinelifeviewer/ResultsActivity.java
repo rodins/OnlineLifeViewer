@@ -9,12 +9,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.sergeyrodin.onlinelifeviewer.utilities.CategoriesParser;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
@@ -39,6 +43,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_CURRENTLINK = "com.sergeyrodin.CURRENTLINK";
     private final String STATE_PAGE = "com.sergeyrodin.PAGE";
+    private final String STATE_IS_ON_POST_EXECUTE = "com.sergeyrodin.IS_ON_POST_EXECUTE";
     private final String TAG = ResultsActivity.class.getSimpleName();
     private String title;
 
@@ -50,6 +55,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private TextView mErrorMessageTextView;
     private RecyclerView mResultsView;
     private List<Result> mResults;
+    private boolean mIsOnPostExecute = false;
+    private boolean mIsPage = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +69,22 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mResultsView.setLayoutManager(layoutManager);
 
         mResultsView.setHasFixedSize(false);
+
+        mResultsView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                if(!recyclerView.canScrollVertically(1)){
+                    Log.d(TAG, "Scroll...");
+                    // React to scrolling only when list is totally loaded
+                    if(mIsOnPostExecute) {
+                        mIsPage = true;
+                        if(nextLink != null) {
+                            refresh(nextLink);
+                        }
+                    }
+                }
+            }
+        });
 
         mLoadingIndicator = (ProgressBar)findViewById(R.id.results_loading_indicator);
         mErrorMessageTextView = (TextView)findViewById(R.id.results_loading_error);
@@ -77,6 +100,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                 String strPrevLink = savedInstanceState.getString(STATE_PREVLINK);
                 String strNextLink = savedInstanceState.getString(STATE_NEXTLINK);
                 String strCurrentLink = savedInstanceState.getString(STATE_CURRENTLINK);
+                mIsOnPostExecute = savedInstanceState.getBoolean(STATE_IS_ON_POST_EXECUTE);
                 if(strPrevLink != null) {
                     prevLink = new URL(strPrevLink);
                 }
@@ -138,7 +162,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         new ItemClickAsyncTask(this).execute(result);
     }
 
-    @Override
+    /*@Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.results_menu, menu);
@@ -152,7 +176,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             next.setVisible(false);
         }
         return super.onCreateOptionsMenu(menu);
-    }
+    }*/
 
     public void setupPagerFromAsyncTask(String pl, String nl, int prevPage, int nextPage) {
         prevLink = null;
@@ -175,9 +199,9 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             prev.setVisible(true);
         }else {
             if(prevPage == 0) {
-                prev.setVisible(false);
+                //prev.setVisible(false);
             }else { // search page pager
-                prev.setVisible(true);
+                //prev.setVisible(true);
                 prevLink = getSearchLink(prevPage); // forming prev search link
             }
         }
@@ -185,15 +209,15 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             next.setVisible(true);
         }else {
             if(nextPage == 0) {
-                next.setVisible(false);
+                //next.setVisible(false);
             }else {
-                next.setVisible(true);
+                //next.setVisible(true);
                 nextLink = getSearchLink(nextPage); //forming next search link
             }
         }
     }
 
-    @Override
+    /*@Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.action_prev:
@@ -205,7 +229,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
+    }*/
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -221,12 +245,13 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             outState.putString(STATE_CURRENTLINK, currentLink.toString());
         }
         outState.putInt(STATE_PAGE, page);
+        outState.putBoolean(STATE_IS_ON_POST_EXECUTE, mIsOnPostExecute);
 
         super.onSaveInstanceState(outState);
     }
 
     private void refresh(String link) {
-        mResultsView.setAdapter(null);
+        //mResultsView.setAdapter(null);
         try {
             currentLink = new URL(link);
             URL url = new URL(link);
@@ -237,26 +262,65 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     private void refresh(URL url) {
-        mResultsView.setAdapter(null);
+        Log.d(TAG, "Refresh...");
+        //mResultsView.setAdapter(null);
         currentLink = url;
         new ResultsAsyncTask().execute(url);
+    }
+
+    private void moveUpResultsViewBottom() {
+        // Increase bottom padding to show spinner
+        //TODO: use int padding = getResources().getDimensionPixelOffset(R.dimen.padding);
+        int paddingDp = 50;
+        float density = this.getResources().getDisplayMetrics().density;
+        int paddingPixel = (int)(paddingDp * density);
+        mResultsView.setPadding(0, 0, 0, paddingPixel);
+    }
+
+    private void moveLoadingIndicatorToBottom() {
+        // Place spinner to the bottom
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT);
+        params.gravity = Gravity.CENTER | Gravity.BOTTOM;
+        mLoadingIndicator.setLayoutParams(params);
+    }
+
+    private void moveErrorMessageToBottom() {
+        // Place textView to the bottom
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT);
+        params.gravity = Gravity.CENTER | Gravity.BOTTOM;
+        mErrorMessageTextView.setLayoutParams(params);
     }
 
     private void showErrorMessage(int id){
         mErrorMessageTextView.setText(id);
         mLoadingIndicator.setVisibility(View.INVISIBLE);
+        if(mIsPage) {
+            mResultsView.setVisibility(View.VISIBLE);
+            moveUpResultsViewBottom();
+            moveErrorMessageToBottom();
+        }else {
+            mResultsView.setVisibility(View.INVISIBLE);
+        }
         mErrorMessageTextView.setVisibility(View.VISIBLE);
-        mResultsView.setVisibility(View.INVISIBLE);
     }
 
     private void showLoadingIndicator() {
+        if(mIsPage) {
+            mResultsView.setVisibility(View.VISIBLE);
+            moveUpResultsViewBottom();
+            moveLoadingIndicatorToBottom();
+        }else {
+            mResultsView.setVisibility(View.INVISIBLE);
+        }
         mLoadingIndicator.setVisibility(View.VISIBLE);
-        mResultsView.setVisibility(View.INVISIBLE);
         mErrorMessageTextView.setVisibility(View.INVISIBLE);
     }
 
     private void showData() {
         mLoadingIndicator.setVisibility(View.INVISIBLE);
+        mResultsView.setPadding(0, 0, 0, 0);
         mResultsView.setVisibility(View.VISIBLE);
         mErrorMessageTextView.setVisibility(View.INVISIBLE);
     }
@@ -330,9 +394,15 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         protected void onPreExecute() {
             showLoadingIndicator();
 
-            mResults = new ArrayList<>();
-            adapter = new ResultsAdapter(mResults, ResultsActivity.this);
-            mResultsView.setAdapter(adapter);
+            mIsOnPostExecute = false;
+
+            if(!mIsPage) {
+                mResults = new ArrayList<>();
+                adapter = new ResultsAdapter(mResults, ResultsActivity.this);
+                mResultsView.setAdapter(adapter);
+            }else {
+                adapter = (ResultsAdapter)mResultsView.getAdapter();
+            }
         }
 
         protected String doInBackground(URL... params) {
@@ -410,6 +480,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                 mSaveResults.setData(null);
                 return;
             }
+
+            mIsOnPostExecute = true;
 
             if(!navigation.isEmpty()) {
                 parseNavigation(navigation);
