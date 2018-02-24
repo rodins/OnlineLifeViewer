@@ -22,7 +22,7 @@ public class Result {
 
     Result(String title, String image, int id) {
         this.title = title;
-        this.image = image + "&w=82&h=118&zc=1";
+        this.image = image; //+ "&w=82&h=118&zc=1";
         this.id = id;
         bitmap = null;
     }

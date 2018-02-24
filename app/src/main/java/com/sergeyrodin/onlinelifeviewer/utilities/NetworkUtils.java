@@ -32,6 +32,11 @@ public class NetworkUtils {
     private final static String PATH_PLAYER = "player.php";
     private final static String PARAM_NEWS_ID = "newsid";
 
+    private final static String PARAM_IMAGE_WIDTH = "w";
+    private final static String PARAM_IMAGE_HEIGHT = "h";
+    private final static String PARAM_IMAGE_ZC = "zc";
+    private final static String ZC = "1";
+
     public static URL buildSearchUrl(String query) {
         return buildSearchUrl(query, 0);
     }
@@ -85,6 +90,15 @@ public class NetworkUtils {
                 .appendQueryParameter(PARAM_NEWS_ID, Integer.toString(id))
                 .build();
         return builtUri.toString();
+    }
+
+    public static URL buildImageUrl(String image, String width, String height) throws MalformedURLException {
+        Uri builtUri = Uri.parse(image).buildUpon()
+                .appendQueryParameter(PARAM_IMAGE_WIDTH, width)
+                .appendQueryParameter(PARAM_IMAGE_HEIGHT, height)
+                .appendQueryParameter(PARAM_IMAGE_ZC, ZC)
+                .build();
+        return new URL(builtUri.toString());
     }
 
     public static String getResponseFromHttpUrl(URL url) throws IOException {

@@ -9,6 +9,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="5dp"
+        android:maxWidth="136dp"
+        android:maxHeight="236dp"
+        android:src="@drawable/empty"
         android:id="@+id/resultEntryImage" />
 
     <TextView

@@ -64,7 +64,7 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
             if(result.getBitmap() != null) {
                 mImageView.setImageBitmap(result.getBitmap());
             }else if(result.image != null){
-                mImageView.setImageBitmap(null); //TODO: add empty image placeholder
+                mImageView.setImageResource(R.drawable.empty);
                 new ImageLoadTask(result, mImageView).execute();
             }
         }

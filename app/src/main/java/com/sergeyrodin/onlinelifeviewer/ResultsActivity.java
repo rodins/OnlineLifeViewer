@@ -71,7 +71,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 if(!recyclerView.canScrollVertically(1)){
-                    Log.d(TAG, "Scroll...");
                     // React to scrolling only when list is totally loaded
                     if(mIsOnPostExecute) {
                         mIsPage = true;
@@ -373,7 +372,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             showData();
             Result result = values[0];
             mResults.add(result);
-            adapter.notifyItemInserted(mResults.size()-1);
+            int index = mResults.indexOf(result);
+            adapter.notifyItemInserted(index);
         }
 
         protected void onPostExecute(String navigation) {
