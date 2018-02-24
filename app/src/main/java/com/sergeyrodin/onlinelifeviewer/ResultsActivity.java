@@ -39,17 +39,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener {
-    private final String STATE_PREVLINK = "com.sergeyrodin.PREVLINK";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_CURRENTLINK = "com.sergeyrodin.CURRENTLINK";
-    private final String STATE_PAGE = "com.sergeyrodin.PAGE";
     private final String STATE_IS_ON_POST_EXECUTE = "com.sergeyrodin.IS_ON_POST_EXECUTE";
+    private final String STATE_TITLE = "com.sergeyrodin.TITLE";
     private final String TAG = ResultsActivity.class.getSimpleName();
-    private String title;
 
-    private MenuItem prev, next;
-    private URL prevLink, nextLink, currentLink;
-    private int page = 0;
+    private URL nextLink, currentLink;
     private ResultsRetainedFragment mSaveResults;
     private ProgressBar mLoadingIndicator;
     private TextView mErrorMessageTextView;
@@ -57,6 +53,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private List<Result> mResults;
     private boolean mIsOnPostExecute = false;
     private boolean mIsPage = false;
+    private String mTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,20 +87,17 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mErrorMessageTextView = (TextView)findViewById(R.id.results_loading_error);
 
         Intent intent = getIntent();
-        title = intent.getStringExtra(MainActivity.EXTRA_TITLE);
-        if(title == null) {
-            title = getString(R.string.results);
+        mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
+        if(mTitle == null) {
+            mTitle = getString(R.string.results);
         }
 
         if(savedInstanceState != null) {
             try {
-                String strPrevLink = savedInstanceState.getString(STATE_PREVLINK);
                 String strNextLink = savedInstanceState.getString(STATE_NEXTLINK);
                 String strCurrentLink = savedInstanceState.getString(STATE_CURRENTLINK);
                 mIsOnPostExecute = savedInstanceState.getBoolean(STATE_IS_ON_POST_EXECUTE);
-                if(strPrevLink != null) {
-                    prevLink = new URL(strPrevLink);
-                }
+                mTitle = savedInstanceState.getString(STATE_TITLE);
                 if(strNextLink != null) {
                     nextLink = new URL(strNextLink);
                 }
@@ -113,15 +107,9 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
-
-            page = savedInstanceState.getInt(STATE_PAGE);
-
-            if(page > 0) {
-                setTitle(title + ": " + page);
-            }
-        }else {
-            setTitle(title);
         }
+
+        setTitle(mTitle);
 
         FragmentManager fm = getFragmentManager();
         String tag = "saveResultsData";
@@ -162,81 +150,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         new ItemClickAsyncTask(this).execute(result);
     }
 
-    /*@Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.results_menu, menu);
-
-        prev = menu.findItem(R.id.action_prev);
-        next = menu.findItem(R.id.action_next);
-        if(prevLink == null) {
-            prev.setVisible(false);
-        }
-        if(nextLink == null) {
-            next.setVisible(false);
-        }
-        return super.onCreateOptionsMenu(menu);
-    }*/
-
-    public void setupPagerFromAsyncTask(String pl, String nl, int prevPage, int nextPage) {
-        prevLink = null;
-        nextLink = null;
-        try {
-            if(pl != null) {
-                prevLink = new URL(pl);
-            }
-            if(nl != null) {
-                nextLink = new URL(nl);
-            }
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        if(page > 0) {
-            setTitle(title + ": " + page);
-        }
-        if(prev != null && prevLink != null) {
-            prev.setVisible(true);
-        }else {
-            if(prevPage == 0) {
-                //prev.setVisible(false);
-            }else { // search page pager
-                //prev.setVisible(true);
-                prevLink = getSearchLink(prevPage); // forming prev search link
-            }
-        }
-        if(next != null && nextLink != null) {
-            next.setVisible(true);
-        }else {
-            if(nextPage == 0) {
-                //next.setVisible(false);
-            }else {
-                //next.setVisible(true);
-                nextLink = getSearchLink(nextPage); //forming next search link
-            }
-        }
-    }
-
-    /*@Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-            case R.id.action_prev:
-                refresh(prevLink);
-                return true;
-            case R.id.action_next:
-                refresh(nextLink);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }*/
-
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        if(prevLink != null) {
-            String strPrevLink = prevLink.toString();
-            outState.putString(STATE_PREVLINK, strPrevLink);
-        }
         if(nextLink != null) {
             String strNextLink = nextLink.toString();
             outState.putString(STATE_NEXTLINK, strNextLink);
@@ -244,14 +159,13 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         if(currentLink != null) {
             outState.putString(STATE_CURRENTLINK, currentLink.toString());
         }
-        outState.putInt(STATE_PAGE, page);
         outState.putBoolean(STATE_IS_ON_POST_EXECUTE, mIsOnPostExecute);
+        outState.putString(STATE_TITLE, mTitle);
 
         super.onSaveInstanceState(outState);
     }
 
     private void refresh(String link) {
-        //mResultsView.setAdapter(null);
         try {
             currentLink = new URL(link);
             URL url = new URL(link);
@@ -262,8 +176,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     private void refresh(URL url) {
-        Log.d(TAG, "Refresh...");
-        //mResultsView.setAdapter(null);
         currentLink = url;
         new ResultsAsyncTask().execute(url);
     }
@@ -340,42 +252,38 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     private void parseNavigation(String nav) {
-        String pl = null, nl = null;
-        int prevPage = 0, nextPage = 0;
+        nextLink = null;
+        String nl = null;
+        int nextPage = 0;
 
         Matcher m;
-        //find current page
-        m = Pattern.compile("<span>(.+?)</span>").matcher(nav);
-        while(m.find()) {
-            if(m.group(1).length() < 5) {
-                page = Integer.parseInt(m.group(1));
-            }
-        }
-
         // non-search page navigation links
         m = Pattern.compile("<a\\s+href=\"(.+?)\">(.+?)</a>").matcher(nav);
         while(m.find()) {
-            if(m.group(2).length() == 5) {
-                pl = m.group(1);
-            }
-
             if(m.group(2).length() == 6) {
                 nl = m.group(1);
+                try {
+                    if(nl != null) {
+                        nextLink = new URL(nl);
+                    }
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+                break;
             }
         }
 
         // search page navigation links
         m = Pattern.compile("<a.+?onclick=\".+?(\\d+).+?\">(.+?)</a>").matcher(nav);
         while(m.find()) {
-            if(m.group(2).length() == 5) {
-                prevPage = Integer.parseInt(m.group(1));
-            }
-
             if(m.group(2).length() == 6) {
                 nextPage = Integer.parseInt(m.group(1));
+                if(nextPage != 0) {
+                    nextLink = getSearchLink(nextPage); //forming next search link
+                }
+                break;
             }
         }
-        setupPagerFromAsyncTask(pl, nl, prevPage, nextPage);
     }
 
     @Override
