@@ -3,6 +3,9 @@ package com.sergeyrodin.onlinelifeviewer;
 import android.app.FragmentManager;
 import android.app.SearchManager;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -54,7 +57,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private boolean mIsOnPostExecute = false;
     private boolean mIsPage = false;
     private String mTitle;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

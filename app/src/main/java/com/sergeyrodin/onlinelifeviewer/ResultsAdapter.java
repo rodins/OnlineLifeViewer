@@ -1,14 +1,13 @@
 package com.sergeyrodin.onlinelifeviewer;
 
-import android.app.Activity;
 import android.content.Context;
-import android.support.annotation.NonNull;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -18,7 +17,11 @@ import java.util.List;
  * Created by root on 10.05.16.
  */
 class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolder>{
+    private final String TAG = ResultsAdapter.class.getSimpleName();
     private List<Result> results;
+    private Bitmap mDefaultBitmap;
+    private final int WIDTH;
+    private final int HEIGHT;
 
     interface ListItemClickListener {
         void onListItemClick(int index);
@@ -29,6 +32,10 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
     ResultsAdapter(List<Result> results, ListItemClickListener onClickListener) {
         this.results = results;
         mOnClickListener = onClickListener;
+        Resources resources = ((Context)mOnClickListener).getResources();
+        mDefaultBitmap = BitmapFactory.decodeResource(resources, R.drawable.empty);
+        WIDTH = mDefaultBitmap.getWidth();
+        HEIGHT = mDefaultBitmap.getHeight();
     }
 
     @Override
@@ -64,8 +71,9 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
             if(result.getBitmap() != null) {
                 mImageView.setImageBitmap(result.getBitmap());
             }else if(result.image != null){
-                mImageView.setImageResource(R.drawable.empty);
-                new ImageLoadTask(result, mImageView).execute();
+                //mImageView.setImageResource(R.drawable.empty);
+                mImageView.setImageBitmap(mDefaultBitmap);
+                new ImageLoadTask(result, mImageView, WIDTH, HEIGHT).execute();
             }
         }
 
