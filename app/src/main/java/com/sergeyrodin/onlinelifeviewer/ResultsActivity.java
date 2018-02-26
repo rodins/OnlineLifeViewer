@@ -3,15 +3,18 @@ package com.sergeyrodin.onlinelifeviewer;
 import android.app.FragmentManager;
 import android.app.SearchManager;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -64,7 +67,13 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         mResultsView = (RecyclerView)findViewById(R.id.rv_results);
 
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        Configuration configuration = getResources().getConfiguration();
+        int screenWidthDp = configuration.screenWidthDp;
+        int RESULT_WIDTH = 200;
+        int spanCount = screenWidthDp/RESULT_WIDTH;
+
+        //LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        GridLayoutManager layoutManager = new GridLayoutManager(this, spanCount);
         mResultsView.setLayoutManager(layoutManager);
 
         mResultsView.setHasFixedSize(false);
