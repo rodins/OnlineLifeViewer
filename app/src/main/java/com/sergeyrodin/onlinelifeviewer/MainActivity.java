@@ -125,14 +125,18 @@ public class MainActivity extends ExpandableListActivity {
         getExpandableListView().setVisibility(View.VISIBLE);
         tvLoadingError.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.INVISIBLE);
-        refreshMenuItem.setVisible(false);
+        if(refreshMenuItem != null) {
+            refreshMenuItem.setVisible(false);
+        }
     }
 
     private void showLoadingError() {
         getExpandableListView().setVisibility(View.INVISIBLE);
         tvLoadingError.setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.INVISIBLE);
-        refreshMenuItem.setVisible(true);
+        if(refreshMenuItem != null) {
+            refreshMenuItem.setVisible(true);
+        }
     }
 
     private void categoriesToAdapter(List<Link> categories) {

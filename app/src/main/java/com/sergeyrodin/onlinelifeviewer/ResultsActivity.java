@@ -50,6 +50,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private final String STATE_IS_ON_POST_EXECUTE = "com.sergeyrodin.IS_ON_POST_EXECUTE";
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
     private final String TAG = ResultsActivity.class.getSimpleName();
+    private final int RESULT_WIDTH = 190;
 
     private URL nextLink, currentLink;
     private ResultsRetainedFragment mSaveResults;
@@ -60,6 +61,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private boolean mIsOnPostExecute = false;
     private boolean mIsPage = false;
     private String mTitle;
+    private int mNewWidthDp;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,8 +71,12 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         Configuration configuration = getResources().getConfiguration();
         int screenWidthDp = configuration.screenWidthDp;
-        int RESULT_WIDTH = 200;
         int spanCount = screenWidthDp/RESULT_WIDTH;
+
+        mNewWidthDp = screenWidthDp/spanCount;
+
+        Log.d(TAG, "Result width: " + RESULT_WIDTH);
+        Log.d(TAG, "New result width: " + mNewWidthDp);
 
         //LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         GridLayoutManager layoutManager = new GridLayoutManager(this, spanCount);
@@ -139,7 +145,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         }else { //using saved results list
             mResults = mSaveResults.getData();
             if(mResults != null) {
-                mResultsView.setAdapter(new ResultsAdapter(mResults, this));
+                mResultsView.setAdapter(new ResultsAdapter(mResults, this, mNewWidthDp));
             }else {
                 //if ResultsRetainedFragment is outdated refresh data
                 if(currentLink != null) {
@@ -316,7 +322,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
             if(!mIsPage) {
                 mResults = new ArrayList<>();
-                adapter = new ResultsAdapter(mResults, ResultsActivity.this);
+                adapter = new ResultsAdapter(mResults, ResultsActivity.this, mNewWidthDp);
                 mResultsView.setAdapter(adapter);
             }else {
                 adapter = (ResultsAdapter)mResultsView.getAdapter();
