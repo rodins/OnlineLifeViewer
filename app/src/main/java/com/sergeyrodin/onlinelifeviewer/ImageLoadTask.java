@@ -22,6 +22,9 @@ public class ImageLoadTask extends AsyncTask<Void, Void, Bitmap> {
     private String mImageUrl;
     private final int WIDTH;
     private final int HEIGHT;
+    private final int DEFAULT_WIDTH = 164;
+    private final int DEFAULT_HEIGHT = 236;
+
 
     public ImageLoadTask(ResultsActivity activity, ImageView imageView, String imageUrl, int width, int height) {
         mActivity = activity;
@@ -34,8 +37,8 @@ public class ImageLoadTask extends AsyncTask<Void, Void, Bitmap> {
     @Override
     protected Bitmap doInBackground(Void... params){
         try{ // get new bitmap from the net
-            String width = "164";//"82";
-            String height = "236";//"118";
+            String width = Integer.toString(DEFAULT_WIDTH); //"164";//"82";
+            String height = Integer.toString(DEFAULT_HEIGHT); //"236";//"118";
             //Download fixed sized images, and scale them to needed size later
             URL urlConnection = NetworkUtils.buildImageUrl(mImageUrl, width, height);
             HttpURLConnection connection = (HttpURLConnection)urlConnection.openConnection();
@@ -52,8 +55,14 @@ public class ImageLoadTask extends AsyncTask<Void, Void, Bitmap> {
     @Override
     protected void onPostExecute(Bitmap bitmap){
         if(bitmap != null){
-            Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, WIDTH, HEIGHT, true);
-            mImageView.setImageBitmap(scaledBitmap);
+            // Do not scale image if width and height are equals to defaults
+            if(DEFAULT_WIDTH != WIDTH) {
+                Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, WIDTH, HEIGHT, true);
+                mImageView.setImageBitmap(scaledBitmap);
+            }else {
+                mImageView.setImageBitmap(bitmap);
+            }
+
             mActivity.addBitmapToMemoryCache(mImageUrl, bitmap);
         }
     }
