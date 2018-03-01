@@ -19,28 +19,29 @@ public class ImageLoadTask extends AsyncTask<Void, Void, Bitmap> {
     private final String TAG = ImageLoadTask.class.getSimpleName();
     private Result result;
     private ImageView imageView;
-    private final String WIDTH;
-    private final String HEIGHT;
+    private final int WIDTH;
+    private final int HEIGHT;
 
     public ImageLoadTask(Result result, ImageView imageView, int width, int height) {
         this.result = result;
         this.imageView = imageView;
-        WIDTH = Integer.toString(width);
-        HEIGHT = Integer.toString(height);
+        WIDTH = width;
+        HEIGHT = height;
     }
 
     @Override
     protected Bitmap doInBackground(Void... params){
         try{ // get new bitmap from the net
-            //String WIDTH = "164";//"82";
-            //String HEIGHT = "236";//"118";
-            //TODO: this strange solution with width and height are taken from scaled resource image should be changed
-            URL urlConnection = NetworkUtils.buildImageUrl(result.image, WIDTH, HEIGHT);
+            String width = "164";//"82";
+            String height = "236";//"118";
+            //Download fixed sized images, and scale them to needed size later
+            URL urlConnection = NetworkUtils.buildImageUrl(result.image, width, height);
             HttpURLConnection connection = (HttpURLConnection)urlConnection.openConnection();
             connection.setDoInput(true);
             connection.connect();
             InputStream input = connection.getInputStream();
-            return BitmapFactory.decodeStream(input);
+            Bitmap downloadedBitmap = BitmapFactory.decodeStream(input);
+            return Bitmap.createScaledBitmap(downloadedBitmap, WIDTH, HEIGHT, true);
         }catch(Exception e){
             System.err.println(e.toString());
         }
@@ -51,6 +52,7 @@ public class ImageLoadTask extends AsyncTask<Void, Void, Bitmap> {
     protected void onPostExecute(Bitmap bitmap){
         if(bitmap != null){
             imageView.setImageBitmap(bitmap);
+            //TODO: fix out of memory error
             result.setBitmap(bitmap);
         }
     }

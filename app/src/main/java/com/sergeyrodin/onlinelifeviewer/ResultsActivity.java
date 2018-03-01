@@ -75,9 +75,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         mNewWidthDp = screenWidthDp/spanCount;
 
-        Log.d(TAG, "Result width: " + RESULT_WIDTH);
-        Log.d(TAG, "New result width: " + mNewWidthDp);
-
         //LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         GridLayoutManager layoutManager = new GridLayoutManager(this, spanCount);
         mResultsView.setLayoutManager(layoutManager);

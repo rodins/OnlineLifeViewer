@@ -51,8 +51,6 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
 
         Bitmap bitmap = BitmapFactory.decodeResource(resources, R.drawable.empty);
         mDefaultBitmap = Bitmap.createScaledBitmap(bitmap, WIDTH, HEIGHT, true);
-        Log.d(TAG, "Width: " + WIDTH);
-        Log.d(TAG, "Height: " + HEIGHT);
     }
 
     @Override
@@ -87,6 +85,7 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
         private void bind(Result result) {
             mTitleView.setText(result.title);
             if(result.getBitmap() != null) {
+                //TODO: use cache on drive, not in memory
                 mImageView.setImageBitmap(result.getBitmap());
             }else if(result.image != null){
                 mImageView.setImageBitmap(mDefaultBitmap);
