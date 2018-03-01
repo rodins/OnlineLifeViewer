@@ -4,33 +4,20 @@ import android.app.FragmentManager;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.util.LruCache;
-import android.util.TypedValue;
 import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.sergeyrodin.onlinelifeviewer.utilities.CategoriesParser;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
-
-import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -104,23 +91,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mLoadingIndicator = (ProgressBar)findViewById(R.id.results_loading_indicator);
         mErrorMessageTextView = (TextView)findViewById(R.id.results_loading_error);
 
-        // Get max available VM memory, exceeding this amount will throw an
-        // OutOfMemory exception. Stored in kilobytes as LruCache takes an
-        // int in its constructor.
-        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-
-        // Use 1/8th of the available memory for this memory cache.
-        final int cacheSize = maxMemory / 8;
-
-        mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
-            @Override
-            protected int sizeOf(String key, Bitmap bitmap) {
-                // The cache size will be measured in kilobytes rather than
-                // number of items.
-                return bitmap.getByteCount() / 1024;
-            }
-        };
-
+        //TODO: fix intent logic
         Intent intent = getIntent();
         mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
         if(mTitle == null) {
@@ -146,13 +117,31 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         setTitle(mTitle);
 
-        FragmentManager fm = getFragmentManager();
-        String tag = "saveResultsData";
-        mSaveResults = (ResultsRetainedFragment)fm.findFragmentByTag(tag);
-        if(mSaveResults == null) { //getting new results list
-            mSaveResults = new ResultsRetainedFragment();
-            fm.beginTransaction().add(mSaveResults, tag).commit();
+        // Get max available VM memory, exceeding this amount will throw an
+        // OutOfMemory exception. Stored in kilobytes as LruCache takes an
+        // int in its constructor.
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
 
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 8;
+
+        mSaveResults = ResultsRetainedFragment.findOrCreateRetainedFragment(getFragmentManager());
+        mMemoryCache = mSaveResults.mRetainedCache;
+        if(mMemoryCache == null) {
+            mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+                @Override
+                protected int sizeOf(String key, Bitmap bitmap) {
+                    // The cache size will be measured in kilobytes rather than
+                    // number of items.
+                    return bitmap.getByteCount() / 1024;
+                }
+            };
+            mSaveResults.mRetainedCache = mMemoryCache;
+        }
+
+        mResults = mSaveResults.mRetainedData;
+        if(mResults == null) {
+            // No saved data, find new info
             String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
             if(link != null) {
                 // Getting results from site, putting them to ListView and save them
@@ -160,17 +149,11 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             }else if(Intent.ACTION_SEARCH.equals(intent.getAction())) { //Called by SearchView
                 String query = getIntent().getStringExtra(SearchManager.QUERY);
                 refresh(NetworkUtils.buildSearchUrl(query));
+            }else if(currentLink != null) {
+                refresh(currentLink);
             }
-        }else { //using saved results list
-            mResults = mSaveResults.getData();
-            if(mResults != null) {
-                mResultsView.setAdapter(new ResultsAdapter(mResults, this, this, mNewWidthDp));
-            }else {
-                //if ResultsRetainedFragment is outdated refresh data
-                if(currentLink != null) {
-                    refresh(currentLink);
-                }
-            }
+        }else {
+            mResultsView.setAdapter(new ResultsAdapter(mResults, this, this, mNewWidthDp));
         }
     }
 
@@ -331,15 +314,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        //Saving data
-        if(mSaveResults != null) {
-            mSaveResults.setData(mResults);
-        }
-        super.onDestroy();
-    }
-
     public class ResultsAsyncTask extends AsyncTask<URL, Result, String> {
         private ResultsAdapter adapter;
 
@@ -427,14 +401,16 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         protected void onPostExecute(String navigation) {
             if(navigation == null) {
                 showErrorMessage(R.string.network_problem);
-                mSaveResults.setData(null);//save null to ResultsRetainedFragment to erase prev results
+                mSaveResults.mRetainedData = null; //save null to ResultsRetainedFragment to erase prev results
                 return;
             }
 
             if(mResults.isEmpty()) {
                 showErrorMessage(R.string.nothing_found);
-                mSaveResults.setData(null);
+                mSaveResults.mRetainedData = null;
                 return;
+            }else {
+                mSaveResults.mRetainedData = mResults;
             }
 
             mIsOnPostExecute = true;
@@ -444,4 +420,5 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             }
         }
     }
+
 }
