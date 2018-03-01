@@ -14,6 +14,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.util.LruCache;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.Menu;
@@ -62,6 +63,10 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private boolean mIsPage = false;
     private String mTitle;
     private int mNewWidthDp;
+
+    // Memory cache
+    private LruCache<String, Bitmap> mMemoryCache;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,6 +103,23 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         mLoadingIndicator = (ProgressBar)findViewById(R.id.results_loading_indicator);
         mErrorMessageTextView = (TextView)findViewById(R.id.results_loading_error);
+
+        // Get max available VM memory, exceeding this amount will throw an
+        // OutOfMemory exception. Stored in kilobytes as LruCache takes an
+        // int in its constructor.
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 8;
+
+        mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in kilobytes rather than
+                // number of items.
+                return bitmap.getByteCount() / 1024;
+            }
+        };
 
         Intent intent = getIntent();
         mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
@@ -142,7 +164,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         }else { //using saved results list
             mResults = mSaveResults.getData();
             if(mResults != null) {
-                mResultsView.setAdapter(new ResultsAdapter(mResults, this, mNewWidthDp));
+                mResultsView.setAdapter(new ResultsAdapter(mResults, this, this, mNewWidthDp));
             }else {
                 //if ResultsRetainedFragment is outdated refresh data
                 if(currentLink != null) {
@@ -150,6 +172,16 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                 }
             }
         }
+    }
+
+    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (getBitmapFromMemCache(key) == null) {
+            mMemoryCache.put(key, bitmap);
+        }
+    }
+
+    public Bitmap getBitmapFromMemCache(String key) {
+        return mMemoryCache.get(key);
     }
 
     private URL getSearchLink(int page) {
@@ -319,7 +351,10 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
             if(!mIsPage) {
                 mResults = new ArrayList<>();
-                adapter = new ResultsAdapter(mResults, ResultsActivity.this, mNewWidthDp);
+                adapter = new ResultsAdapter(mResults,
+                        ResultsActivity.this,
+                        ResultsActivity.this,
+                        mNewWidthDp);
                 mResultsView.setAdapter(adapter);
             }else {
                 adapter = (ResultsAdapter)mResultsView.getAdapter();
@@ -341,7 +376,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                         String div = "";
                         boolean div_found = false;
                         while((line = in.readLine()) != null){
-                            //Log.d(TAG, "Line: " + line);
                             if(line.contains("class=\"custom-poster\"") && !div_found) {
                                 div_found = true;
                             }

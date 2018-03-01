@@ -17,14 +17,16 @@ import java.net.URL;
  */
 public class ImageLoadTask extends AsyncTask<Void, Void, Bitmap> {
     private final String TAG = ImageLoadTask.class.getSimpleName();
-    private Result result;
-    private ImageView imageView;
+    private ResultsActivity mActivity;
+    private ImageView mImageView;
+    private String mImageUrl;
     private final int WIDTH;
     private final int HEIGHT;
 
-    public ImageLoadTask(Result result, ImageView imageView, int width, int height) {
-        this.result = result;
-        this.imageView = imageView;
+    public ImageLoadTask(ResultsActivity activity, ImageView imageView, String imageUrl, int width, int height) {
+        mActivity = activity;
+        mImageView = imageView;
+        mImageUrl = imageUrl;
         WIDTH = width;
         HEIGHT = height;
     }
@@ -35,13 +37,12 @@ public class ImageLoadTask extends AsyncTask<Void, Void, Bitmap> {
             String width = "164";//"82";
             String height = "236";//"118";
             //Download fixed sized images, and scale them to needed size later
-            URL urlConnection = NetworkUtils.buildImageUrl(result.image, width, height);
+            URL urlConnection = NetworkUtils.buildImageUrl(mImageUrl, width, height);
             HttpURLConnection connection = (HttpURLConnection)urlConnection.openConnection();
             connection.setDoInput(true);
             connection.connect();
             InputStream input = connection.getInputStream();
-            Bitmap downloadedBitmap = BitmapFactory.decodeStream(input);
-            return Bitmap.createScaledBitmap(downloadedBitmap, WIDTH, HEIGHT, true);
+            return BitmapFactory.decodeStream(input);
         }catch(Exception e){
             System.err.println(e.toString());
         }
@@ -51,9 +52,9 @@ public class ImageLoadTask extends AsyncTask<Void, Void, Bitmap> {
     @Override
     protected void onPostExecute(Bitmap bitmap){
         if(bitmap != null){
-            imageView.setImageBitmap(bitmap);
-            //TODO: fix out of memory error
-            result.setBitmap(bitmap);
+            Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, WIDTH, HEIGHT, true);
+            mImageView.setImageBitmap(scaledBitmap);
+            mActivity.addBitmapToMemoryCache(mImageUrl, bitmap);
         }
     }
 }

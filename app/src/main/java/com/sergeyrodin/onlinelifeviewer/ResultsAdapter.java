@@ -27,10 +27,10 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
     private final double HEIGHT_DEV_WIDTH = 1.4390243902;
     private List<Result> results;
     private Bitmap mDefaultBitmap;
-    private Drawable mDefaultDrawable;
     private final int WIDTH;
     private final int HEIGHT;
     private int mNewWidthTextViewPx;
+    private ResultsActivity mActivity;
 
     interface ListItemClickListener {
         void onListItemClick(int index);
@@ -38,10 +38,11 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
 
     final private ListItemClickListener mOnClickListener;
 
-    ResultsAdapter(List<Result> results, ListItemClickListener onClickListener, int newWidthDp) {
+    ResultsAdapter(List<Result> results, ListItemClickListener onClickListener, ResultsActivity activity, int newWidthDp) {
         this.results = results;
         mOnClickListener = onClickListener;
-        Resources resources = ((Context)mOnClickListener).getResources();
+        mActivity = activity;
+        Resources resources = mActivity.getResources();
 
         float density = resources.getDisplayMetrics().density;
         int newWidthPx = (int)(newWidthDp*density);
@@ -84,12 +85,13 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
 
         private void bind(Result result) {
             mTitleView.setText(result.title);
-            if(result.getBitmap() != null) {
-                //TODO: use cache on drive, not in memory
-                mImageView.setImageBitmap(result.getBitmap());
+            Bitmap bitmap = mActivity.getBitmapFromMemCache(result.image);
+            if(bitmap != null) {
+                Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, WIDTH, HEIGHT, true);
+                mImageView.setImageBitmap(scaledBitmap);
             }else if(result.image != null){
                 mImageView.setImageBitmap(mDefaultBitmap);
-                new ImageLoadTask(result, mImageView, WIDTH, HEIGHT).execute();
+                new ImageLoadTask(mActivity, mImageView, result.image, WIDTH, HEIGHT).execute();
             }
         }
 
