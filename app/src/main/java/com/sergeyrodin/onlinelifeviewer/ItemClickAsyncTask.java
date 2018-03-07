@@ -17,7 +17,7 @@ public class ItemClickAsyncTask extends AsyncTask<Result, Void, String> {
     }
     @Override
     protected String doInBackground(Result... params) {
-        Result result = params[0];
+        /*Result result = params[0];
         if(result != null) {
             try{
                 return new Curl().getJsString(result.id);
@@ -25,7 +25,7 @@ public class ItemClickAsyncTask extends AsyncTask<Result, Void, String> {
                 e.printStackTrace();
                 return null;
             }
-        }
+        }*/
         return null;
     }
 

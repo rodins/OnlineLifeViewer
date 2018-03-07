@@ -10,36 +10,13 @@ import java.text.BreakIterator;
  */
 public class Result {
     public final String title;
+    public final String link;
     public final String image;
-    private Bitmap bitmap;
-    public int id;
-    public Result(String title, int id) {
-        this.title = title;
-        this.id = id;
-        image = null;
-        bitmap = null;
-    }
 
-    Result(String title, String image, int id) {
+    Result(String title, String image, String link) {
         this.title = title;
         this.image = image; //+ "&w=82&h=118&zc=1";
-        this.id = id;
-        bitmap = null;
-    }
-
-    public Result(String title, Bitmap bitmap, int id) {
-        this.title = title;
-        this.bitmap = bitmap;
-        this.id = id;
-        image = null;
-    }
-
-    void setBitmap(Bitmap bitmap) {
-        this.bitmap = bitmap;
-    }
-
-    Bitmap getBitmap() {
-        return bitmap;
+        this.link = link;
     }
 
     public String toString() {

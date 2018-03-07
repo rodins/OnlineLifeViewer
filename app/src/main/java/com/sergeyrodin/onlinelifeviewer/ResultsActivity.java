@@ -175,7 +175,10 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     public void onListItemClick(int position) {
         Result result = mResults.get(position);
-        new ItemClickAsyncTask(this).execute(result);
+        Intent intent = new Intent(this, ActorsActivity.class);
+        intent.putExtra(MainActivity.EXTRA_LINK, result.link);
+        startActivity(intent);
+        //new ItemClickAsyncTask(this).execute(result);
     }
 
     @Override
@@ -267,14 +270,14 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     private Result divToResult(String div) {
         Matcher m = Pattern
-                .compile("<a\\s+href=\"http://www.online-life.club/(\\d+?)-.*?html\"\\s*?>\\n\\s*<img\\s+src=\"(.*?)\"\\s+/>(.+?)\\n?\\s*</a>")
+                .compile("<a\\s+href=\"(http://www.online-life.club/\\d+?-.*?html)\"\\s*?>\\n\\s*<img\\s+src=\"(.*?)\"\\s+/>(.+?)\\n?\\s*</a>")
                 .matcher(div);
         if(m.find()) {
-            int id = Integer.parseInt(m.group(1));
+            String link = m.group(1);
             String image = m.group(2);
             image = image.substring(0, image.indexOf("&"));
             String title = Html.unescape(m.group(3));
-            return new Result(title, image, id);
+            return new Result(title, image, link);
         }
         return null;
     }
