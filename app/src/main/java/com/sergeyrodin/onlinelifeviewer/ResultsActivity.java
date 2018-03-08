@@ -269,6 +269,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     private Result divToResult(String div) {
+        //TODO: regexp should be domain independent
         Matcher m = Pattern
                 .compile("<a\\s+href=\"(http://www.online-life.club/\\d+?-.*?html)\"\\s*?>\\n\\s*<img\\s+src=\"(.*?)\"\\s+/>(.+?)\\n?\\s*</a>")
                 .matcher(div);
@@ -340,56 +341,51 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         protected String doInBackground(URL... params) {
             try {
+                URL url = params[0];
+                HttpURLConnection connection = null;
+                BufferedReader in = null;
                 try {
-                    URL url = params[0];
-                    HttpURLConnection connection = null;
-                    BufferedReader in = null;
-                    try {
-                        connection = (HttpURLConnection)url.openConnection();
-                        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0 SeaMonkey/2.40");
-                        InputStream stream = connection.getInputStream();
-                        in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
-                        String line;
-                        String div = "";
-                        boolean div_found = false;
-                        while((line = in.readLine()) != null){
-                            if(line.contains("class=\"custom-poster\"") && !div_found) {
-                                div_found = true;
+                    connection = (HttpURLConnection)url.openConnection();
+                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0 SeaMonkey/2.40");
+                    InputStream stream = connection.getInputStream();
+                    in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
+                    String line;
+                    String div = "";
+                    boolean div_found = false;
+                    while((line = in.readLine()) != null){
+                        if(line.contains("class=\"custom-poster\"") && !div_found) {
+                            div_found = true;
+                        }
+                        if(line.contains("</a>") && div_found) {
+                            div_found = false;
+                            div += line;
+                            Result result = divToResult(div);
+                            if(result != null) {
+                                publishProgress(result);
                             }
-                            if(line.contains("</a>") && div_found) {
-                                div_found = false;
-                                div += line;
-                                Result result = divToResult(div);
-                                if(result != null) {
-                                    publishProgress(result);
-                                }
-                                div = "";
-                            }
-                            if(div_found) {
-                                div += line + "\n";
-                            }
+                            div = "";
+                        }
+                        if(div_found) {
+                            div += line + "\n";
+                        }
 
-                            if(line.contains("class=\"navigation\"")) {
-                                return line;
-                            }
-                        }
-                        return "";
-                    }finally {
-                        if(in != null) {
-                            in.close();
-                        }
-                        if(connection != null) {
-                            connection.disconnect();
+                        if(line.contains("class=\"navigation\"")) {
+                            return line;
                         }
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    return "";
+                }finally {
+                    if(in != null) {
+                        in.close();
+                    }
+                    if(connection != null) {
+                        connection.disconnect();
+                    }
                 }
-                return new Curl().getPageString(params[0]);
-            }catch(IOException e){
-                System.err.println(e.toString());
-                return null;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+            return null;
         }
 
         @Override

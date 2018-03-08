@@ -23,4 +23,5 @@
     <string name="mp4">Формат .mp4</string>
     <string name="search_hint">Поиск видео</string>
     <string name="actors_title">Actors</string>
+    <string name="director">director</string>
 </resources>
