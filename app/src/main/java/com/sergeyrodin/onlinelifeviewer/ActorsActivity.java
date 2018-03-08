@@ -10,7 +10,10 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
+
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -30,6 +33,7 @@ public class ActorsActivity extends AppCompatActivity {
 
     private List<Link> mActors = new ArrayList<>();
     private String mPlayerLink;
+    private String mJs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -156,7 +160,6 @@ public class ActorsActivity extends AppCompatActivity {
         protected void onPostExecute(String playerLink) {
             mPlayerLink = playerLink;
             if(playerLink != null) {
-                //showData();
                 try {
                     URL url = new URL(playerLink);
                     new PlayerLinkAsyncTask().execute(url);
@@ -175,6 +178,8 @@ public class ActorsActivity extends AppCompatActivity {
 
     class PlayerLinkAsyncTask extends AsyncTask<URL, Void, String> {
 
+        private URL referer;
+
         private String parseJsLink(String line) {
             int begin = line.indexOf("src=");
             int end = line.indexOf("\"", begin+6);
@@ -188,6 +193,7 @@ public class ActorsActivity extends AppCompatActivity {
         protected String doInBackground(URL... urls) {
             try {
                 URL url = urls[0];
+                referer = url;
                 HttpURLConnection connection = null;
                 BufferedReader in = null;
                 try {
@@ -216,8 +222,40 @@ public class ActorsActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String jsLink) {
-            Log.d(TAG, "Js: " + jsLink);
-            showData();
+            if(jsLink != null) {
+                try {
+                    URL url = new URL(jsLink);
+                    new JsAsyncTask().execute(url, referer);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+            }else {
+                showError();
+            }
+        }
+    }
+
+    class JsAsyncTask extends AsyncTask<URL, Void, String> {
+
+        @Override
+        protected String doInBackground(URL... urls) {
+            try {
+                return NetworkUtils.getResponseFromHttpUrl(urls[0], urls[1].toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String js) {
+            if(js != null) {
+                mJs = js;
+                Log.d(TAG, "JS: " + js);
+                showData();
+            }else {
+                showError();
+            }
         }
     }
 }

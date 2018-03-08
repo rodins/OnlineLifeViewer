@@ -101,8 +101,15 @@ public class NetworkUtils {
         return new URL(builtUri.toString());
     }
 
-    public static String getResponseFromHttpUrl(URL url) throws IOException {
+    public static String getResponseFromHttpUrl(URL url) throws IOException{
+        return getResponseFromHttpUrl(url, "");
+    }
+
+    public static String getResponseFromHttpUrl(URL url, String referer) throws IOException {
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        if(!referer.equals("")) {
+            urlConnection.setRequestProperty("Referer", referer);
+        }
         try {
             InputStream in = urlConnection.getInputStream();
 
