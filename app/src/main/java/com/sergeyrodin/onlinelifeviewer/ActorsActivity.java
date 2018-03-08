@@ -28,6 +28,9 @@ public class ActorsActivity extends AppCompatActivity {
     private ProgressBar mLoadingIndicator;
     private TextView mErrorTextView;
 
+    private List<Link> mActors = new ArrayList<>();
+    private String mPlayerLink;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,25 +74,32 @@ public class ActorsActivity extends AppCompatActivity {
         mErrorTextView.setVisibility(View.VISIBLE);
     }
 
-    class ActorsAsyncTask extends AsyncTask<URL, Void, List<Link>> {
+    class ActorsAsyncTask extends AsyncTask<URL, Link, String> {
 
         @Override
         protected void onPreExecute() {
             showLoadingIndicator();
         }
 
-        List<Link> parseAnchors(String line, boolean isDirector) {
-            List<Link> links = new ArrayList<>();
+        void parseAnchors(String line, boolean isDirector) {
             Matcher m = Pattern.compile("<a\\s+href=\"(.+?)\">(.+?)</a>").matcher(line);
             while(m.find()) {
                 String title = m.group(2) + " " + (isDirector?"(" + getString(R.string.director) + ")":"");
-                links.add(new Link(title, m.group(1)));
+                publishProgress(new Link(Html.unescape(title), m.group(1)));
             }
-            return links;
+        }
+
+        String parseIframe(String line) {
+            int linkBegin = line.indexOf("src=");
+            int linkEnd = line.indexOf("'", linkBegin+6);
+            if(linkBegin != -1 && linkEnd != -1) {
+                return line.substring(linkBegin+5, linkEnd);
+            }
+            return null;
         }
 
         @Override
-        protected List<Link> doInBackground(URL... urls) {
+        protected String doInBackground(URL... urls) {
             try {
                 URL url = urls[0];
                 HttpURLConnection connection = null;
@@ -99,7 +109,6 @@ public class ActorsActivity extends AppCompatActivity {
                 List<Link> links = new ArrayList<>();
                 try {
                     connection = (HttpURLConnection)url.openConnection();
-                    //connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0 SeaMonkey/2.40");
                     InputStream stream = connection.getInputStream();
                     in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
                     String line;
@@ -115,14 +124,16 @@ public class ActorsActivity extends AppCompatActivity {
                             continue;
                         }
                         if(spanFound && !line.contains("span")) {
-                            links.addAll(parseAnchors(line, isDirector));
+                            parseAnchors(line, isDirector);
                         }
                         if(line.contains("</span>") && spanFound) {
                             spanFound = false;
                             isDirector = false;
                         }
+                        if(line.contains("<iframe")) {
+                            return parseIframe(line);
+                        }
                     }
-                    return links;
                 }finally {
                     if(in != null) {
                         in.close();
@@ -138,9 +149,16 @@ public class ActorsActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(List<Link> links) {
+        protected void onProgressUpdate(Link... values) {
+            mActors.add(values[0]);
+        }
+
+        @Override
+        protected void onPostExecute(String playerLink) {
+            mPlayerLink = playerLink;
+            Log.d(TAG, "PlayerLink: " + playerLink);
             showData();
-            for(Link link : links) {
+            for(Link link : mActors) {
                 Log.d(TAG, "Title: " + link.Title);
             }
         }
