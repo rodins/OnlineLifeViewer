@@ -106,7 +106,6 @@ public class ActorsActivity extends AppCompatActivity {
                 BufferedReader in = null;
                 boolean spanFound = false;
                 boolean isDirector = false;
-                List<Link> links = new ArrayList<>();
                 try {
                     connection = (HttpURLConnection)url.openConnection();
                     InputStream stream = connection.getInputStream();
@@ -156,11 +155,69 @@ public class ActorsActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String playerLink) {
             mPlayerLink = playerLink;
-            Log.d(TAG, "PlayerLink: " + playerLink);
-            showData();
+            if(playerLink != null) {
+                //showData();
+                try {
+                    URL url = new URL(playerLink);
+                    new PlayerLinkAsyncTask().execute(url);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+            }else {
+                showError();
+            }
+
             for(Link link : mActors) {
                 Log.d(TAG, "Title: " + link.Title);
             }
+        }
+    }
+
+    class PlayerLinkAsyncTask extends AsyncTask<URL, Void, String> {
+
+        private String parseJsLink(String line) {
+            int begin = line.indexOf("src=");
+            int end = line.indexOf("\"", begin+6);
+            if(begin != -1 && end != -1) {
+                return line.substring(begin+5, end);
+            }
+            return null;
+        }
+
+        @Override
+        protected String doInBackground(URL... urls) {
+            try {
+                URL url = urls[0];
+                HttpURLConnection connection = null;
+                BufferedReader in = null;
+                try {
+                    connection = (HttpURLConnection)url.openConnection();
+                    InputStream stream = connection.getInputStream();
+                    in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
+                    String line;
+                    while((line = in.readLine()) != null){
+                        if(line.contains("js.php")) {
+                            return "http:" + parseJsLink(line);
+                        }
+                    }
+                }finally {
+                    if(in != null) {
+                        in.close();
+                    }
+                    if(connection != null) {
+                        connection.disconnect();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String jsLink) {
+            Log.d(TAG, "Js: " + jsLink);
+            showData();
         }
     }
 }
