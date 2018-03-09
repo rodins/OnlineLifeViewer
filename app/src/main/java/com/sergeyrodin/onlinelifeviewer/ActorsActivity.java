@@ -6,6 +6,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -32,8 +35,8 @@ public class ActorsActivity extends AppCompatActivity {
     private TextView mErrorTextView;
 
     private List<Link> mActors = new ArrayList<>();
-    private String mPlayerLink;
     private String mJs;
+    private MenuItem mActionOpen;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +61,36 @@ public class ActorsActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.actors_menu, menu);
+        mActionOpen = menu.findItem(R.id.action_open);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.action_open) {
+
+            if(mJs != null) {
+                PlaylistItem psItem = new PlaylistItemParser().getItem(mJs);
+                if(psItem.getComment() != null) {
+                    //Start process item dialog: select play or download item
+                    ProcessPlaylistItem.process(this, psItem);
+                }else {
+                    // Process activity_playlists in PlaylistsActivity
+                    Intent intent = new Intent(this, PlaylistsActivity.class);
+                    intent.putExtra(MainActivity.EXTRA_JS, mJs);
+                    startActivity(intent);
+                }
+            }
+
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void showLoadingIndicator() {
@@ -158,7 +191,6 @@ public class ActorsActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String playerLink) {
-            mPlayerLink = playerLink;
             if(playerLink != null) {
                 try {
                     URL url = new URL(playerLink);
@@ -251,7 +283,8 @@ public class ActorsActivity extends AppCompatActivity {
         protected void onPostExecute(String js) {
             if(js != null) {
                 mJs = js;
-                Log.d(TAG, "JS: " + js);
+                //Log.d(TAG, "JS: " + js);
+                mActionOpen.setVisible(true);
                 showData();
             }else {
                 showError();
