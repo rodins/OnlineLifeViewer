@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
@@ -45,7 +46,9 @@ public class ActorsActivity extends AppCompatActivity {
 
         setTitle(R.string.actors_title);
 
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         mRvActors = (RecyclerView)findViewById(R.id.rv_actors);
+        mRvActors.setLayoutManager(layoutManager);
         mLoadingIndicator = (ProgressBar)findViewById(R.id.actors_loading_indicator);
         mErrorTextView = (TextView)findViewById(R.id.actors_loading_error);
 
@@ -112,10 +115,13 @@ public class ActorsActivity extends AppCompatActivity {
     }
 
     class ActorsAsyncTask extends AsyncTask<URL, Link, String> {
+        private ActorsAdapter mAdapter;
 
         @Override
         protected void onPreExecute() {
             showLoadingIndicator();
+            mAdapter = new ActorsAdapter(mActors);
+            mRvActors.setAdapter(mAdapter);
         }
 
         void parseAnchors(String line, boolean isDirector) {
@@ -187,6 +193,10 @@ public class ActorsActivity extends AppCompatActivity {
         @Override
         protected void onProgressUpdate(Link... values) {
             mActors.add(values[0]);
+            mAdapter.notifyItemInserted(mActors.size()-1);
+            if(mActors.size() == 1) {
+                showData();
+            }
         }
 
         @Override
@@ -200,10 +210,6 @@ public class ActorsActivity extends AppCompatActivity {
                 }
             }else {
                 showError();
-            }
-
-            for(Link link : mActors) {
-                Log.d(TAG, "Title: " + link.Title);
             }
         }
     }
@@ -283,9 +289,7 @@ public class ActorsActivity extends AppCompatActivity {
         protected void onPostExecute(String js) {
             if(js != null) {
                 mJs = js;
-                //Log.d(TAG, "JS: " + js);
                 mActionOpen.setVisible(true);
-                showData();
             }else {
                 showError();
             }
