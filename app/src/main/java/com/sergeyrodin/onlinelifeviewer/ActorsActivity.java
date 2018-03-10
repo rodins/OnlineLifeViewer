@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.ListItemClickListener {
     private final static String TAG = ActorsActivity.class.getSimpleName();
     private final String SAVE_JS = "com.sergeyrodin.JS";
+    private final String SAVE_TITLE = "com.sergeyrodin.TITLE";
     private RecyclerView mRvActors;
     private ProgressBar mLoadingIndicator;
     private TextView mErrorTextView;
@@ -41,13 +42,12 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     private String mJs;
     private MenuItem mActionOpen;
     private LinkRetainedFragment mSaveActors;
+    private String mTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_actors);
-
-        setTitle(R.string.actors_title);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         mRvActors = (RecyclerView)findViewById(R.id.rv_actors);
@@ -59,6 +59,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
         if(savedInstanceState != null) {
             mJs = savedInstanceState.getString(SAVE_JS);
+            mTitle = savedInstanceState.getString(SAVE_TITLE);
         }
 
         if(mSaveActors.Data != null && mSaveActors.Data.size() != 0) {
@@ -67,6 +68,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         }else {
             Intent intent = getIntent();
             if(intent != null) {
+                mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
                 String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
                 try {
                     URL url = new URL(link);
@@ -75,6 +77,12 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                     e.printStackTrace();
                 }
             }
+        }
+
+        if(mTitle != null) {
+            setTitle(mTitle);
+        }else {
+            setTitle(R.string.actors_title);
         }
     }
 
@@ -146,6 +154,9 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     public void onSaveInstanceState(Bundle outState) {
         if(mJs != null) {
             outState.putString(SAVE_JS, mJs);
+        }
+        if(mTitle != null) {
+            outState.putString(SAVE_TITLE, mTitle);
         }
         super.onSaveInstanceState(outState);
     }

@@ -176,9 +176,9 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     public void onListItemClick(int position) {
         Result result = mResults.get(position);
         Intent intent = new Intent(this, ActorsActivity.class);
+        intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
         intent.putExtra(MainActivity.EXTRA_LINK, result.link);
         startActivity(intent);
-        //new ItemClickAsyncTask(this).execute(result);
     }
 
     @Override
