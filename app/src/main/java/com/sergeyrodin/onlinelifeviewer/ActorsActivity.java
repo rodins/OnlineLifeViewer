@@ -2,6 +2,7 @@ package com.sergeyrodin.onlinelifeviewer;
 
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.PersistableBundle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -31,6 +32,7 @@ import java.util.regex.Pattern;
 
 public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.ListItemClickListener {
     private final static String TAG = ActorsActivity.class.getSimpleName();
+    private final String SAVE_JS = "com.sergeyrodin.JS";
     private RecyclerView mRvActors;
     private ProgressBar mLoadingIndicator;
     private TextView mErrorTextView;
@@ -38,6 +40,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     private List<Link> mActors = new ArrayList<>();
     private String mJs;
     private MenuItem mActionOpen;
+    private LinkRetainedFragment mSaveActors;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,16 +55,25 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         mLoadingIndicator = (ProgressBar)findViewById(R.id.actors_loading_indicator);
         mErrorTextView = (TextView)findViewById(R.id.actors_loading_error);
 
+        mSaveActors = LinkRetainedFragment.findOrCreateRetainedFragment(getFragmentManager());
 
-        Intent intent = getIntent();
-        if(intent != null) {
-            String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
-            //Log.d(TAG, "Link: " + link);
-            try {
-                URL url = new URL(link);
-                new ActorsAsyncTask().execute(url);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
+        if(savedInstanceState != null) {
+            mJs = savedInstanceState.getString(SAVE_JS);
+        }
+
+        if(mSaveActors.Data != null && mSaveActors.Data.size() != 0) {
+            mActors = mSaveActors.Data;
+            mRvActors.setAdapter(new ActorsAdapter(mActors, this));
+        }else {
+            Intent intent = getIntent();
+            if(intent != null) {
+                String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
+                try {
+                    URL url = new URL(link);
+                    new ActorsAsyncTask().execute(url);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -71,6 +83,9 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.actors_menu, menu);
         mActionOpen = menu.findItem(R.id.action_open);
+        if(mJs != null) {
+            mActionOpen.setVisible(true);
+        }
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -125,6 +140,20 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         intent.putExtra(MainActivity.EXTRA_TITLE, title);
         intent.putExtra(MainActivity.EXTRA_LINK, link);
         startActivity(intent);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if(mJs != null) {
+            outState.putString(SAVE_JS, mJs);
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onPause() {
+        mSaveActors.Data = mActors;
+        super.onPause();
     }
 
     class ActorsAsyncTask extends AsyncTask<URL, Link, String> {

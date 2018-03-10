@@ -1,6 +1,7 @@
 package com.sergeyrodin.onlinelifeviewer;
 
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.os.Bundle;
 
 import java.util.List;
@@ -10,7 +11,17 @@ import java.util.List;
  */
 
 public class LinkRetainedFragment extends Fragment {
-    private List<Link> mData;
+    private static final String TAG = "LinkRetainedFragment";
+    public List<Link> Data;
+
+    public static LinkRetainedFragment findOrCreateRetainedFragment(FragmentManager fm) {
+        LinkRetainedFragment fragment = (LinkRetainedFragment)fm.findFragmentByTag(TAG);
+        if(fragment == null) {
+            fragment = new LinkRetainedFragment();
+            fm.beginTransaction().add(fragment, TAG).commit();
+        }
+        return fragment;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -20,10 +31,10 @@ public class LinkRetainedFragment extends Fragment {
     }
 
     public void setData(List<Link> data) {
-        mData = data;
+        Data = data;
     }
 
     public List<Link> getData() {
-        return mData;
+        return Data;
     }
 }
