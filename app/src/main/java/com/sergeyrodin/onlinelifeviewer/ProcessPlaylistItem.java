@@ -5,14 +5,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 /**
  * Created by root on 08.05.16.
  */
 public class ProcessPlaylistItem {
+    private static final String TAG = ProcessPlaylistItem.class.getSimpleName();
     public static void show(Context activity, String link) {
-        if(link != null) {
+        if(link != null && !link.isEmpty()) {
             Uri uri = Uri.parse(link);
             Intent viewMediaIntent = new Intent();
             viewMediaIntent.setAction(Intent.ACTION_VIEW);
@@ -32,7 +34,8 @@ public class ProcessPlaylistItem {
     }
 
     public static void process(Activity activity, PlaylistItem psItem) {
-        if (psItem != null) { //file found
+        if (psItem != null) {
+            //TODO: get files sizes
             //start play/download dialog
             if(psItem.getDownload() == null) {// no download link, use file link
                 show(activity, psItem.getFile());
