@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ActorsActivity extends AppCompatActivity {
+public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.ListItemClickListener {
     private final static String TAG = ActorsActivity.class.getSimpleName();
     private RecyclerView mRvActors;
     private ProgressBar mLoadingIndicator;
@@ -114,13 +114,26 @@ public class ActorsActivity extends AppCompatActivity {
         mErrorTextView.setVisibility(View.VISIBLE);
     }
 
+    @Override
+    public void onListItemClick(int index) {
+        Link link = mActors.get(index);
+        startResultsActivity(link.Title, link.Href);
+    }
+
+    private void startResultsActivity(String title, String link) {
+        Intent intent = new Intent(this, ResultsActivity.class);
+        intent.putExtra(MainActivity.EXTRA_TITLE, title);
+        intent.putExtra(MainActivity.EXTRA_LINK, link);
+        startActivity(intent);
+    }
+
     class ActorsAsyncTask extends AsyncTask<URL, Link, String> {
         private ActorsAdapter mAdapter;
 
         @Override
         protected void onPreExecute() {
             showLoadingIndicator();
-            mAdapter = new ActorsAdapter(mActors);
+            mAdapter = new ActorsAdapter(mActors, ActorsActivity.this);
             mRvActors.setAdapter(mAdapter);
         }
 

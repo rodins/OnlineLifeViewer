@@ -17,8 +17,15 @@ public class ActorsAdapter extends RecyclerView.Adapter<ActorsAdapter.ActorViewH
     private static final String TAG = ActorsAdapter.class.getSimpleName();
     private List<Link> mActors;
 
-    public ActorsAdapter(List<Link> actors) {
+    interface ListItemClickListener {
+        void onListItemClick(int index);
+    }
+
+    final private ListItemClickListener mListItemClickListener;
+
+    public ActorsAdapter(List<Link> actors, ListItemClickListener listener) {
         mActors = actors;
+        mListItemClickListener = listener;
     }
 
     @Override
@@ -38,16 +45,22 @@ public class ActorsAdapter extends RecyclerView.Adapter<ActorsAdapter.ActorViewH
         return mActors.size();
     }
 
-    public class ActorViewHolder extends RecyclerView.ViewHolder {
+    public class ActorViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView mTitleView;
 
         public ActorViewHolder(View itemView) {
             super(itemView);
             mTitleView = (TextView)itemView.findViewById(R.id.entryText);
+            itemView.setOnClickListener(this);
         }
 
         private void bind(String title) {
             mTitleView.setText(title);
+        }
+
+        @Override
+        public void onClick(View v) {
+            mListItemClickListener.onListItemClick(getAdapterPosition());
         }
     }
 }
