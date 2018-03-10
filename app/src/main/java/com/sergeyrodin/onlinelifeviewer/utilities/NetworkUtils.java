@@ -1,14 +1,18 @@
 package com.sergeyrodin.onlinelifeviewer.utilities;
 
 import android.net.Uri;
+import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Scanner;
 
 /**
@@ -17,6 +21,7 @@ import java.util.Scanner;
 
 public class NetworkUtils {
     final static String ONLINE_LIFE_BASE_URL = "http://online-life.club";
+    final static String TAG = NetworkUtils.class.getSimpleName();
 
     private final static String PARAM_DO = "do";
     private final static String PARAM_SUBACTION = "subaction";
@@ -138,5 +143,26 @@ public class NetworkUtils {
         }finally {
             urlConnection.disconnect();
         }
+    }
+
+    public static String getLinkSize(URL url) {
+        try {
+            HttpURLConnection connection = null;
+            BufferedReader in = null;
+            try {
+                connection = (HttpURLConnection)url.openConnection();
+                return connection.getHeaderField("content-length");
+            }finally {
+                if(in != null) {
+                    in.close();
+                }
+                if(connection != null) {
+                    connection.disconnect();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

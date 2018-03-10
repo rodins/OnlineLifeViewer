@@ -12,6 +12,8 @@ public class PlaylistItem implements Serializable {
     private String _comment;
     private String _file;
     private String _download;
+    private String _fileSize;
+    private String _downloadSize;
 
     PlaylistItem() {
 
@@ -32,6 +34,12 @@ public class PlaylistItem implements Serializable {
     void setDownload(String d) {
         _download = fixDownloadLink(d);
     }
+    void setFileSize(String size) {
+        _fileSize = size;
+    }
+    void setDownloadSize(String size) {
+        _downloadSize = size;
+    }
 
     String getComment() {
         return _comment;
@@ -41,6 +49,12 @@ public class PlaylistItem implements Serializable {
     }
     String getDownload() {
         return _download;
+    }
+    String getFileSize() {
+        return _fileSize;
+    }
+    String getDownloadSize() {
+        return _downloadSize;
     }
 
     public String toString() {

@@ -17,10 +17,12 @@ public class PlayDialogFragment extends DialogFragment {
         mPsItem = (PlaylistItem)getArguments().getSerializable(MainActivity.EXTRA_PSITEM);
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(mPsItem.getComment());
+        String fileSize = mPsItem.getFileSize()!=null?" (" + mPsItem.getFileSize() + " Mb)":"";
+        String downloadSize = mPsItem.getDownloadSize()!=null?" (" + mPsItem.getDownloadSize() + " Mb)":"";
 
         String[] items = new String[] {
-          getString(R.string.flv),
-          getString(R.string.mp4),
+          getString(R.string.flv) + fileSize,
+          getString(R.string.mp4) + downloadSize,
         };
 
         builder.setItems(items, new DialogInterface.OnClickListener() {
