@@ -241,6 +241,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                         }
 
                         if(line.contains("info_data")) {
+
                             if(line.contains("</span>")) {
                                 if(line.contains("<li>")) {
                                     String year = parseYear(line);
@@ -270,6 +271,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                             return result;
                         }
                     }
+                    return result;
                 }finally {
                     if(in != null) {
                         in.close();
