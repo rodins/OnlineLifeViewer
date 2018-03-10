@@ -26,7 +26,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -167,7 +169,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         super.onPause();
     }
 
-    class ActorsAsyncTask extends AsyncTask<URL, Link, String> {
+    class ActorsAsyncTask extends AsyncTask<URL, Link, Map<String, String>> {
         private ActorsAdapter mAdapter;
 
         @Override
@@ -194,14 +196,26 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             return null;
         }
 
+        String parseYear(String line) {
+            int yearBegin = line.indexOf("\">");
+            int yearEnd = line.indexOf("<", yearBegin);
+            if(yearBegin != -1 && yearEnd != -1) {
+                return line.substring(yearBegin+2, yearEnd);
+            }
+            return null;
+        }
+
         @Override
-        protected String doInBackground(URL... urls) {
+        protected Map<String, String> doInBackground(URL... urls) {
             try {
+                Map<String, String> result = new HashMap<>();
                 URL url = urls[0];
                 HttpURLConnection connection = null;
                 BufferedReader in = null;
                 boolean spanFound = false;
                 boolean isDirector = false;
+                boolean infoDataFound = false;
+                boolean countryFound = false;
                 try {
                     connection = (HttpURLConnection)url.openConnection();
                     InputStream stream = connection.getInputStream();
@@ -225,8 +239,35 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                             spanFound = false;
                             isDirector = false;
                         }
+
+                        if(line.contains("info_data")) {
+                            if(line.contains("</span>")) {
+                                if(line.contains("<li>")) {
+                                    String year = parseYear(line);
+                                    result.put("year", year);
+                                }
+                            }else {
+                                infoDataFound = true;
+                            }
+                            continue;
+                        }
+
+                        if(line.contains("</span>") && infoDataFound) {
+                            infoDataFound = false;
+                        }
+
+                        if(infoDataFound) {
+                            if(!line.contains("<")) {
+                                if(!countryFound) {
+                                    result.put("country", line.trim());
+                                    countryFound = true;
+                                }
+                            }
+                        }
+
                         if(line.contains("<iframe")) {
-                            return parseIframe(line);
+                            result.put("playerLink", parseIframe(line));
+                            return result;
                         }
                     }
                 }finally {
@@ -253,10 +294,12 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         }
 
         @Override
-        protected void onPostExecute(String playerLink) {
-            if(playerLink != null) {
+        protected void onPostExecute(Map<String, String> result) {
+            if(result != null) {
+                mTitle += (" - " + result.get("country") + " - " + result.get("year"));
+                setTitle(mTitle);
                 try {
-                    URL url = new URL(playerLink);
+                    URL url = new URL(result.get("playerLink"));
                     new PlayerLinkAsyncTask().execute(url);
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
