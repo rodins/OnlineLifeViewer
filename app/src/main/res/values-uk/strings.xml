@@ -22,7 +22,8 @@
     <string name="flv">Формат .flv</string>
     <string name="mp4">Формат .mp4</string>
     <string name="search_hint">Пошук відео</string>
-    <string name="actors_title">Actors</string>
-    <string name="director">director</string>
-    <string name="open">Open</string>
+    <string name="actors_title">Актори</string>
+    <string name="director">режисер</string>
+    <string name="open">Відкрити</string>
+    <string name="no_links_found">Посилання не знайдені</string>
 </resources>
