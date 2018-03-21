@@ -43,16 +43,6 @@ public class ProcessPlaylistItem {
     public static void process(Activity activity, PlaylistItem psItem) {
         if (psItem != null) {
             new SizeAsyncTask(activity.getFragmentManager()).execute(psItem);
-            //start play/download dialog
-            /*if(psItem.getDownload() == null) {// no download link, use file link
-                show(activity, psItem.getFile());
-            }else {// select file or download link with PlayDialog
-                Bundle args = new Bundle();
-                args.putSerializable(MainActivity.EXTRA_PSITEM, psItem);
-                PlayDialogFragment playDialog = new PlayDialogFragment();
-                playDialog.setArguments(args);
-                playDialog.show(activity.getFragmentManager(), "playdialog");
-            }*/
         }
     }
 
