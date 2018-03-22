@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.LruCache;
 import android.view.Gravity;
@@ -49,7 +50,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private boolean mIsOnPostExecute = false;
     private boolean mIsPage = false;
     private String mTitle;
-    private int mNewWidthDp;
+    private int mSpanCount;
 
     // Memory cache
     private LruCache<String, Bitmap> mMemoryCache;
@@ -63,13 +64,16 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         Configuration configuration = getResources().getConfiguration();
         int screenWidthDp = configuration.screenWidthDp;
-        int spanCount = screenWidthDp/RESULT_WIDTH;
+        mSpanCount = screenWidthDp/RESULT_WIDTH;
 
-        mNewWidthDp = screenWidthDp/spanCount;
 
-        //LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        GridLayoutManager layoutManager = new GridLayoutManager(this, spanCount);
-        mResultsView.setLayoutManager(layoutManager);
+        if(mSpanCount == 1) {
+            LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+            mResultsView.setLayoutManager(layoutManager);
+        }else {
+            GridLayoutManager layoutManager = new GridLayoutManager(this, mSpanCount);
+            mResultsView.setLayoutManager(layoutManager);
+        }
 
         mResultsView.setHasFixedSize(false);
 
@@ -153,7 +157,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                 refresh(currentLink);
             }
         }else {
-            mResultsView.setAdapter(new ResultsAdapter(mResults, this, this, mNewWidthDp));
+            mResultsView.setAdapter(new ResultsAdapter(mResults, this, this, mSpanCount));
         }
     }
 
@@ -332,7 +336,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                 adapter = new ResultsAdapter(mResults,
                         ResultsActivity.this,
                         ResultsActivity.this,
-                        mNewWidthDp);
+                         mSpanCount);
                 mResultsView.setAdapter(adapter);
             }else {
                 adapter = (ResultsAdapter)mResultsView.getAdapter();

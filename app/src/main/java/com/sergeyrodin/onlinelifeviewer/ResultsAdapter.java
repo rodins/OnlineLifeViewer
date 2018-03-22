@@ -31,6 +31,7 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
     private final int HEIGHT;
     private int mNewWidthTextViewPx;
     private ResultsActivity mActivity;
+    private int mSpanCount;
 
     interface ListItemClickListener {
         void onListItemClick(int index);
@@ -38,17 +39,30 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
 
     final private ListItemClickListener mOnClickListener;
 
-    ResultsAdapter(List<Result> results, ListItemClickListener onClickListener, ResultsActivity activity, int newWidthDp) {
+    ResultsAdapter(List<Result> results,
+                   ListItemClickListener onClickListener,
+                   ResultsActivity activity,
+                   int spanCount) {
         this.results = results;
         mOnClickListener = onClickListener;
         mActivity = activity;
         Resources resources = mActivity.getResources();
-
+        int screenWidthDp = resources.getConfiguration().screenWidthDp;
         float density = resources.getDisplayMetrics().density;
+        int newWidthDp = screenWidthDp/spanCount;
         int newWidthPx = (int)(newWidthDp*density);
-        mNewWidthTextViewPx = newWidthPx + LIN_LAY_WIDTH_MIN_TW_WIDTH;
-        WIDTH = mNewWidthTextViewPx - TW_WIDTH_MIN_IMG_WIDTH;
-        HEIGHT = (int)(WIDTH * HEIGHT_DEV_WIDTH);
+
+        mSpanCount = spanCount;
+
+        if(spanCount > 1) {
+            mNewWidthTextViewPx = newWidthPx + LIN_LAY_WIDTH_MIN_TW_WIDTH;
+            WIDTH = mNewWidthTextViewPx - TW_WIDTH_MIN_IMG_WIDTH;
+            HEIGHT = (int)(WIDTH * HEIGHT_DEV_WIDTH);
+        }else {
+            mNewWidthTextViewPx = newWidthPx/2 + LIN_LAY_WIDTH_MIN_TW_WIDTH;
+            WIDTH = mNewWidthTextViewPx - TW_WIDTH_MIN_IMG_WIDTH;
+            HEIGHT = (int)(WIDTH * HEIGHT_DEV_WIDTH);
+        }
 
         Bitmap bitmap = BitmapFactory.decodeResource(resources, R.drawable.empty);
         mDefaultBitmap = Bitmap.createScaledBitmap(bitmap, WIDTH, HEIGHT, true);
@@ -56,9 +70,15 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
 
     @Override
     public ResultViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        View view = inflater.inflate(R.layout.result_entry, parent, false);
-        return new ResultViewHolder(view);
+        if(mSpanCount == 1) {
+            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            View view = inflater.inflate(R.layout.linear_result_entry, parent, false);
+            return new ResultViewHolder(view);
+        }else {
+            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            View view = inflater.inflate(R.layout.result_entry, parent, false);
+            return new ResultViewHolder(view);
+        }
     }
 
     @Override
