@@ -26,4 +26,5 @@
     <string name="director">режиссёр</string>
     <string name="open">Открыть</string>
     <string name="no_links_found">Ссылки не найдены</string>
+    <string name="mb">Мб</string>
 </resources>

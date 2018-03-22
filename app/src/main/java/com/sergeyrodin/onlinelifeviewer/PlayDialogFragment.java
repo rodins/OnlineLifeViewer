@@ -18,8 +18,8 @@ public class PlayDialogFragment extends DialogFragment {
         mPsItem = (PlaylistItem)getArguments().getSerializable(MainActivity.EXTRA_PSITEM);
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(mPsItem.getComment());
-        String fileSize = mPsItem.getFileSize()!=null?" (" + mPsItem.getFileSize() + " Mb)":"";
-        String downloadSize = mPsItem.getDownloadSize()!=null?" (" + mPsItem.getDownloadSize() + " Mb)":"";
+        String fileSize = mPsItem.getFileSize()!=null?" (" + mPsItem.getFileSize() + " " + getString(R.string.mb) + ")":"";
+        String downloadSize = mPsItem.getDownloadSize()!=null?" (" + mPsItem.getDownloadSize() + " " + getString(R.string.mb) + ")":"";
 
         if(!fileSize.isEmpty() && !downloadSize.isEmpty()) {
             String[] items = new String[] {
