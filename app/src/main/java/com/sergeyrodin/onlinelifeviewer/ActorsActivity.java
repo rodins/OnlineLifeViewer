@@ -106,6 +106,10 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             if(mJs != null) {
                 PlaylistItem psItem = new PlaylistItemParser().getItem(mJs);
                 if(psItem.getComment() != null) {
+                    // Trailer title
+                    if(psItem.getComment().length() == 1) {
+                        psItem.setComment(mTitle);
+                    }
                     //Start process item dialog: select play or download item
                     ProcessPlaylistItem.process(this, psItem);
                 }else {
