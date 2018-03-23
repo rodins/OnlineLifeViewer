@@ -290,8 +290,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     private void parseNavigation(String nav) {
         nextLink = null;
-        String nl = null;
-        int nextPage = 0;
+        String nl;
+        int nextPage;
 
         Matcher m;
         // non-search page navigation links
