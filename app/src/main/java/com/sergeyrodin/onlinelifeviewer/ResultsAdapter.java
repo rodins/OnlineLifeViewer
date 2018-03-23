@@ -54,7 +54,7 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
 
         mSpanCount = spanCount;
 
-        if(spanCount > 1) {
+        if(spanCount > 2) {
             mNewWidthTextViewPx = newWidthPx + LIN_LAY_WIDTH_MIN_TW_WIDTH;
             WIDTH = mNewWidthTextViewPx - TW_WIDTH_MIN_IMG_WIDTH;
             HEIGHT = (int)(WIDTH * HEIGHT_DEV_WIDTH);
@@ -70,7 +70,7 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
 
     @Override
     public ResultViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        if(mSpanCount == 1) {
+        if(mSpanCount <= 2) {
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
             View view = inflater.inflate(R.layout.linear_result_entry, parent, false);
             return new ResultViewHolder(view);
@@ -100,7 +100,9 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
             mTitleView = (TextView)itemView.findViewById(R.id.resultEntryTitle);
             mImageView = (ImageView)itemView.findViewById(R.id.resultEntryImage);
             itemView.setOnClickListener(this);
-            mTitleView.setMaxWidth(mNewWidthTextViewPx);
+            if(mSpanCount > 2) {
+                mTitleView.setMaxWidth(mNewWidthTextViewPx);
+            }
         }
 
         private void bind(Result result) {

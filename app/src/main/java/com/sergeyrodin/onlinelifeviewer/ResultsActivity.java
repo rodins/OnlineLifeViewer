@@ -67,7 +67,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mSpanCount = screenWidthDp/RESULT_WIDTH;
 
 
-        if(mSpanCount == 1) {
+        if(mSpanCount <= 2) {
             LinearLayoutManager layoutManager = new LinearLayoutManager(this);
             mResultsView.setLayoutManager(layoutManager);
         }else {
