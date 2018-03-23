@@ -1,5 +1,7 @@
 package com.sergeyrodin.onlinelifeviewer;
 
+import com.sergeyrodin.onlinelifeviewer.utilities.Html;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,7 +19,7 @@ public class PlaylistItemParser {
 
             switch(key) {
                 case "comment":
-                    plItem.setComment(android.text.Html.fromHtml(value).toString());
+                    plItem.setComment(Html.unescape(value));
                     break;
                 case "file":
                     plItem.setFile(value);

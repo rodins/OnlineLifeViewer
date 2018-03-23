@@ -7,7 +7,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.*;
 import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
@@ -189,7 +188,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             Matcher m = Pattern.compile("<a\\s+href=\"(.+?)\">(.+?)</a>").matcher(line);
             while(m.find()) {
                 String title = m.group(2) + " " + (isDirector?"(" + getString(R.string.director) + ")":"");
-                publishProgress(new Link(android.text.Html.fromHtml(title).toString(), m.group(1)));
+                publishProgress(new Link(com.sergeyrodin.onlinelifeviewer.utilities.Html.unescape(title), m.group(1)));
             }
         }
 

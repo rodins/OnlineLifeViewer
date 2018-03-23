@@ -18,6 +18,7 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.sergeyrodin.onlinelifeviewer.utilities.Html;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
 import java.io.BufferedReader;
@@ -281,7 +282,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             String link = m.group(1);
             String image = m.group(2);
             image = image.substring(0, image.indexOf("&"));
-            String title = android.text.Html.fromHtml(m.group(3)).toString();
+            String title = Html.unescape(m.group(3));
             return new Result(title, image, link);
         }
         return null;
