@@ -281,7 +281,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             String link = m.group(1);
             String image = m.group(2);
             image = image.substring(0, image.indexOf("&"));
-            String title = Html.unescape(m.group(3));
+            String title = android.text.Html.fromHtml(m.group(3)).toString();
             return new Result(title, image, link);
         }
         return null;

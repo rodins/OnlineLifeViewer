@@ -17,7 +17,7 @@ public class PlaylistItemParser {
 
             switch(key) {
                 case "comment":
-                    plItem.setComment(Html.unescape(value));
+                    plItem.setComment(android.text.Html.fromHtml(value).toString());
                     break;
                 case "file":
                     plItem.setFile(value);
