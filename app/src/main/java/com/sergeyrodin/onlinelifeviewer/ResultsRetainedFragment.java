@@ -15,7 +15,6 @@ import java.util.List;
 public class ResultsRetainedFragment extends Fragment {
     private static final String TAG = "ResultsRetainedFragment";
     public List<Result> mRetainedData;
-    public LruCache<String, Bitmap> mRetainedCache;
 
     public static ResultsRetainedFragment findOrCreateRetainedFragment(FragmentManager fm) {
         ResultsRetainedFragment fragment = (ResultsRetainedFragment)fm.findFragmentByTag(TAG);

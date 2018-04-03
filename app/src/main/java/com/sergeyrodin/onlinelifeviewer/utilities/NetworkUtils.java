@@ -97,13 +97,15 @@ public class NetworkUtils {
         return builtUri.toString();
     }
 
-    public static URL buildImageUrl(String image, String width, String height) throws MalformedURLException {
+    public static String buildImageStringUrl(String image, int w, int h) {
+        String width = Integer.toString(w);
+        String height = Integer.toString(h);
         Uri builtUri = Uri.parse(image).buildUpon()
                 .appendQueryParameter(PARAM_IMAGE_WIDTH, width)
                 .appendQueryParameter(PARAM_IMAGE_HEIGHT, height)
                 .appendQueryParameter(PARAM_IMAGE_ZC, ZC)
                 .build();
-        return new URL(builtUri.toString());
+        return builtUri.toString();
     }
 
     public static String getResponseFromHttpUrl(URL url) throws IOException{

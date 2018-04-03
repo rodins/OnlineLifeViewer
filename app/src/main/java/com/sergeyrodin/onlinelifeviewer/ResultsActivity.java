@@ -53,9 +53,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private String mTitle;
     private int mSpanCount;
 
-    // Memory cache
-    private LruCache<String, Bitmap> mMemoryCache;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,27 +119,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         setTitle(mTitle);
 
-        // Get max available VM memory, exceeding this amount will throw an
-        // OutOfMemory exception. Stored in kilobytes as LruCache takes an
-        // int in its constructor.
-        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-
-        // Use 1/8th of the available memory for this memory cache.
-        final int cacheSize = maxMemory / 4;
-
         mSaveResults = ResultsRetainedFragment.findOrCreateRetainedFragment(getFragmentManager());
-        mMemoryCache = mSaveResults.mRetainedCache;
-        if(mMemoryCache == null) {
-            mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
-                @Override
-                protected int sizeOf(String key, Bitmap bitmap) {
-                    // The cache size will be measured in kilobytes rather than
-                    // number of items.
-                    return bitmap.getByteCount() / 1024;
-                }
-            };
-            mSaveResults.mRetainedCache = mMemoryCache;
-        }
 
         mResults = mSaveResults.mRetainedData;
         if(mResults == null) {
@@ -160,16 +137,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         }else {
             mResultsView.setAdapter(new ResultsAdapter(mResults, this, this, mSpanCount));
         }
-    }
-
-    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
-        if (getBitmapFromMemCache(key) == null) {
-            mMemoryCache.put(key, bitmap);
-        }
-    }
-
-    public Bitmap getBitmapFromMemCache(String key) {
-        return mMemoryCache.get(key);
     }
 
     private URL getSearchLink(int page) {

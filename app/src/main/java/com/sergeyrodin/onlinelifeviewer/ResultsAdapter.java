@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ScaleDrawable;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,6 +15,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
 import java.util.List;
 
@@ -25,8 +29,12 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
     private final int LIN_LAY_WIDTH_MIN_TW_WIDTH = 10;
     private final int TW_WIDTH_MIN_IMG_WIDTH = 16;
     private final double HEIGHT_DEV_WIDTH = 1.4390243902;
+
+    private final int DEFAULT_WIDTH = 164;
+    private final int DEFAULT_HEIGHT = 236;
+
     private List<Result> results;
-    private Bitmap mDefaultBitmap;
+    private Drawable mDefaultDrawable;
     private final int WIDTH;
     private final int HEIGHT;
     private int mNewWidthTextViewPx;
@@ -65,11 +73,13 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
         }
 
         Bitmap bitmap = BitmapFactory.decodeResource(resources, R.drawable.empty);
-        mDefaultBitmap = Bitmap.createScaledBitmap(bitmap, WIDTH, HEIGHT, true);
+        bitmap = Bitmap.createScaledBitmap(bitmap, WIDTH, HEIGHT, true);
+        mDefaultDrawable = new BitmapDrawable(resources, bitmap);
     }
 
+    @NonNull
     @Override
-    public ResultViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ResultViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if(mSpanCount <= 2) {
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
             View view = inflater.inflate(R.layout.linear_result_entry, parent, false);
@@ -82,7 +92,7 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
     }
 
     @Override
-    public void onBindViewHolder(ResultViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ResultViewHolder holder, int position) {
         Result result = results.get(position);
         holder.bind(result);
     }
@@ -97,8 +107,8 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
         ImageView mImageView;
         ResultViewHolder(View itemView) {
             super(itemView);
-            mTitleView = (TextView)itemView.findViewById(R.id.resultEntryTitle);
-            mImageView = (ImageView)itemView.findViewById(R.id.resultEntryImage);
+            mTitleView = itemView.findViewById(R.id.resultEntryTitle);
+            mImageView = itemView.findViewById(R.id.resultEntryImage);
             itemView.setOnClickListener(this);
             if(mSpanCount > 2) {
                 mTitleView.setMaxWidth(mNewWidthTextViewPx);
@@ -107,14 +117,11 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
 
         private void bind(Result result) {
             mTitleView.setText(result.title);
-            Bitmap bitmap = mActivity.getBitmapFromMemCache(result.image);
-            if(bitmap != null) {
-                Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, WIDTH, HEIGHT, true);
-                mImageView.setImageBitmap(scaledBitmap);
-            }else if(result.image != null){
-                mImageView.setImageBitmap(mDefaultBitmap);
-                new ImageLoadTask(mActivity, mImageView, result.image, WIDTH, HEIGHT).execute();
-            }
+            GlideApp.with(mActivity)
+                    .load(NetworkUtils.buildImageStringUrl(result.image, DEFAULT_WIDTH, DEFAULT_HEIGHT))
+                    .override(WIDTH, HEIGHT)
+                    .placeholder(mDefaultDrawable)
+                    .into(mImageView);
         }
 
         @Override
