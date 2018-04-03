@@ -1,22 +1,18 @@
 package com.sergeyrodin.onlinelifeviewer;
 
-import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ScaleDrawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
 import java.util.List;
@@ -26,12 +22,6 @@ import java.util.List;
  */
 class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolder>{
     private final String TAG = ResultsAdapter.class.getSimpleName();
-    private final int LIN_LAY_WIDTH_MIN_TW_WIDTH = 10;
-    private final int TW_WIDTH_MIN_IMG_WIDTH = 16;
-    private final double HEIGHT_DEV_WIDTH = 1.4390243902;
-
-    private final int DEFAULT_WIDTH = 164;
-    private final int DEFAULT_HEIGHT = 236;
 
     private List<Result> results;
     private Drawable mDefaultDrawable;
@@ -62,6 +52,9 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
 
         mSpanCount = spanCount;
 
+        int LIN_LAY_WIDTH_MIN_TW_WIDTH = 10;
+        int TW_WIDTH_MIN_IMG_WIDTH = 16;
+        double HEIGHT_DEV_WIDTH = 1.4390243902;
         if(spanCount > 2) {
             mNewWidthTextViewPx = newWidthPx + LIN_LAY_WIDTH_MIN_TW_WIDTH;
             WIDTH = mNewWidthTextViewPx - TW_WIDTH_MIN_IMG_WIDTH;
@@ -117,6 +110,8 @@ class ResultsAdapter extends RecyclerView.Adapter<ResultsAdapter.ResultViewHolde
 
         private void bind(Result result) {
             mTitleView.setText(result.title);
+            int DEFAULT_WIDTH = 164;
+            int DEFAULT_HEIGHT = 236;
             GlideApp.with(mActivity)
                     .load(NetworkUtils.buildImageStringUrl(result.image, DEFAULT_WIDTH, DEFAULT_HEIGHT))
                     .override(WIDTH, HEIGHT)
