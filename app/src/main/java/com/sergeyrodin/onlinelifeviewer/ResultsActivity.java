@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.util.LruCache;
 import android.view.Gravity;
 import android.view.View;
@@ -36,13 +37,11 @@ import java.util.regex.Pattern;
 
 public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener {
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
-    private final String STATE_CURRENTLINK = "com.sergeyrodin.CURRENTLINK";
     private final String STATE_IS_ON_POST_EXECUTE = "com.sergeyrodin.IS_ON_POST_EXECUTE";
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
     private final String TAG = ResultsActivity.class.getSimpleName();
-    private final int RESULT_WIDTH = 190;
 
-    private URL nextLink, currentLink;
+    private URL nextLink;
     private ResultsRetainedFragment mSaveResults;
     private ProgressBar mLoadingIndicator;
     private TextView mErrorMessageTextView;
@@ -58,12 +57,12 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_results);
 
-        mResultsView = (RecyclerView)findViewById(R.id.rv_results);
+        mResultsView = findViewById(R.id.rv_results);
 
         Configuration configuration = getResources().getConfiguration();
         int screenWidthDp = configuration.screenWidthDp;
-        mSpanCount = screenWidthDp/RESULT_WIDTH;
-
+        int RESULT_WIDTH = 190;
+        mSpanCount = screenWidthDp/ RESULT_WIDTH;
 
         if(mSpanCount <= 2) {
             LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -90,53 +89,46 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             }
         });
 
-        mLoadingIndicator = (ProgressBar)findViewById(R.id.results_loading_indicator);
-        mErrorMessageTextView = (TextView)findViewById(R.id.results_loading_error);
+        mLoadingIndicator = findViewById(R.id.results_loading_indicator);
+        mErrorMessageTextView = findViewById(R.id.results_loading_error);
 
-        //TODO: fix intent logic
-        Intent intent = getIntent();
-        mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
-        if(mTitle == null) {
-            mTitle = getString(R.string.results);
-        }
+        mTitle = getString(R.string.results);
 
         if(savedInstanceState != null) {
             try {
                 String strNextLink = savedInstanceState.getString(STATE_NEXTLINK);
-                String strCurrentLink = savedInstanceState.getString(STATE_CURRENTLINK);
                 mIsOnPostExecute = savedInstanceState.getBoolean(STATE_IS_ON_POST_EXECUTE);
                 mTitle = savedInstanceState.getString(STATE_TITLE);
                 if(strNextLink != null) {
                     nextLink = new URL(strNextLink);
-                }
-                if(strCurrentLink != null) {
-                    currentLink = new URL(strCurrentLink);
                 }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
         }
 
-        setTitle(mTitle);
-
         mSaveResults = ResultsRetainedFragment.findOrCreateRetainedFragment(getFragmentManager());
 
         mResults = mSaveResults.mRetainedData;
         if(mResults == null) {
+            Intent intent = getIntent();
+            if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
+                mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
+            }
             // No saved data, find new info
-            String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
-            if(link != null) {
-                // Getting results from site, putting them to ListView and save them
+            if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
+                String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
                 refresh(link);
             }else if(Intent.ACTION_SEARCH.equals(intent.getAction())) { //Called by SearchView
                 String query = getIntent().getStringExtra(SearchManager.QUERY);
+                mTitle = query;
                 refresh(NetworkUtils.buildSearchUrl(query));
-            }else if(currentLink != null) {
-                refresh(currentLink);
             }
         }else {
             mResultsView.setAdapter(new ResultsAdapter(mResults, this, this, mSpanCount));
         }
+
+        setTitle(mTitle);
     }
 
     private URL getSearchLink(int page) {
@@ -159,9 +151,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             String strNextLink = nextLink.toString();
             outState.putString(STATE_NEXTLINK, strNextLink);
         }
-        if(currentLink != null) {
-            outState.putString(STATE_CURRENTLINK, currentLink.toString());
-        }
         outState.putBoolean(STATE_IS_ON_POST_EXECUTE, mIsOnPostExecute);
         outState.putString(STATE_TITLE, mTitle);
 
@@ -170,7 +159,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     private void refresh(String link) {
         try {
-            currentLink = new URL(link);
             URL url = new URL(link);
             new ResultsAsyncTask().execute(url);
         } catch (MalformedURLException e) {
@@ -179,7 +167,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     private void refresh(URL url) {
-        currentLink = url;
         new ResultsAsyncTask().execute(url);
     }
 
