@@ -257,10 +257,9 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     private void parseNavigation(String nav) {
-        Log.d(TAG, nav);
         nextLink = null;
         String nl = "";
-        int nextPage;
+        int nextPage = 0;
 
         Matcher m;
         // non-search page navigation links
@@ -279,13 +278,10 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         // search page navigation links
         m = Pattern.compile("<a.+?onclick=\".+?(\\d+).+?\">(.+?)</a>").matcher(nav);
         while(m.find()) {
-            if(m.group(2).length() == 6) {
-                nextPage = Integer.parseInt(m.group(1));
-                if(nextPage != 0) {
-                    nextLink = getSearchLink(nextPage); //forming next search link
-                }
-                break;
-            }
+            nextPage = Integer.parseInt(m.group(1));
+        }
+        if(nextPage != 0) {
+            nextLink = getSearchLink(nextPage); //forming next search link
         }
     }
 
