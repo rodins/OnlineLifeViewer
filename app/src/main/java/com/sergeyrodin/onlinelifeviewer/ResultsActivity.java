@@ -257,25 +257,23 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     private void parseNavigation(String nav) {
+        Log.d(TAG, nav);
         nextLink = null;
-        String nl;
+        String nl = "";
         int nextPage;
 
         Matcher m;
         // non-search page navigation links
         m = Pattern.compile("<a\\s+href=\"(.+?)\">(.+?)</a>").matcher(nav);
         while(m.find()) {
-            if(m.group(2).length() == 6) {
-                nl = m.group(1);
-                try {
-                    if(nl != null) {
-                        nextLink = new URL(nl);
-                    }
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
-                break;
+            nl = m.group(1);
+        }
+        try {
+            if(!nl.isEmpty()) {
+                nextLink = new URL(nl);
             }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
 
         // search page navigation links
@@ -326,6 +324,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                     String div = "";
                     boolean div_found = false;
                     boolean div_mobile_found = false;
+                    boolean div_nav_found = false;
                     while((line = in.readLine()) != null){
                         if(line.contains("class=\"custom-poster\"") && !div_found) {
                             div_found = true;
@@ -364,7 +363,18 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                         }
 
                         if(line.contains("class=\"navigation\"")) {
-                            return line;
+                            div_nav_found = true;
+                            div = "";
+                            continue;
+                        }
+
+                        if(line.contains("</div>") && div_nav_found) {
+                            div += line.trim();
+                            return div;
+                        }
+
+                        if(div_nav_found) {
+                            div += line.trim();
                         }
                     }
                     return "";
