@@ -53,10 +53,10 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         setContentView(R.layout.activity_actors);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        mRvActors = (RecyclerView)findViewById(R.id.rv_actors);
+        mRvActors = findViewById(R.id.rv_actors);
         mRvActors.setLayoutManager(layoutManager);
-        mLoadingIndicator = (ProgressBar)findViewById(R.id.actors_loading_indicator);
-        mErrorTextView = (TextView)findViewById(R.id.actors_loading_error);
+        mLoadingIndicator = findViewById(R.id.actors_loading_indicator);
+        mErrorTextView = findViewById(R.id.actors_loading_error);
 
         mSaveActors = LinkRetainedFragment.findOrCreateRetainedFragment(getFragmentManager());
 
@@ -70,8 +70,11 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             mRvActors.setAdapter(new ActorsAdapter(mActors, this));
         }else {
             Intent intent = getIntent();
-            if(intent != null) {
+            if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
                 mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
+            }
+
+            if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
                 String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
                 try {
                     URL url = new URL(link);
