@@ -31,7 +31,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,6 +53,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private boolean mIsPage = false;
     private String mTitle;
     private int mSpanCount;
+    private Set<String> mNextLinks = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -265,11 +268,15 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         // non-search page navigation links
         m = Pattern.compile("<a\\s+href=\"(.+?)\">(.+?)</a>").matcher(nav);
         while(m.find()) {
-            nl = m.group(1);
+            nl = m.group(1);// iterating to get last element
         }
+
         try {
             if(!nl.isEmpty()) {
-                nextLink = new URL(nl);
+                if(!mNextLinks.contains(nl)) {
+                    mNextLinks.add(nl);
+                    nextLink = new URL(nl);
+                }
             }
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -278,10 +285,15 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         // search page navigation links
         m = Pattern.compile("<a.+?onclick=\".+?(\\d+).+?\">(.+?)</a>").matcher(nav);
         while(m.find()) {
-            nextPage = Integer.parseInt(m.group(1));
+            nl = m.group(1);
         }
-        if(nextPage != 0) {
-            nextLink = getSearchLink(nextPage); //forming next search link
+
+        if(!nl.isEmpty()) {
+            if(!mNextLinks.contains(nl)) {
+                mNextLinks.add(nl);
+                nextPage = Integer.parseInt(nl);
+                nextLink = getSearchLink(nextPage); //forming next search link
+            }
         }
     }
 
@@ -301,6 +313,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                         ResultsActivity.this,
                          mSpanCount);
                 mResultsView.setAdapter(adapter);
+                mNextLinks.clear();
             }else {
                 adapter = (ResultsAdapter)mResultsView.getAdapter();
             }
@@ -313,7 +326,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                 BufferedReader in = null;
                 try {
                     connection = (HttpURLConnection)url.openConnection();
-                    //connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0 SeaMonkey/2.40");
                     InputStream stream = connection.getInputStream();
                     in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
                     String line;
