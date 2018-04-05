@@ -242,6 +242,20 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         return null;
     }
 
+    private Result divToMobileResult(String div) {
+        Matcher m = Pattern
+                .compile("<a\\s+href=\"(.*?)\".*?src=\"(.*?)\".*?\">(.+?)</span>")
+                .matcher(div);
+        if(m.find()) {
+            String link = m.group(1);
+            String image = m.group(2);
+            image = image.substring(0, image.indexOf("&"));
+            String title = Html.unescape(m.group(3));
+            return new Result(title, image, link);
+        }
+        return null;
+    }
+
     private void parseNavigation(String nav) {
         nextLink = null;
         String nl;
@@ -305,12 +319,13 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                 BufferedReader in = null;
                 try {
                     connection = (HttpURLConnection)url.openConnection();
-                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0 SeaMonkey/2.40");
+                    //connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0 SeaMonkey/2.40");
                     InputStream stream = connection.getInputStream();
                     in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
                     String line;
                     String div = "";
                     boolean div_found = false;
+                    boolean div_mobile_found = false;
                     while((line = in.readLine()) != null){
                         if(line.contains("class=\"custom-poster\"") && !div_found) {
                             div_found = true;
@@ -326,6 +341,26 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                         }
                         if(div_found) {
                             div += line + "\n";
+                        }
+
+                        if(line.contains("class=\"slider-item\"")) {
+                            div_mobile_found = true;
+                            div = "";
+                            continue;
+                        }
+
+                        if(line.contains("</a>") && div_mobile_found) {
+                            div_mobile_found = false;
+                            Result result = divToMobileResult(div);
+                            if(result != null) {
+                                publishProgress(result);
+                            }
+                        }
+
+                        if(div_mobile_found) {
+                            if(!line.contains("<div") && !line.contains("</div>")) {
+                                div += line;
+                            }
                         }
 
                         if(line.contains("class=\"navigation\"")) {
