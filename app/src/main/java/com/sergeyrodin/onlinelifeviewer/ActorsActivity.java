@@ -123,7 +123,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                     startActivity(intent);
                 }
             }
-
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -306,13 +305,17 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         @Override
         protected void onPostExecute(Map<String, String> result) {
             if(result != null) {
-                mTitle += (" - " + result.get("country") + " - " + result.get("year"));
-                setTitle(mTitle);
-                try {
-                    URL url = new URL(result.get("playerLink"));
-                    new PlayerLinkAsyncTask().execute(url);
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
+                if(result.containsKey("country") && result.containsKey("year")) {
+                    mTitle += (" - " + result.get("country") + " - " + result.get("year"));
+                    setTitle(mTitle);
+                }
+                if(result.containsKey("playerLink")) {
+                    try {
+                        URL url = new URL(result.get("playerLink"));
+                        new PlayerLinkAsyncTask().execute(url);
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
                 }
             }else {
                 showError();
