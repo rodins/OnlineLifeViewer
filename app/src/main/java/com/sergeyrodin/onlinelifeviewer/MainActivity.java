@@ -7,6 +7,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
@@ -38,7 +39,8 @@ public class MainActivity extends ExpandableListActivity {
     public static final String EXTRA_JS = "com.sergeyrodin.JS";
     public static final String EXTRA_PAGE = "com.sergeyrodin.PAGE";
     public static final String EXTRA_TITLE = "com.sergeyrodin.TITLE";
-    public static final String DOMAIN = "http://online-life.club";
+    public static final String DOMAIN = "http://online-life.club";//TODO: domain should be resource
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private ProgressBar progressBar;
     private LinkRetainedFragment linkRetainedFragment;
@@ -50,8 +52,8 @@ public class MainActivity extends ExpandableListActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        progressBar = (ProgressBar)findViewById(R.id.loading_indicator);
-        tvLoadingError = (TextView)findViewById(R.id.loading_error);
+        progressBar = findViewById(R.id.loading_indicator);
+        tvLoadingError = findViewById(R.id.loading_error);
 
         FragmentManager fm = getFragmentManager();
         String tag = "saveMainData";
@@ -184,14 +186,13 @@ public class MainActivity extends ExpandableListActivity {
         @Override
         protected List<Link> doInBackground(Void... voids) {
             //TODO use domain from resources
-            URL url = null;
+            URL url;
             try {
                 url = new URL(DOMAIN);
                 HttpURLConnection connection = null;
                 BufferedReader in = null;
                 try {
                     connection = (HttpURLConnection)url.openConnection();
-                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0 SeaMonkey/2.40");
                     InputStream stream = connection.getInputStream();
                     in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
                     String html = CategoriesParser.getCategoriesPart(in);
@@ -215,7 +216,6 @@ public class MainActivity extends ExpandableListActivity {
             if(categories != null) {
                 showResults();
                 linkRetainedFragment.setData(categories);
-                //listToTextView(categories);
                 categoriesToAdapter(categories);
             }else {
                 showLoadingError();

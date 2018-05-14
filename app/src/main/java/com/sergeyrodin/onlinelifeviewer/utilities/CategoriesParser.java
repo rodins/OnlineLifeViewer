@@ -15,6 +15,8 @@ import java.util.regex.Pattern;
  */
 
 public class CategoriesParser {
+    private static final String TAG = CategoriesParser.class.getSimpleName();
+
     private static String fixUrl(String href) { // I put it here because it is only needed for categories
         if(href.contains("http")) {
             return href;
@@ -29,61 +31,56 @@ public class CategoriesParser {
         String s;
         while((s = in.readLine()) != null) {
             // Find beginning
-            if(s.contains("<div class=\"nav\">")) {
+            if(s.contains("<nav")) {
                 sb.append(s);
                 continue;
             }
 
             // Add line in the middle
-            if(sb.length() > 0 && !s.contains("</div>")) {
+            if(sb.length() > 0 && !s.contains("login-btn")) {
                 sb.append(s);
                 continue;
             }
 
             // Add end
-            if(sb.length() > 0 && s.contains("</div>")) {
+            if(sb.length() > 0 && s.contains("login-btn")) {
                 sb.append(s);
                 return sb.toString();
             }
-
         }
         return null;
     }
 
     public static List<Link> parseCategories(String html) {
-
-        // Get elements from nav div into list
         List<Link> categories = new ArrayList<>();
         if(html != null && !html.isEmpty()) {
-            Matcher m3 = Pattern.compile("<li class=\"pull-right nodrop\"><a href=\"(.+?)\">(.+?)</a></li>")
-                    .matcher(html);
-            List<Link> links3 = new ArrayList<>();
-            while(m3.find()) {
-                links3.add(new Link(m3.group(2), fixUrl(m3.group(1))));
+            Matcher mMain = Pattern.compile("<li>\\s+?<a rel=\"external\" href=\"([a-z/]+?)\">\\s+?<span class=\"menu-icon[ a-z]+?\"><svg viewbox=\"[ 0-1]+?\"><use xlink:href=\"#[a-z]+?-icon\"></use></svg></span>([ а-яА-Я]+?)</a>\\s+?</li>")
+                                .matcher(html);
+            List<Link> linksMain = new ArrayList<>();
+            // New, Popular, Best, Trailers
+            while(mMain.find()) {
+                linksMain.add(new Link(mMain.group(2).trim(), fixUrl(mMain.group(1))));
             }
 
-            // Get trailers link
-            m3 = Pattern.compile("<li class=\"nodrop\" style=\"margin-left: 10px;\"><a href=\"(.+?)\" class=\"link1\">(.+?)</a>")
-                    .matcher(html);
-            if(m3.find()) {
-                links3.add(new Link(m3.group(2), fixUrl(m3.group(1))));
-            }
+            // Subcategories for main
+            categories.add(new Link("Главная", "", linksMain));
 
-            categories.add(new Link("Главная", NetworkUtils.ONLINE_LIFE_BASE_URL, links3));
+            // Categories
+            Matcher mCategories = Pattern.compile("(?s)<li>\\s+?<a\\s+?rel=\"external\"\\s*?href=\"(.*?)\">\\s+?<span class=.*?</span>(.*?)</a>.*?</ul>")
+                                         .matcher(html);
 
-            Matcher m = Pattern.compile("(?s)<li class=\"drop\"><a href=\"(.*?)\".*?>(.*?)</a>.*?</ul>.*?</li>")
-                    .matcher(html);
+            // Subcategories
+            Matcher mSubcategories = Pattern.compile("<li\\s*?><a\\s+?rel=\"external\"\\s*?href=\"(.*?)\">(.*?)</a></li>")
+                                            .matcher("");
 
-            Matcher m1 = Pattern.compile("<li><a href=\"(.*?)\">(.*?)</a></li>")
-                    .matcher("");
-
-            while(m.find()) {
+            // Most of the categories
+            while(mCategories.find()) {
                 List<Link> links = new ArrayList<>();
-                m1.reset(m.group(0));
-                while(m1.find()) {
-                    links.add(new Link(m1.group(2), fixUrl(m1.group(1))));
+                mSubcategories.reset(mCategories.group(0));
+                while(mSubcategories.find()) {
+                    links.add(new Link(mSubcategories.group(2), fixUrl(mSubcategories.group(1))));
                 }
-                categories.add(new Link(m.group(2), fixUrl(m.group(1)), links));
+                categories.add(new Link(mCategories.group(2).trim(), "", links));
             }
         }
         return categories;
