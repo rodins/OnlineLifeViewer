@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Online Life Viewer</string>
     <string name="nothing_found">Nothing found</string>
+    <string name="no_actors">No actors</string>
     <string name="flv">Format .flv</string>
     <string name="mp4">Format .mp4</string>
     <string name="no_app_found">No app found to open this file</string>

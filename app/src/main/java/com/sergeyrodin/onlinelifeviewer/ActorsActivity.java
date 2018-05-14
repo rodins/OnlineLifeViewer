@@ -151,7 +151,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         mRvActors.setVisibility(View.INVISIBLE);
         mLoadingIndicator.setVisibility(View.INVISIBLE);
         mErrorTextView.setVisibility(View.VISIBLE);
-        mErrorTextView.setText(R.string.nothing_found);
+        mErrorTextView.setText(R.string.no_actors);
     }
 
     @Override
