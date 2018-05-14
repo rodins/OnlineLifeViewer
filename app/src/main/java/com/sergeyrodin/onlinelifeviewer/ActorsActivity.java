@@ -144,6 +144,14 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         mRvActors.setVisibility(View.INVISIBLE);
         mLoadingIndicator.setVisibility(View.INVISIBLE);
         mErrorTextView.setVisibility(View.VISIBLE);
+        mErrorTextView.setText(R.string.network_problem);
+    }
+
+    private void showEmpty() {
+        mRvActors.setVisibility(View.INVISIBLE);
+        mLoadingIndicator.setVisibility(View.INVISIBLE);
+        mErrorTextView.setVisibility(View.VISIBLE);
+        mErrorTextView.setText(R.string.nothing_found);
     }
 
     @Override
@@ -305,6 +313,9 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         @Override
         protected void onPostExecute(Map<String, String> result) {
             if(result != null) {
+                if(mActors.isEmpty()) {
+                    showEmpty();
+                }
                 if(result.containsKey("country") && result.containsKey("year")) {
                     mTitle += (" - " + result.get("country") + " - " + result.get("year"));
                     setTitle(mTitle);
