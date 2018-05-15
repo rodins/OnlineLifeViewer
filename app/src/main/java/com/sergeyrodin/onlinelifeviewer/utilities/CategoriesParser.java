@@ -6,6 +6,7 @@ import com.sergeyrodin.onlinelifeviewer.Link;
 
 import java.io.BufferedReader;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,10 +57,11 @@ public class CategoriesParser {
         if(html != null && !html.isEmpty()) {
             Matcher mMain = Pattern.compile("<li>\\s+?<a rel=\"external\" href=\"([a-z/]+?)\">\\s+?<span class=\"menu-icon[ a-z]+?\"><svg viewbox=\"[ 0-1]+?\"><use xlink:href=\"#[a-z]+?-icon\"></use></svg></span>([ а-яА-Я]+?)</a>\\s+?</li>")
                                 .matcher(html);
-            List<Link> linksMain = new ArrayList<>();
+            LinkedList<Link> linksMain = new LinkedList<>();
+
             // New, Popular, Best, Trailers
             while(mMain.find()) {
-                linksMain.add(new Link(mMain.group(2).trim(), fixUrl(mMain.group(1))));
+                linksMain.push(new Link(mMain.group(2).trim(), fixUrl(mMain.group(1))));
             }
 
             // Subcategories for main
