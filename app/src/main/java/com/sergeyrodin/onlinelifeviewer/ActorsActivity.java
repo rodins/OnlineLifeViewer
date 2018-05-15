@@ -317,10 +317,13 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
         @Override
         protected void onPostExecute(ActorsResult result) {
-            if(result != null) {
-                if(mActors.isEmpty()) {
-                    showEmpty();
-                }
+            if(result == null) {
+                showError();
+            }else if(mActors.isEmpty()) {
+                showEmpty();
+            }
+
+            if(result != null){
                 if(result.country != null && result.year != null) {
                     mTitle += (" - " + result.country + " - " + result.year);
                     setTitle(mTitle);
@@ -333,8 +336,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                         e.printStackTrace();
                     }
                 }
-            }else {
-                showError();
             }
         }
     }
