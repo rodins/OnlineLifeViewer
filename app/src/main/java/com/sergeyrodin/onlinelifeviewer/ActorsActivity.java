@@ -33,6 +33,13 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
+class ActorsResult {
+    String country;
+    String year;
+    String playerLink;
+}
+
 public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.ListItemClickListener {
     private final static String TAG = ActorsActivity.class.getSimpleName();
     private final String SAVE_JS = "com.sergeyrodin.JS";
@@ -184,7 +191,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         super.onPause();
     }
 
-    class ActorsAsyncTask extends AsyncTask<URL, Link, Map<String, String>> {
+    class ActorsAsyncTask extends AsyncTask<URL, Link, ActorsResult> {
         private ActorsAdapter mAdapter;
 
         @Override
@@ -221,9 +228,9 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         }
 
         @Override
-        protected Map<String, String> doInBackground(URL... urls) {
+        protected ActorsResult doInBackground(URL... urls) {
             try {
-                Map<String, String> result = new HashMap<>();
+                ActorsResult result = new ActorsResult();
                 URL url = urls[0];
                 HttpURLConnection connection = null;
                 BufferedReader in = null;
@@ -237,7 +244,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                     in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
                     String line;
                     while((line = in.readLine()) != null){
-                        //Log.d(TAG, line);
                         if(line.contains("Режиссеры") && !spanFound) {
                             spanFound = true;
                             isDirector = true;
@@ -259,8 +265,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
                             if(line.contains("</span>")) {
                                 if(line.contains("<li>")) {
-                                    String year = parseYear(line);
-                                    result.put("year", year);
+                                    result.year = parseYear(line);
                                 }
                             }else {
                                 infoDataFound = true;
@@ -275,14 +280,14 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                         if(infoDataFound) {
                             if(!line.contains("<")) {
                                 if(!countryFound) {
-                                    result.put("country", line.trim());
+                                    result.country = line.trim();
                                     countryFound = true;
                                 }
                             }
                         }
 
                         if(line.contains("<iframe")) {
-                            result.put("playerLink", parseIframe(line));
+                            result.playerLink = parseIframe(line);
                             return result;
                         }
                     }
@@ -311,18 +316,18 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         }
 
         @Override
-        protected void onPostExecute(Map<String, String> result) {
+        protected void onPostExecute(ActorsResult result) {
             if(result != null) {
                 if(mActors.isEmpty()) {
                     showEmpty();
                 }
-                if(result.containsKey("country") && result.containsKey("year")) {
-                    mTitle += (" - " + result.get("country") + " - " + result.get("year"));
+                if(result.country != null && result.year != null) {
+                    mTitle += (" - " + result.country + " - " + result.year);
                     setTitle(mTitle);
                 }
-                if(result.containsKey("playerLink")) {
+                if(result.playerLink != null) {
                     try {
-                        URL url = new URL(result.get("playerLink"));
+                        URL url = new URL(result.playerLink);
                         new PlayerLinkAsyncTask().execute(url);
                     } catch (MalformedURLException e) {
                         e.printStackTrace();
