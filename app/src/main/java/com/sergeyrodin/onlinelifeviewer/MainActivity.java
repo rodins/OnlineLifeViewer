@@ -213,7 +213,7 @@ public class MainActivity extends ExpandableListActivity {
 
         @Override
         protected void onPostExecute(List<Link> categories) {
-            if(categories != null) {
+            if(categories != null && !categories.isEmpty()) {
                 showResults();
                 linkRetainedFragment.setData(categories);
                 categoriesToAdapter(categories);
