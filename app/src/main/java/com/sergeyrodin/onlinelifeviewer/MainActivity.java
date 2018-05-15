@@ -76,8 +76,10 @@ public class MainActivity extends ExpandableListActivity {
     @Override
     public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
         List<Link> categories = linkRetainedFragment.getData();
+        String parentTitle = categories.get(groupPosition).Title;
         Link selectedCategory = categories.get(groupPosition).Links.get(childPosition);
-        startResultsActivity(selectedCategory.Title, selectedCategory.Href);
+        startResultsActivity(parentTitle + " - " + selectedCategory.Title,
+                              selectedCategory.Href);
         return true;
     }
 
