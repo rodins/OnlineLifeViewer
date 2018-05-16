@@ -43,9 +43,9 @@ public class PlaylistsActivity extends ExpandableListActivity {
         setContentView(R.layout.activity_playlists);
         setTitle(R.string.playlists);
 
-        pbLoadingIndicator = (ProgressBar)findViewById(R.id.playlists_loading_indicator);
-        tvLoadingError = (TextView)findViewById(R.id.playlists_loading_error);
-        lvPlaylist = (ListView)findViewById(R.id.lv_playlist);
+        pbLoadingIndicator = findViewById(R.id.playlists_loading_indicator);
+        tvLoadingError = findViewById(R.id.playlists_loading_error);
+        lvPlaylist = findViewById(R.id.lv_playlist);
         lvPlaylist.setOnItemClickListener(mMessageClickedHandler);
 
         if(savedInstanceState != null) { //restore saved info

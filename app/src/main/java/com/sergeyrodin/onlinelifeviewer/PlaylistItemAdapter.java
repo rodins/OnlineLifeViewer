@@ -31,11 +31,11 @@ public class PlaylistItemAdapter extends ArrayAdapter<PlaylistItem> {
             View view = inflater.inflate(R.layout.playlist_entry, parent, false);
 
             PlaylistItem playlistItem = getItem(position);
-            TextView textView = (TextView)view.findViewById(R.id.entryText);
-            ImageView imageView = (ImageView)view.findViewById(R.id.entryImage);
+            TextView textView = view.findViewById(R.id.entryText);
+            ImageView imageView = view.findViewById(R.id.entryImage);
 
             textView.setText(playlistItem.getComment());
-            imageView.setImageResource(R.drawable.film);
+            imageView.setImageResource(R.drawable.ic_link2);
             views[position] = view;
 
             return view;

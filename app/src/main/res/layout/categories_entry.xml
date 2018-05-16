@@ -6,7 +6,7 @@
     android:orientation="horizontal"
     android:gravity="center_vertical">
     <ImageView
-        android:src="@drawable/movies_folder"
+        android:src="@drawable/ic_movie_folder"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginRight="5dp" />
