@@ -21,6 +21,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.sergeyrodin.onlinelifeviewer.utilities.Html;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
@@ -164,10 +165,19 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     public void onListItemClick(int position) {
         Result result = mResults.get(position);
-        Intent intent = new Intent(this, ActorsActivity.class);
-        intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
-        intent.putExtra(MainActivity.EXTRA_LINK, result.link);
-        startActivity(intent);
+        if(mActorsMenuItem.isChecked()) { // Use actors links
+            Intent intent = new Intent(this, ActorsActivity.class);
+            intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
+            intent.putExtra(MainActivity.EXTRA_LINK, result.link);
+            startActivity(intent);
+        }else { // Use constant links
+            try {
+                URL url = new URL(result.link);
+                new JsAsyncTask().execute(url);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -450,6 +460,43 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
             if(!navigation.isEmpty()) {
                 parseNavigation(navigation);
+            }
+        }
+    }
+
+    class JsAsyncTask extends AsyncTask<URL, Void, String> {
+
+        @Override
+        protected String doInBackground(URL... urls) {
+            try {
+                return NetworkUtils.getConstantLinksJs(urls[0]);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String js) {
+            if(js != null) {
+                PlaylistItem psItem = new PlaylistItemParser().getItem(js);
+                if(psItem.getComment() != null) {
+                    // Trailer title
+                    if(psItem.getComment().length() == 1) {
+                        Toast.makeText(ResultsActivity.this,
+                                       "Using with trailers is not recommended",
+                                        Toast.LENGTH_SHORT).show();
+                    }
+                    //Start process item dialog: select play or download item
+                    ProcessPlaylistItem.process(ResultsActivity.this, psItem);
+                }else {
+                    // Process activity_playlists in PlaylistsActivity
+                    Intent intent = new Intent(ResultsActivity.this, PlaylistsActivity.class);
+                    intent.putExtra(MainActivity.EXTRA_JS, js);
+                    startActivity(intent);
+                }
+            }else {
+                Toast.makeText(ResultsActivity.this, R.string.network_problem, Toast.LENGTH_SHORT).show();
             }
         }
     }

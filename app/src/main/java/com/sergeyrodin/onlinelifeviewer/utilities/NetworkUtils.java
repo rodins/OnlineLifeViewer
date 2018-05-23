@@ -14,6 +14,8 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by sergey on 30.11.17.
@@ -31,7 +33,7 @@ public class NetworkUtils {
     private final static String search = "search";
     private final static String simple = "simple";
 
-    private final static String JSON_BASE_URL = "http://dterod.com";
+    private final static String JSON_BASE_URL = "http://play.cidwo.com";
     private final static String PATH_JSON = "js.php";
     private final static String PARAM_ID = "id";
     private final static String PATH_PLAYER = "player.php";
@@ -81,18 +83,28 @@ public class NetworkUtils {
         return url;
     }
 
-    public static URL buildJsonUrl(int id) throws MalformedURLException {
+    private static String getLinkId(String link) {
+        Matcher m = Pattern
+                .compile("/(\\d+?)-")
+                .matcher(link);
+        if(m.find()){
+            return m.group(1);
+        }
+        return  "";
+    }
+
+    private static URL buildJsonUrl(String id) throws MalformedURLException {
         Uri builtUri = Uri.parse(JSON_BASE_URL).buildUpon()
                 .appendPath(PATH_JSON)
-                .appendQueryParameter(PARAM_ID, Integer.toString(id))
+                .appendQueryParameter(PARAM_ID, id)
                 .build();
         return new URL(builtUri.toString());
     }
 
-    public static String buildRefererUrl(int id) {
+    private static String buildRefererUrl(String id) {
         Uri builtUri = Uri.parse(JSON_BASE_URL).buildUpon()
                 .appendPath(PATH_PLAYER)
-                .appendQueryParameter(PARAM_NEWS_ID, Integer.toString(id))
+                .appendQueryParameter(PARAM_NEWS_ID, id)
                 .build();
         return builtUri.toString();
     }
@@ -125,6 +137,16 @@ public class NetworkUtils {
         }finally {
             urlConnection.disconnect();
         }
+    }
+
+    public static String getConstantLinksJs(URL url) {
+        try {
+            String id = getLinkId(url.toString());
+            return getResponseFromHttpUrl(buildJsonUrl(id), buildRefererUrl(id));
+        }catch (IOException e) {
+            Log.d(TAG, e.getMessage());
+        }
+        return "";
     }
 
     public static String getResponseFromHttpUrl(URL url, String referer) throws IOException {
