@@ -14,6 +14,9 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.LruCache;
 import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
@@ -54,6 +57,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private String mTitle;
     private int mSpanCount;
     private Set<String> mNextLinks = new HashSet<>();
+
+    private MenuItem mActorsMenuItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,6 +137,23 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         }
 
         setTitle(mTitle);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.results_menu, menu);
+
+        mActorsMenuItem = menu.findItem(R.id.action_actors);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.action_actors) {
+            mActorsMenuItem.setChecked(!mActorsMenuItem.isChecked());
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private URL getSearchLink(int page) {
