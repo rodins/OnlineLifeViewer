@@ -46,6 +46,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private final String STATE_IS_ON_POST_EXECUTE = "com.sergeyrodin.IS_ON_POST_EXECUTE";
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
     private final String TAG = ResultsActivity.class.getSimpleName();
+    private final String TRAILERS = "Трейлеры";
 
     private URL nextLink;
     private ResultsRetainedFragment mSaveResults;
@@ -146,6 +147,10 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         inflater.inflate(R.menu.results_menu, menu);
 
         mActorsMenuItem = menu.findItem(R.id.action_actors);
+        if(mTitle.contains(TRAILERS)) {
+            mActorsMenuItem.setVisible(false);
+        }
+
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -165,7 +170,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     public void onListItemClick(int position) {
         Result result = mResults.get(position);
-        if(mActorsMenuItem.isChecked()) { // Use actors links
+        if(mActorsMenuItem.isChecked() || mTitle.contains(TRAILERS)) { // Use actors links
             Intent intent = new Intent(this, ActorsActivity.class);
             intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
             intent.putExtra(MainActivity.EXTRA_LINK, result.link);
@@ -481,13 +486,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             if(js != null) {
                 PlaylistItem psItem = new PlaylistItemParser().getItem(js);
                 if(psItem.getComment() != null) {
-                    // Trailer title
-                    if(psItem.getComment().length() == 1) {
-                        Toast.makeText(ResultsActivity.this,
-                                       "Using with trailers is not recommended",
-                                        Toast.LENGTH_SHORT).show();
-                    }
-                    //Start process item dialog: select play or download item
+                    //Start process item dialog
                     ProcessPlaylistItem.process(ResultsActivity.this, psItem);
                 }else {
                     // Process activity_playlists in PlaylistsActivity
