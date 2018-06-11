@@ -4,6 +4,7 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -48,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private TextView tvLoadingError;
     private ExpandableListView mCategoriesList;
     private MenuItem refreshMenuItem;
-    private List<Link> mCategories;
+    private LinkRetainedFragment mSavedCategories;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,9 +63,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mCategoriesList.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
             @Override
             public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-                if(mCategories != null) {
-                    String parentTitle = mCategories.get(groupPosition).Title;
-                    Link selectedCategory = mCategories.get(groupPosition).Links.get(childPosition);
+                if(mSavedCategories.Data != null) {
+                    String parentTitle = mSavedCategories.Data.get(groupPosition).Title;
+                    Link selectedCategory = mSavedCategories.Data.get(groupPosition).Links.get(childPosition);
                     startResultsActivity(parentTitle + " - " + selectedCategory.Title,
                             selectedCategory.Href);
                 }
@@ -72,7 +73,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         });
 
-        initLoader();
+        mSavedCategories = LinkRetainedFragment.findOrCreateRetainedFragment(getFragmentManager());
+        if(mSavedCategories.Data == null) {
+            initLoader();
+        }else {
+            categoriesToAdapter(mSavedCategories.Data);
+        }
     }
 
     private void initLoader() {
@@ -99,7 +105,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         SearchManager searchManager =
                 (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         SearchView searchView = (SearchView)menu.findItem(R.id.action_search).getActionView();
-        Log.d(TAG, "Search view: " + searchView);
         searchView.setSearchableInfo(
                 searchManager.getSearchableInfo(getComponentName()));
 
@@ -186,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mCategoriesList.setAdapter(adapter);
     }
 
+    @NonNull
     @Override
     public Loader<List<Link>> onCreateLoader(int id, Bundle args) {
         return new CategoriesAsyncTaskLoader(this, args);
@@ -195,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public void onLoadFinished(Loader<List<Link>> loader, List<Link> data) {
         if(data != null && !data.isEmpty()) {
             showResults();
-            mCategories = data;
+            mSavedCategories.Data = data;
             categoriesToAdapter(data);
         }else {
             showLoadingError();
@@ -233,7 +239,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 HttpURLConnection connection = null;
                 BufferedReader in = null;
                 try {
-                    Log.d(TAG, "Using network");
                     connection = (HttpURLConnection)url.openConnection();
                     InputStream stream = connection.getInputStream();
                     in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));

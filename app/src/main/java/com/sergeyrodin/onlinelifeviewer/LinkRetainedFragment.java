@@ -29,12 +29,4 @@ public class LinkRetainedFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
     }
-
-    public void setData(List<Link> data) {
-        Data = data;
-    }
-
-    public List<Link> getData() {
-        return Data;
-    }
 }
