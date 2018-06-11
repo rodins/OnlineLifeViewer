@@ -2,8 +2,11 @@ package com.sergeyrodin.onlinelifeviewer;
 
 import android.app.ExpandableListActivity;
 import android.app.FragmentManager;
+import android.app.LoaderManager;
 import android.app.SearchManager;
+import android.content.AsyncTaskLoader;
 import android.content.Context;
+import android.content.Loader;
 import android.os.AsyncTask;
 import android.content.Intent;
 import android.os.Bundle;
@@ -32,20 +35,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends ExpandableListActivity {
+public class MainActivity extends ExpandableListActivity implements LoaderManager.LoaderCallbacks<List<Link>> {
     public static final String EXTRA_PSITEM = "com.sergeyrodin.PSITEM";
     public static final String EXTRA_PLAYLIST = "com.sergeyrodin.PLAYLIST";
     public static final String EXTRA_LINK = "com.sergeyrodin.LINK";
     public static final String EXTRA_JS = "com.sergeyrodin.JS";
     public static final String EXTRA_PAGE = "com.sergeyrodin.PAGE";
     public static final String EXTRA_TITLE = "com.sergeyrodin.TITLE";
-    public static final String DOMAIN = "http://online-life.club";//TODO: domain should be resource
+    public static final String DOMAIN = "http://online-life.club";//TODO: domain should be
+    private static final String CATEGORIES_URL_EXTRA = "categories";
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private final int CATEGORIES_LOADER = 22;
+
     private ProgressBar progressBar;
-    private LinkRetainedFragment linkRetainedFragment;
     private TextView tvLoadingError;
     private MenuItem refreshMenuItem;
+    private List<Link> mCategories;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,31 +61,30 @@ public class MainActivity extends ExpandableListActivity {
         progressBar = findViewById(R.id.loading_indicator);
         tvLoadingError = findViewById(R.id.loading_error);
 
-        FragmentManager fm = getFragmentManager();
-        String tag = "saveMainData";
-        linkRetainedFragment = (LinkRetainedFragment)fm.findFragmentByTag(tag);
-        if(linkRetainedFragment == null){ //getting new results list
-            linkRetainedFragment = new LinkRetainedFragment();
-            fm.beginTransaction().add(linkRetainedFragment, tag).commit();
+        initLoader();
+    }
 
-            new CategoriesAsyncTask().execute();
-        }else{//using saved categories list
-            List<Link> categories = linkRetainedFragment.getData();
-            if(categories != null) {
-                categoriesToAdapter(categories);
-            }else {
-                new CategoriesAsyncTask().execute();
-            }
+    private void initLoader() {
+        Bundle categoriesBundle = new Bundle();
+        categoriesBundle.putString(CATEGORIES_URL_EXTRA, DOMAIN);
+
+        LoaderManager loaderManager = getLoaderManager();
+        Loader loader = loaderManager.getLoader(CATEGORIES_LOADER);
+        if(loader == null) {
+            loaderManager.initLoader(CATEGORIES_LOADER, categoriesBundle, this);
+        }else {
+            loaderManager.restartLoader(CATEGORIES_LOADER, categoriesBundle, this);
         }
     }
 
     @Override
     public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-        List<Link> categories = linkRetainedFragment.getData();
-        String parentTitle = categories.get(groupPosition).Title;
-        Link selectedCategory = categories.get(groupPosition).Links.get(childPosition);
-        startResultsActivity(parentTitle + " - " + selectedCategory.Title,
-                              selectedCategory.Href);
+        if(mCategories != null) {
+            String parentTitle = mCategories.get(groupPosition).Title;
+            Link selectedCategory = mCategories.get(groupPosition).Links.get(childPosition);
+            startResultsActivity(parentTitle + " - " + selectedCategory.Title,
+                    selectedCategory.Href);
+        }
         return true;
     }
 
@@ -103,7 +108,7 @@ public class MainActivity extends ExpandableListActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_refresh) {
-            new CategoriesAsyncTask().execute();
+            initLoader();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -178,51 +183,64 @@ public class MainActivity extends ExpandableListActivity {
         setListAdapter(adapter);
     }
 
-    class CategoriesAsyncTask extends AsyncTask<Void, Void, List<Link>> {
+    @Override
+    public Loader<List<Link>> onCreateLoader(int id, final Bundle args) {
+        return new AsyncTaskLoader<List<Link>>(this) {
 
-        @Override
-        protected void onPreExecute() {
-            showLoadingIndicator();
-        }
-
-        @Override
-        protected List<Link> doInBackground(Void... voids) {
-            //TODO use domain from resources
-            URL url;
-            try {
-                url = new URL(DOMAIN);
-                HttpURLConnection connection = null;
-                BufferedReader in = null;
-                try {
-                    connection = (HttpURLConnection)url.openConnection();
-                    InputStream stream = connection.getInputStream();
-                    in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
-                    String html = CategoriesParser.getCategoriesPart(in);
-                    return CategoriesParser.parseCategories(html);
-                }finally {
-                    if(in != null) {
-                        in.close();
-                    }
-                    if(connection != null) {
-                        connection.disconnect();
-                    }
+            @Override
+            protected void onStartLoading() {
+                if(args == null) {
+                    return;
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+                showLoadingIndicator();
+                forceLoad();
             }
-            return null;
-        }
 
-        @Override
-        protected void onPostExecute(List<Link> categories) {
-            if(categories != null && !categories.isEmpty()) {
-                showResults();
-                linkRetainedFragment.setData(categories);
-                categoriesToAdapter(categories);
-            }else {
-                showLoadingError();
+            @Override
+            public List<Link> loadInBackground() {
+                String categoriesUrl = args.getString(CATEGORIES_URL_EXTRA);
+                //TODO use domain from resources
+                URL url;
+                try {
+                    url = new URL(categoriesUrl);
+                    HttpURLConnection connection = null;
+                    BufferedReader in = null;
+                    try {
+                        connection = (HttpURLConnection)url.openConnection();
+                        InputStream stream = connection.getInputStream();
+                        in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
+                        String html = CategoriesParser.getCategoriesPart(in);
+                        return CategoriesParser.parseCategories(html);
+                    }finally {
+                        if(in != null) {
+                            in.close();
+                        }
+                        if(connection != null) {
+                            connection.disconnect();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return null;
             }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(Loader<List<Link>> loader, List<Link> data) {
+        if(data != null && !data.isEmpty()) {
+            showResults();
+            mCategories = data;
+            categoriesToAdapter(data);
+        }else {
+            showLoadingError();
         }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<List<Link>> loader) {
+
     }
 }
 
