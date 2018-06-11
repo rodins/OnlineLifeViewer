@@ -198,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     @Override
-    public void onLoadFinished(Loader<List<Link>> loader, List<Link> data) {
+    public void onLoadFinished(@NonNull Loader<List<Link>> loader, List<Link> data) {
         if(data != null && !data.isEmpty()) {
             showResults();
             mSavedCategories.Data = data;
@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     @Override
-    public void onLoaderReset(Loader<List<Link>> loader) {
+    public void onLoaderReset(@NonNull Loader<List<Link>> loader) {
 
     }
 

@@ -1,13 +1,18 @@
 package com.sergeyrodin.onlinelifeviewer;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.PersistableBundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,6 +21,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.sergeyrodin.onlinelifeviewer.utilities.Html;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
 import java.io.BufferedReader;
@@ -33,17 +39,32 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+class Actor {
+    String title;
+    boolean isDirector;
+    String href;
+    Actor(String title, boolean isDirector, String href) {
+        this.title = title;
+        this.isDirector = isDirector;
+        this.href = href;
+    }
+}
 
 class ActorsResult {
     String country;
     String year;
     String playerLink;
+    List<Actor> actors = new ArrayList<>();
 }
 
-public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.ListItemClickListener {
+public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.ListItemClickListener,
+        LoaderManager.LoaderCallbacks<ActorsResult>{
     private final static String TAG = ActorsActivity.class.getSimpleName();
+    private final static String ACTORS_URL_EXTRA = "actors";
     private final String SAVE_JS = "com.sergeyrodin.JS";
     private final String SAVE_TITLE = "com.sergeyrodin.TITLE";
+    private final int ACTORS_LOADER = 23;
+
     private RecyclerView mRvActors;
     private ProgressBar mLoadingIndicator;
     private TextView mErrorTextView;
@@ -83,12 +104,11 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
             if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
                 String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
-                try {
-                    URL url = new URL(link);
-                    new ActorsAsyncTask().execute(url);
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
+                Bundle actorsBundle = new Bundle();
+                actorsBundle.putString(ACTORS_URL_EXTRA, link);
+                showLoadingIndicator();
+                LoaderManager loaderManager = getSupportLoaderManager();
+                loaderManager.initLoader(ACTORS_LOADER, actorsBundle, this);
             }
         }
 
@@ -191,25 +211,78 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         super.onPause();
     }
 
-    class ActorsAsyncTask extends AsyncTask<URL, Link, ActorsResult> {
-        private ActorsAdapter mAdapter;
+    @NonNull
+    @Override
+    public Loader<ActorsResult> onCreateLoader(int id, @Nullable Bundle args) {
+        return new ActorsAsyncTaskLoader(this, args);
+    }
 
-        @Override
-        protected void onPreExecute() {
-            showLoadingIndicator();
-            mAdapter = new ActorsAdapter(mActors, ActorsActivity.this);
-            mRvActors.setAdapter(mAdapter);
-        }
+    @Override
+    public void onLoadFinished(@NonNull Loader<ActorsResult> loader, ActorsResult data) {
+        if(data == null) {
+            showError();
+        }else {
+            if(data.actors.isEmpty()) {
+                showEmpty();
+            }else {
+                for(Actor actor: data.actors) {
+                    String title = actor.title + " " + (actor.isDirector?"(" + getString(R.string.director) + ")":"");
+                    mActors.add(new Link(title, actor.href));
+                }
+                ActorsAdapter adapter = new ActorsAdapter(mActors, this);
+                mRvActors.setAdapter(adapter);
+                showData();
+            }
 
-        void parseAnchors(String line, boolean isDirector) {
-            Matcher m = Pattern.compile("<a\\s+href=\"(.+?)\">(.+?)</a>").matcher(line);
-            while(m.find()) {
-                String title = m.group(2) + " " + (isDirector?"(" + getString(R.string.director) + ")":"");
-                publishProgress(new Link(com.sergeyrodin.onlinelifeviewer.utilities.Html.unescape(title), m.group(1)));
+            if(data.country != null && data.year != null) {
+                mTitle += (" - " + data.country + " - " + data.year);
+                setTitle(mTitle);
+            }
+
+            if(data.playerLink != null) {
+                try {
+                    URL url = new URL(data.playerLink);
+                    new PlayerLinkAsyncTask().execute(url);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
             }
         }
+    }
 
-        String parseIframe(String line) {
+    @Override
+    public void onLoaderReset(@NonNull Loader<ActorsResult> loader) {
+
+    }
+
+    static class ActorsAsyncTaskLoader extends AsyncTaskLoader<ActorsResult> {
+        private Bundle args;
+
+        ActorsAsyncTaskLoader(Context context, Bundle args) {
+            super(context);
+            this.args = args;
+        }
+
+        @Override
+        protected void onStartLoading() {
+            if(args == null) {
+                return;
+            }
+            forceLoad();
+        }
+
+        private List<Actor> parseAnchors(String line, boolean isDirector) {
+            List<Actor> actors = new ArrayList<>();
+            Matcher m = Pattern.compile("<a\\s+href=\"(.+?)\">(.+?)</a>").matcher(line);
+            while(m.find()) {
+                actors.add(new Actor(Html.unescape(m.group(2)),
+                                     isDirector,
+                                     m.group(1)));
+            }
+            return actors;
+        }
+
+        private String parseIframe(String line) {
             int linkBegin = line.indexOf("src=");
             int linkEnd = line.indexOf("'", linkBegin+6);
             if(linkBegin != -1 && linkEnd != -1) {
@@ -218,7 +291,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             return null;
         }
 
-        String parseYear(String line) {
+        private String parseYear(String line) {
             int yearBegin = line.indexOf("\">");
             int yearEnd = line.indexOf("<", yearBegin);
             if(yearBegin != -1 && yearEnd != -1) {
@@ -228,10 +301,11 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         }
 
         @Override
-        protected ActorsResult doInBackground(URL... urls) {
+        public ActorsResult loadInBackground() {
             try {
+                String actorsUrl = args.getString(ACTORS_URL_EXTRA);
                 ActorsResult result = new ActorsResult();
-                URL url = urls[0];
+                URL url = new URL(actorsUrl);
                 HttpURLConnection connection = null;
                 BufferedReader in = null;
                 boolean spanFound = false;
@@ -254,7 +328,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                             continue;
                         }
                         if(spanFound && !line.contains("span")) {
-                            parseAnchors(line, isDirector);
+                            result.actors.addAll(parseAnchors(line, isDirector));
                         }
                         if(line.contains("</span>") && spanFound) {
                             spanFound = false;
@@ -304,39 +378,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                 e.printStackTrace();
             }
             return null;
-        }
-
-        @Override
-        protected void onProgressUpdate(Link... values) {
-            mActors.add(values[0]);
-            mAdapter.notifyItemInserted(mActors.size()-1);
-            if(mActors.size() == 1) {
-                showData();
-            }
-        }
-
-        @Override
-        protected void onPostExecute(ActorsResult result) {
-            if(result == null) {
-                showError();
-            }else if(mActors.isEmpty()) {
-                showEmpty();
-            }
-
-            if(result != null){
-                if(result.country != null && result.year != null) {
-                    mTitle += (" - " + result.country + " - " + result.year);
-                    setTitle(mTitle);
-                }
-                if(result.playerLink != null) {
-                    try {
-                        URL url = new URL(result.playerLink);
-                        new PlayerLinkAsyncTask().execute(url);
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
         }
     }
 
