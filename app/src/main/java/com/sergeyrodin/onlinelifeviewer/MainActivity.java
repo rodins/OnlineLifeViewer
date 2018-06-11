@@ -1,23 +1,21 @@
 package com.sergeyrodin.onlinelifeviewer;
 
-import android.app.ExpandableListActivity;
-import android.app.FragmentManager;
-import android.app.LoaderManager;
 import android.app.SearchManager;
-import android.content.AsyncTaskLoader;
 import android.content.Context;
-import android.content.Loader;
-import android.os.AsyncTask;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ProgressBar;
-import android.widget.SearchView;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
@@ -35,7 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends ExpandableListActivity implements LoaderManager.LoaderCallbacks<List<Link>> {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Link>> {
     public static final String EXTRA_PSITEM = "com.sergeyrodin.PSITEM";
     public static final String EXTRA_PLAYLIST = "com.sergeyrodin.PLAYLIST";
     public static final String EXTRA_LINK = "com.sergeyrodin.LINK";
@@ -46,10 +44,9 @@ public class MainActivity extends ExpandableListActivity implements LoaderManage
     private static final String CATEGORIES_URL_EXTRA = "categories";
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private final int CATEGORIES_LOADER = 22;
-
     private ProgressBar progressBar;
     private TextView tvLoadingError;
+    private ExpandableListView mCategoriesList;
     private MenuItem refreshMenuItem;
     private List<Link> mCategories;
 
@@ -60,32 +57,37 @@ public class MainActivity extends ExpandableListActivity implements LoaderManage
 
         progressBar = findViewById(R.id.loading_indicator);
         tvLoadingError = findViewById(R.id.loading_error);
+        mCategoriesList = findViewById(R.id.categories_list);
+
+        mCategoriesList.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+            @Override
+            public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+                if(mCategories != null) {
+                    String parentTitle = mCategories.get(groupPosition).Title;
+                    Link selectedCategory = mCategories.get(groupPosition).Links.get(childPosition);
+                    startResultsActivity(parentTitle + " - " + selectedCategory.Title,
+                            selectedCategory.Href);
+                }
+                return true;
+            }
+        });
 
         initLoader();
     }
 
     private void initLoader() {
+        showLoadingIndicator();
         Bundle categoriesBundle = new Bundle();
         categoriesBundle.putString(CATEGORIES_URL_EXTRA, DOMAIN);
 
-        LoaderManager loaderManager = getLoaderManager();
+        LoaderManager loaderManager = getSupportLoaderManager();
+        int CATEGORIES_LOADER = 22;
         Loader loader = loaderManager.getLoader(CATEGORIES_LOADER);
         if(loader == null) {
             loaderManager.initLoader(CATEGORIES_LOADER, categoriesBundle, this);
         }else {
             loaderManager.restartLoader(CATEGORIES_LOADER, categoriesBundle, this);
         }
-    }
-
-    @Override
-    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-        if(mCategories != null) {
-            String parentTitle = mCategories.get(groupPosition).Title;
-            Link selectedCategory = mCategories.get(groupPosition).Links.get(childPosition);
-            startResultsActivity(parentTitle + " - " + selectedCategory.Title,
-                    selectedCategory.Href);
-        }
-        return true;
     }
 
     @Override
@@ -97,6 +99,7 @@ public class MainActivity extends ExpandableListActivity implements LoaderManage
         SearchManager searchManager =
                 (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         SearchView searchView = (SearchView)menu.findItem(R.id.action_search).getActionView();
+        Log.d(TAG, "Search view: " + searchView);
         searchView.setSearchableInfo(
                 searchManager.getSearchableInfo(getComponentName()));
 
@@ -122,7 +125,7 @@ public class MainActivity extends ExpandableListActivity implements LoaderManage
     }
 
     private void showLoadingIndicator() {
-        getExpandableListView().setVisibility(View.INVISIBLE);
+        mCategoriesList.setVisibility(View.INVISIBLE);
         tvLoadingError.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.VISIBLE);
         if(refreshMenuItem != null) {
@@ -131,7 +134,7 @@ public class MainActivity extends ExpandableListActivity implements LoaderManage
     }
 
     private void showResults() {
-        getExpandableListView().setVisibility(View.VISIBLE);
+        mCategoriesList.setVisibility(View.VISIBLE);
         tvLoadingError.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.INVISIBLE);
         if(refreshMenuItem != null) {
@@ -140,7 +143,7 @@ public class MainActivity extends ExpandableListActivity implements LoaderManage
     }
 
     private void showLoadingError() {
-        getExpandableListView().setVisibility(View.INVISIBLE);
+        mCategoriesList.setVisibility(View.INVISIBLE);
         tvLoadingError.setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.INVISIBLE);
         if(refreshMenuItem != null) {
@@ -180,51 +183,12 @@ public class MainActivity extends ExpandableListActivity implements LoaderManage
                 childFrom,
                 childTo
                 );
-        setListAdapter(adapter);
+        mCategoriesList.setAdapter(adapter);
     }
 
     @Override
-    public Loader<List<Link>> onCreateLoader(int id, final Bundle args) {
-        return new AsyncTaskLoader<List<Link>>(this) {
-
-            @Override
-            protected void onStartLoading() {
-                if(args == null) {
-                    return;
-                }
-                showLoadingIndicator();
-                forceLoad();
-            }
-
-            @Override
-            public List<Link> loadInBackground() {
-                String categoriesUrl = args.getString(CATEGORIES_URL_EXTRA);
-                //TODO use domain from resources
-                URL url;
-                try {
-                    url = new URL(categoriesUrl);
-                    HttpURLConnection connection = null;
-                    BufferedReader in = null;
-                    try {
-                        connection = (HttpURLConnection)url.openConnection();
-                        InputStream stream = connection.getInputStream();
-                        in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
-                        String html = CategoriesParser.getCategoriesPart(in);
-                        return CategoriesParser.parseCategories(html);
-                    }finally {
-                        if(in != null) {
-                            in.close();
-                        }
-                        if(connection != null) {
-                            connection.disconnect();
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-        };
+    public Loader<List<Link>> onCreateLoader(int id, Bundle args) {
+        return new CategoriesAsyncTaskLoader(this, args);
     }
 
     @Override
@@ -241,6 +205,53 @@ public class MainActivity extends ExpandableListActivity implements LoaderManage
     @Override
     public void onLoaderReset(Loader<List<Link>> loader) {
 
+    }
+
+    static class CategoriesAsyncTaskLoader extends AsyncTaskLoader<List<Link>> {
+        private Bundle args;
+
+        CategoriesAsyncTaskLoader(Context context, Bundle args) {
+            super(context);
+            this.args = args;
+        }
+
+        @Override
+        protected void onStartLoading() {
+            if(args == null) {
+                return;
+            }
+            forceLoad();
+        }
+
+        @Override
+        public List<Link> loadInBackground() {
+            String categoriesUrl = args.getString(CATEGORIES_URL_EXTRA);
+            //TODO use domain from resources
+            URL url;
+            try {
+                url = new URL(categoriesUrl);
+                HttpURLConnection connection = null;
+                BufferedReader in = null;
+                try {
+                    Log.d(TAG, "Using network");
+                    connection = (HttpURLConnection)url.openConnection();
+                    InputStream stream = connection.getInputStream();
+                    in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
+                    String html = CategoriesParser.getCategoriesPart(in);
+                    return CategoriesParser.parseCategories(html);
+                }finally {
+                    if(in != null) {
+                        in.close();
+                    }
+                    if(connection != null) {
+                        connection.disconnect();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
     }
 }
 
