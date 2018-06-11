@@ -45,11 +45,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private static final String CATEGORIES_URL_EXTRA = "categories";
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private int CATEGORIES_LOADER = 22;
     private ProgressBar progressBar;
     private TextView tvLoadingError;
     private ExpandableListView mCategoriesList;
     private MenuItem refreshMenuItem;
-    private LinkRetainedFragment mSavedCategories;
+    private List<Link> mCategories;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,9 +64,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mCategoriesList.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
             @Override
             public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-                if(mSavedCategories.Data != null) {
-                    String parentTitle = mSavedCategories.Data.get(groupPosition).Title;
-                    Link selectedCategory = mSavedCategories.Data.get(groupPosition).Links.get(childPosition);
+                if(mCategories != null) {
+                    String parentTitle = mCategories.get(groupPosition).Title;
+                    Link selectedCategory = mCategories.get(groupPosition).Links.get(childPosition);
                     startResultsActivity(parentTitle + " - " + selectedCategory.Title,
                             selectedCategory.Href);
                 }
@@ -73,27 +74,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         });
 
-        mSavedCategories = LinkRetainedFragment.findOrCreateRetainedFragment(getFragmentManager());
-        if(mSavedCategories.Data == null) {
-            initLoader();
-        }else {
-            categoriesToAdapter(mSavedCategories.Data);
-        }
-    }
-
-    private void initLoader() {
         showLoadingIndicator();
         Bundle categoriesBundle = new Bundle();
         categoriesBundle.putString(CATEGORIES_URL_EXTRA, DOMAIN);
-
         LoaderManager loaderManager = getSupportLoaderManager();
-        int CATEGORIES_LOADER = 22;
-        Loader loader = loaderManager.getLoader(CATEGORIES_LOADER);
-        if(loader == null) {
-            loaderManager.initLoader(CATEGORIES_LOADER, categoriesBundle, this);
-        }else {
-            loaderManager.restartLoader(CATEGORIES_LOADER, categoriesBundle, this);
-        }
+        loaderManager.initLoader(CATEGORIES_LOADER, categoriesBundle, this);
     }
 
     @Override
@@ -116,7 +101,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_refresh) {
-            initLoader();
+            showLoadingIndicator();
+            Bundle categoriesBundle = new Bundle();
+            categoriesBundle.putString(CATEGORIES_URL_EXTRA, DOMAIN);
+            LoaderManager loaderManager = getSupportLoaderManager();
+            loaderManager.restartLoader(CATEGORIES_LOADER, categoriesBundle, this);
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -201,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public void onLoadFinished(@NonNull Loader<List<Link>> loader, List<Link> data) {
         if(data != null && !data.isEmpty()) {
             showResults();
-            mSavedCategories.Data = data;
+            mCategories = data;
             categoriesToAdapter(data);
         }else {
             showLoadingError();
