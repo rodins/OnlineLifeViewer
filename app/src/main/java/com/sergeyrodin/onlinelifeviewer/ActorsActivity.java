@@ -63,7 +63,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     private final static String ACTORS_URL_EXTRA = "actors";
     private final String SAVE_JS = "com.sergeyrodin.JS";
     private final String SAVE_TITLE = "com.sergeyrodin.TITLE";
-    private final int ACTORS_LOADER = 23;
 
     private RecyclerView mRvActors;
     private ProgressBar mLoadingIndicator;
@@ -72,7 +71,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     private List<Link> mActors = new ArrayList<>();
     private String mJs;
     private MenuItem mActionOpen;
-    private LinkRetainedFragment mSaveActors;
     private String mTitle;
 
     @Override
@@ -86,30 +84,24 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         mLoadingIndicator = findViewById(R.id.actors_loading_indicator);
         mErrorTextView = findViewById(R.id.actors_loading_error);
 
-        mSaveActors = LinkRetainedFragment.findOrCreateRetainedFragment(getFragmentManager());
+        Intent intent = getIntent();
+        if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
+            mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
+        }
+
+        if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
+            String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
+            Bundle actorsBundle = new Bundle();
+            actorsBundle.putString(ACTORS_URL_EXTRA, link);
+            showLoadingIndicator();
+            LoaderManager loaderManager = getSupportLoaderManager();
+            int ACTORS_LOADER = 23;
+            loaderManager.initLoader(ACTORS_LOADER, actorsBundle, this);
+        }
 
         if(savedInstanceState != null) {
             mJs = savedInstanceState.getString(SAVE_JS);
             mTitle = savedInstanceState.getString(SAVE_TITLE);
-        }
-
-        if(mSaveActors.Data != null && mSaveActors.Data.size() != 0) {
-            mActors = mSaveActors.Data;
-            mRvActors.setAdapter(new ActorsAdapter(mActors, this));
-        }else {
-            Intent intent = getIntent();
-            if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
-                mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
-            }
-
-            if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
-                String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
-                Bundle actorsBundle = new Bundle();
-                actorsBundle.putString(ACTORS_URL_EXTRA, link);
-                showLoadingIndicator();
-                LoaderManager loaderManager = getSupportLoaderManager();
-                loaderManager.initLoader(ACTORS_LOADER, actorsBundle, this);
-            }
         }
 
         if(mTitle != null) {
@@ -203,12 +195,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             outState.putString(SAVE_TITLE, mTitle);
         }
         super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    protected void onPause() {
-        mSaveActors.Data = mActors;
-        super.onPause();
     }
 
     @NonNull
