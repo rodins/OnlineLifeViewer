@@ -62,7 +62,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     private final static String TAG = ActorsActivity.class.getSimpleName();
     private final static String ACTORS_URL_EXTRA = "actors";
     private final String SAVE_JS = "com.sergeyrodin.JS";
-    private final String SAVE_TITLE = "com.sergeyrodin.TITLE";
 
     private RecyclerView mRvActors;
     private ProgressBar mLoadingIndicator;
@@ -71,7 +70,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     private List<Link> mActors = new ArrayList<>();
     private String mJs;
     private MenuItem mActionOpen;
-    private String mTitle;
+    private String mTitle, mResultTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +85,10 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
         Intent intent = getIntent();
         if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
-            mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
+            mResultTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
+            setTitle(mResultTitle);
+        }else {
+            setTitle(R.string.actors_title);
         }
 
         if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
@@ -101,13 +103,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
         if(savedInstanceState != null) {
             mJs = savedInstanceState.getString(SAVE_JS);
-            mTitle = savedInstanceState.getString(SAVE_TITLE);
-        }
-
-        if(mTitle != null) {
-            setTitle(mTitle);
-        }else {
-            setTitle(R.string.actors_title);
         }
     }
 
@@ -191,9 +186,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         if(mJs != null) {
             outState.putString(SAVE_JS, mJs);
         }
-        if(mTitle != null) {
-            outState.putString(SAVE_TITLE, mTitle);
-        }
         super.onSaveInstanceState(outState);
     }
 
@@ -221,7 +213,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             }
 
             if(data.country != null && data.year != null) {
-                mTitle += (" - " + data.country + " - " + data.year);
+                mTitle = mResultTitle + " - " + data.country + " - " + data.year;
                 setTitle(mTitle);
             }
 
