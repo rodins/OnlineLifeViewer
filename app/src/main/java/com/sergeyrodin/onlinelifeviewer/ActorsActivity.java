@@ -54,6 +54,7 @@ class ActorsResult {
     String country;
     String year;
     String playerLink;
+    String jsLink;
     List<Actor> actors = new ArrayList<>();
 }
 
@@ -217,10 +218,11 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                 setTitle(mTitle);
             }
 
-            if(data.playerLink != null) {
+            if(data.jsLink != null) {
                 try {
-                    URL url = new URL(data.playerLink);
-                    new PlayerLinkAsyncTask().execute(url);
+                    URL url = new URL(data.jsLink);
+                    URL referer = new URL(data.playerLink);
+                    new JsAsyncTask().execute(url, referer);
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 }
@@ -274,6 +276,44 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             int yearEnd = line.indexOf("<", yearBegin);
             if(yearBegin != -1 && yearEnd != -1) {
                 return line.substring(yearBegin+2, yearEnd);
+            }
+            return null;
+        }
+
+        private String parseJsLink(String line) {
+            int begin = line.indexOf("src=");
+            int end = line.indexOf("\"", begin+6);
+            if(begin != -1 && end != -1) {
+                return line.substring(begin+5, end);
+            }
+            return null;
+        }
+
+        private String loadJsLink(String playerLink) {
+            try {
+                URL url = new URL(playerLink);
+                HttpURLConnection connection = null;
+                BufferedReader in = null;
+                try {
+                    connection = (HttpURLConnection)url.openConnection();
+                    InputStream stream = connection.getInputStream();
+                    in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
+                    String line;
+                    while((line = in.readLine()) != null){
+                        if(line.contains("js.php")) {
+                            return "http:" + parseJsLink(line);
+                        }
+                    }
+                }finally {
+                    if(in != null) {
+                        in.close();
+                    }
+                    if(connection != null) {
+                        connection.disconnect();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             return null;
         }
@@ -340,6 +380,9 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
                         if(line.contains("<iframe")) {
                             result.playerLink = parseIframe(line);
+                            if(result.playerLink != null) {
+                                result.jsLink = loadJsLink(result.playerLink);
+                            }
                             return result;
                         }
                     }
@@ -356,65 +399,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                 e.printStackTrace();
             }
             return null;
-        }
-    }
-
-    class PlayerLinkAsyncTask extends AsyncTask<URL, Void, String> {
-
-        private URL referer;
-
-        private String parseJsLink(String line) {
-            int begin = line.indexOf("src=");
-            int end = line.indexOf("\"", begin+6);
-            if(begin != -1 && end != -1) {
-                return line.substring(begin+5, end);
-            }
-            return null;
-        }
-
-        @Override
-        protected String doInBackground(URL... urls) {
-            try {
-                URL url = urls[0];
-                referer = url;
-                HttpURLConnection connection = null;
-                BufferedReader in = null;
-                try {
-                    connection = (HttpURLConnection)url.openConnection();
-                    InputStream stream = connection.getInputStream();
-                    in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
-                    String line;
-                    while((line = in.readLine()) != null){
-                        if(line.contains("js.php")) {
-                            return "http:" + parseJsLink(line);
-                        }
-                    }
-                }finally {
-                    if(in != null) {
-                        in.close();
-                    }
-                    if(connection != null) {
-                        connection.disconnect();
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String jsLink) {
-            if(jsLink != null) {
-                try {
-                    URL url = new URL(jsLink);
-                    new JsAsyncTask().execute(url, referer);
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
-            }else {
-                showError();
-            }
         }
     }
 
