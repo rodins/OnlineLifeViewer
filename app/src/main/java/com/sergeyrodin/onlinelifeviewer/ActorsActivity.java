@@ -53,8 +53,7 @@ class Actor {
 class ActorsResult {
     String country;
     String year;
-    String playerLink;
-    String jsLink;
+    String js;
     List<Actor> actors = new ArrayList<>();
 }
 
@@ -62,7 +61,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         LoaderManager.LoaderCallbacks<ActorsResult>{
     private final static String TAG = ActorsActivity.class.getSimpleName();
     private final static String ACTORS_URL_EXTRA = "actors";
-    private final String SAVE_JS = "com.sergeyrodin.JS";
 
     private RecyclerView mRvActors;
     private ProgressBar mLoadingIndicator;
@@ -100,10 +98,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             LoaderManager loaderManager = getSupportLoaderManager();
             int ACTORS_LOADER = 23;
             loaderManager.initLoader(ACTORS_LOADER, actorsBundle, this);
-        }
-
-        if(savedInstanceState != null) {
-            mJs = savedInstanceState.getString(SAVE_JS);
         }
     }
 
@@ -182,14 +176,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         startActivity(intent);
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        if(mJs != null) {
-            outState.putString(SAVE_JS, mJs);
-        }
-        super.onSaveInstanceState(outState);
-    }
-
     @NonNull
     @Override
     public Loader<ActorsResult> onCreateLoader(int id, @Nullable Bundle args) {
@@ -218,14 +204,13 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                 setTitle(mTitle);
             }
 
-            if(data.jsLink != null) {
-                try {
-                    URL url = new URL(data.jsLink);
-                    URL referer = new URL(data.playerLink);
-                    new JsAsyncTask().execute(url, referer);
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
+            if(data.js != null) {
+                mJs = data.js;
+                if(mActionOpen != null) {
+                    mActionOpen.setVisible(true);
                 }
+            }else {
+                showError();
             }
         }
     }
@@ -318,6 +303,16 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             return null;
         }
 
+        private String loadJs(String jsLink, String referer) {
+            try {
+                URL url = new URL(jsLink);
+                return NetworkUtils.getResponseFromHttpUrl(url, referer);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
         @Override
         public ActorsResult loadInBackground() {
             try {
@@ -379,9 +374,12 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                         }
 
                         if(line.contains("<iframe")) {
-                            result.playerLink = parseIframe(line);
-                            if(result.playerLink != null) {
-                                result.jsLink = loadJsLink(result.playerLink);
+                            String playerLink = parseIframe(line);
+                            if(playerLink != null) {
+                                String jsLink = loadJsLink(playerLink);
+                                if(jsLink != null) {
+                                    result.js = loadJs(jsLink, playerLink);
+                                }
                             }
                             return result;
                         }
@@ -399,29 +397,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                 e.printStackTrace();
             }
             return null;
-        }
-    }
-
-    class JsAsyncTask extends AsyncTask<URL, Void, String> {
-
-        @Override
-        protected String doInBackground(URL... urls) {
-            try {
-                return NetworkUtils.getResponseFromHttpUrl(urls[0], urls[1].toString());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String js) {
-            if(js != null) {
-                mJs = js;
-                mActionOpen.setVisible(true);
-            }else {
-                showError();
-            }
         }
     }
 }
