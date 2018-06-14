@@ -94,11 +94,12 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mResultsView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                if(!recyclerView.canScrollVertically(1)){
-                    // React to scrolling only when list is totally loaded
-                    if(mIsOnPostExecute) {
-                        mIsPage = true;
-                        if(mNextLink != null && !mNextLink.isEmpty()) {
+                if(!recyclerView.canScrollVertically(1)) {
+                    if(mNextLink != null && !mNextLink.isEmpty()) {
+                        if(!mNextLinks.contains(mNextLink)) {
+                            mIsPage = true;
+                            mNextLinks.add(mNextLink);
+                            //Log.d(getClass().getSimpleName(), "Next link: " + mNextLink);
                             restartLoader(mNextLink);
                         }
                     }
@@ -121,6 +122,13 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mNextLinks = mSaveResults.mRetainedNextLinks;
         if(mNextLinks == null) {
              mNextLinks = new HashSet<>();
+        }
+
+        if(mNextLink != null && !mNextLink.isEmpty()) {
+            // In restarted activity mNextLink should't be in mNextLinks
+            if(mNextLinks.contains(mNextLink)) {
+                mNextLinks.remove(mNextLink);
+            }
         }
 
         mResults = mSaveResults.mRetainedData;
@@ -289,22 +297,16 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         }
 
         if(!nl.isEmpty()) {
-            if(!mNextLinks.contains(nl)) {
-                mNextLinks.add(nl);
-                mNextLink = nl;
-            }
+            mNextLink = nl;
         }else {
             // search page navigation links
-            m = Pattern.compile("<a.+?onclick=\".+?(\\d+).+?\">(.+?)</a>").matcher(nav);
-            while(m.find()) {
+            m = Pattern.compile("<a\\s+name=\"nextlink\".+?onclick=\".+?(\\d+).+?\">></a>").matcher(nav);
+            if(m.find()) {
                 nl = m.group(1);
             }
 
             if(!nl.isEmpty()) {
-                if(!mNextLinks.contains(nl)) {
-                    mNextLinks.add(nl);
-                    mNextLink = getSearchLink(Integer.parseInt(nl)); //forming next search link
-                }
+                mNextLink = getSearchLink(Integer.parseInt(nl)); //forming next search link
             }
         }
     }
