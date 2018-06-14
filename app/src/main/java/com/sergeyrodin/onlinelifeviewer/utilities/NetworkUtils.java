@@ -44,11 +44,11 @@ public class NetworkUtils {
     private final static String PARAM_IMAGE_ZC = "zc";
     private final static String ZC = "1";
 
-    public static URL buildSearchUrl(String query) {
+    public static String buildSearchUrl(String query) {
         return buildSearchUrl(query, 0);
     }
 
-    public static URL buildSearchUrl(String query, int page) {
+    public static String buildSearchUrl(String query, int page) {
         String story = "";
 
         try {
@@ -73,14 +73,7 @@ public class NetworkUtils {
                                .build();
         }
 
-        URL url = null;
-        try {
-            url = new URL(builtUri.toString());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        return url;
+        return builtUri.toString();
     }
 
     private static String getLinkId(String link) {

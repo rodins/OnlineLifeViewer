@@ -1,18 +1,21 @@
 package com.sergeyrodin.onlinelifeviewer;
 
-import android.app.FragmentManager;
 import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.util.LruCache;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,7 +30,6 @@ import com.sergeyrodin.onlinelifeviewer.utilities.Html;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -41,14 +43,20 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener {
+class ResultsResult{
+    List<Result> results = new ArrayList<>();
+    String navigation;
+}
+
+public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener,
+        LoaderManager.LoaderCallbacks<ResultsResult>{
+    private final static String RESULTS_URL_EXTRA = "results";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_IS_ON_POST_EXECUTE = "com.sergeyrodin.IS_ON_POST_EXECUTE";
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
-    private final String TAG = ResultsActivity.class.getSimpleName();
     private final String TRAILERS = "Трейлеры";
 
-    private URL nextLink;
+    private String mNextLink;
     private ResultsRetainedFragment mSaveResults;
     private ProgressBar mLoadingIndicator;
     private TextView mErrorMessageTextView;
@@ -57,8 +65,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private boolean mIsOnPostExecute = false;
     private boolean mIsPage = false;
     private String mTitle;
-    private int mSpanCount;
-    private Set<String> mNextLinks = new HashSet<>();
+    private Set<String> mNextLinks;
 
     private MenuItem mActorsMenuItem;
 
@@ -72,7 +79,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         Configuration configuration = getResources().getConfiguration();
         int screenWidthDp = configuration.screenWidthDp;
         int RESULT_WIDTH = 190;
-        mSpanCount = screenWidthDp/ RESULT_WIDTH;
+        int mSpanCount = screenWidthDp / RESULT_WIDTH;
 
         if(mSpanCount <= 2) {
             LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -91,8 +98,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                     // React to scrolling only when list is totally loaded
                     if(mIsOnPostExecute) {
                         mIsPage = true;
-                        if(nextLink != null) {
-                            refresh(nextLink);
+                        if(mNextLink != null && !mNextLink.isEmpty()) {
+                            restartLoader(mNextLink);
                         }
                     }
                 }
@@ -105,40 +112,53 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mTitle = getString(R.string.results);
 
         if(savedInstanceState != null) {
-            try {
-                String strNextLink = savedInstanceState.getString(STATE_NEXTLINK);
-                mIsOnPostExecute = savedInstanceState.getBoolean(STATE_IS_ON_POST_EXECUTE);
-                mTitle = savedInstanceState.getString(STATE_TITLE);
-                if(strNextLink != null) {
-                    nextLink = new URL(strNextLink);
-                }
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
+            mNextLink = savedInstanceState.getString(STATE_NEXTLINK);
+            mIsOnPostExecute = savedInstanceState.getBoolean(STATE_IS_ON_POST_EXECUTE);
+            mTitle = savedInstanceState.getString(STATE_TITLE);
         }
 
         mSaveResults = ResultsRetainedFragment.findOrCreateRetainedFragment(getFragmentManager());
+        mNextLinks = mSaveResults.mRetainedNextLinks;
+        if(mNextLinks == null) {
+             mNextLinks = new HashSet<>();
+        }
 
         mResults = mSaveResults.mRetainedData;
-        if(mResults == null) {
+        if (mResults == null) {
+            mResults = new ArrayList<>();
+
             Intent intent = getIntent();
             if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
                 mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
             }
+
             // No saved data, find new info
             if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
                 String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
-                refresh(link);
+                restartLoader(link);
             }else if(Intent.ACTION_SEARCH.equals(intent.getAction())) { //Called by SearchView
                 String query = getIntent().getStringExtra(SearchManager.QUERY);
                 mTitle = query;
-                refresh(NetworkUtils.buildSearchUrl(query));
+                restartLoader(NetworkUtils.buildSearchUrl(query));
             }
-        }else {
-            mResultsView.setAdapter(new ResultsAdapter(mResults, this, this, mSpanCount));
         }
 
+        mResultsView.setAdapter(new ResultsAdapter(mResults,
+                               this,
+                               this,
+                                mSpanCount));
+
         setTitle(mTitle);
+    }
+
+    private void restartLoader(String link) {
+        mIsOnPostExecute = false;
+        showLoadingIndicator();
+        Bundle resultsBundle = new Bundle();
+        resultsBundle.putString(RESULTS_URL_EXTRA, link);
+        LoaderManager loaderManager = getSupportLoaderManager();
+        int RESULTS_LOADER = 24;
+        loaderManager.restartLoader(RESULTS_LOADER, resultsBundle, this);
     }
 
     @Override
@@ -162,7 +182,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         return super.onOptionsItemSelected(item);
     }
 
-    private URL getSearchLink(int page) {
+    private String getSearchLink(int page) {
         String query = getIntent().getStringExtra(SearchManager.QUERY);
         return NetworkUtils.buildSearchUrl(query, page);
     }
@@ -187,27 +207,18 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        if(nextLink != null) {
-            String strNextLink = nextLink.toString();
-            outState.putString(STATE_NEXTLINK, strNextLink);
-        }
+        outState.putString(STATE_NEXTLINK, mNextLink);
         outState.putBoolean(STATE_IS_ON_POST_EXECUTE, mIsOnPostExecute);
         outState.putString(STATE_TITLE, mTitle);
 
         super.onSaveInstanceState(outState);
     }
 
-    private void refresh(String link) {
-        try {
-            URL url = new URL(link);
-            new ResultsAsyncTask().execute(url);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void refresh(URL url) {
-        new ResultsAsyncTask().execute(url);
+    @Override
+    protected void onPause() {
+        mSaveResults.mRetainedData = mResults;
+        mSaveResults.mRetainedNextLinks = mNextLinks;
+        super.onPause();
     }
 
     private void moveUpResultsViewBottom() {
@@ -267,40 +278,9 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mErrorMessageTextView.setVisibility(View.INVISIBLE);
     }
 
-    private Result divToResult(String div) {
-        //TODO: regexp should be domain independent
-        Matcher m = Pattern
-                .compile("<a\\s+href=\"(http://www.online-life.club/\\d+?-.*?html)\"\\s*?>\\n\\s*<img\\s+src=\"(.*?)\"\\s+/>(.+?)\\n?\\s*</a>")
-                .matcher(div);
-        if(m.find()) {
-            String link = m.group(1);
-            String image = m.group(2);
-            image = image.substring(0, image.indexOf("&"));
-            String title = Html.unescape(m.group(3));
-            return new Result(title, image, link);
-        }
-        return null;
-    }
-
-    private Result divToMobileResult(String div) {
-        Matcher m = Pattern
-                .compile("<a\\s+href=\"(.*?)\".*?src=\"(.*?)\".*?\">(.+?)</span>")
-                .matcher(div);
-        if(m.find()) {
-            String link = m.group(1);
-            String image = m.group(2);
-            image = image.substring(0, image.indexOf("&"));
-            String title = Html.unescape(m.group(3));
-            return new Result(title, image, link);
-        }
-        return null;
-    }
-
     private void parseNavigation(String nav) {
-        nextLink = null;
+        mNextLink = "";
         String nl = "";
-        int nextPage = 0;
-
         Matcher m;
         // non-search page navigation links
         m = Pattern.compile("<a\\s+href=\"(.+?)\">(.+?)</a>").matcher(nav);
@@ -308,57 +288,109 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             nl = m.group(1);// iterating to get last element
         }
 
-        try {
-            if(!nl.isEmpty()) {
-                if(!mNextLinks.contains(nl)) {
-                    mNextLinks.add(nl);
-                    nextLink = new URL(nl);
-                }
-            }
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        // search page navigation links
-        m = Pattern.compile("<a.+?onclick=\".+?(\\d+).+?\">(.+?)</a>").matcher(nav);
-        while(m.find()) {
-            nl = m.group(1);
-        }
-
         if(!nl.isEmpty()) {
             if(!mNextLinks.contains(nl)) {
                 mNextLinks.add(nl);
-                nextPage = Integer.parseInt(nl);
-                nextLink = getSearchLink(nextPage); //forming next search link
+                mNextLink = nl;
+            }
+        }else {
+            // search page navigation links
+            m = Pattern.compile("<a.+?onclick=\".+?(\\d+).+?\">(.+?)</a>").matcher(nav);
+            while(m.find()) {
+                nl = m.group(1);
+            }
+
+            if(!nl.isEmpty()) {
+                if(!mNextLinks.contains(nl)) {
+                    mNextLinks.add(nl);
+                    mNextLink = getSearchLink(Integer.parseInt(nl)); //forming next search link
+                }
             }
         }
     }
 
-    public class ResultsAsyncTask extends AsyncTask<URL, Result, String> {
-        private ResultsAdapter adapter;
+    @NonNull
+    @Override
+    public Loader<ResultsResult> onCreateLoader(int id, Bundle args) {
+        String url = args.getString(RESULTS_URL_EXTRA);
+        return new ResultsAsyncTaskLoader(this, url);
+    }
 
-        @Override
-        protected void onPreExecute() {
-            showLoadingIndicator();
+    @Override
+    public void onLoadFinished(@NonNull Loader<ResultsResult> loader, ResultsResult data) {
+        if(data != null) {
+            if (!data.results.isEmpty()) {
+                mResults.addAll(data.results);
+                ResultsAdapter adapter = (ResultsAdapter)mResultsView.getAdapter();
+                adapter.notifyDataSetChanged();
 
-            mIsOnPostExecute = false;
+                mIsOnPostExecute = true;
 
-            if(!mIsPage) {
-                mResults = new ArrayList<>();
-                adapter = new ResultsAdapter(mResults,
-                        ResultsActivity.this,
-                        ResultsActivity.this,
-                         mSpanCount);
-                mResultsView.setAdapter(adapter);
-                mNextLinks.clear();
-            }else {
-                adapter = (ResultsAdapter)mResultsView.getAdapter();
+                if (!data.navigation.isEmpty()) {
+                    parseNavigation(data.navigation);
+                }
+                showData();
+            }else{
+                showErrorMessage(R.string.nothing_found);
             }
+        }else {
+            showErrorMessage(R.string.network_problem);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<ResultsResult> loader) {
+
+    }
+
+    static class ResultsAsyncTaskLoader extends AsyncTaskLoader<ResultsResult> {
+        private String link;
+
+        ResultsAsyncTaskLoader(@NonNull Context context, String link) {
+            super(context);
+            this.link = link;
         }
 
-        protected String doInBackground(URL... params) {
+        @Override
+        protected void onStartLoading() {
+            forceLoad();
+        }
+
+        private Result divToResult(String div) {
+            //TODO: regexp should be domain independent
+            Matcher m = Pattern
+                    .compile("<a\\s+href=\"(http://www.online-life.club/\\d+?-.*?html)\"\\s*?>\\n\\s*<img\\s+src=\"(.*?)\"\\s+/>(.+?)\\n?\\s*</a>")
+                    .matcher(div);
+            if(m.find()) {
+                String link = m.group(1);
+                String image = m.group(2);
+                image = image.substring(0, image.indexOf("&"));
+                String title = Html.unescape(m.group(3));
+                return new Result(title, image, link);
+            }
+            return null;
+        }
+
+        private Result divToMobileResult(String div) {
+            Matcher m = Pattern
+                    .compile("<a\\s+href=\"(.*?)\".*?src=\"(.*?)\".*?\">(.+?)</span>")
+                    .matcher(div);
+            if(m.find()) {
+                String link = m.group(1);
+                String image = m.group(2);
+                image = image.substring(0, image.indexOf("&"));
+                String title = Html.unescape(m.group(3));
+                return new Result(title, image, link);
+            }
+            return null;
+        }
+
+        @Nullable
+        @Override
+        public ResultsResult loadInBackground() {
+            ResultsResult resultsResult = new ResultsResult();
             try {
-                URL url = params[0];
+                URL url = new URL(link);
                 HttpURLConnection connection = null;
                 BufferedReader in = null;
                 try {
@@ -379,7 +411,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                             div += line;
                             Result result = divToResult(div);
                             if(result != null) {
-                                publishProgress(result);
+                                resultsResult.results.add(result);
                             }
                             div = "";
                         }
@@ -397,7 +429,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                             div_mobile_found = false;
                             Result result = divToMobileResult(div);
                             if(result != null) {
-                                publishProgress(result);
+                                resultsResult.results.add(result);
                             }
                         }
 
@@ -415,14 +447,16 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
                         if(line.contains("</div>") && div_nav_found) {
                             div += line.trim();
-                            return div;
+                            resultsResult.navigation = div;
+                            return resultsResult;
                         }
 
                         if(div_nav_found) {
                             div += line.trim();
                         }
                     }
-                    return "";
+                    resultsResult.navigation = "";
+                    return resultsResult;
                 }finally {
                     if(in != null) {
                         in.close();
@@ -435,37 +469,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                 e.printStackTrace();
             }
             return null;
-        }
-
-        @Override
-        protected void onProgressUpdate(Result... values) {
-            showData();
-            Result result = values[0];
-            mResults.add(result);
-            int index = mResults.indexOf(result);
-            adapter.notifyItemInserted(index);
-        }
-
-        protected void onPostExecute(String navigation) {
-            if(navigation == null) {
-                showErrorMessage(R.string.network_problem);
-                mSaveResults.mRetainedData = null; //save null to ResultsRetainedFragment to erase prev results
-                return;
-            }
-
-            if(mResults.isEmpty()) {
-                showErrorMessage(R.string.nothing_found);
-                mSaveResults.mRetainedData = null;
-                return;
-            }else {
-                mSaveResults.mRetainedData = mResults;
-            }
-
-            mIsOnPostExecute = true;
-
-            if(!navigation.isEmpty()) {
-                parseNavigation(navigation);
-            }
         }
     }
 

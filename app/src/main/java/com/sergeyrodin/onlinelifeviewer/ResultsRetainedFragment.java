@@ -8,6 +8,7 @@ import android.util.LruCache;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by root on 07.05.16.
@@ -15,6 +16,7 @@ import java.util.List;
 public class ResultsRetainedFragment extends Fragment {
     private static final String TAG = "ResultsRetainedFragment";
     public List<Result> mRetainedData;
+    public Set<String> mRetainedNextLinks;
 
     public static ResultsRetainedFragment findOrCreateRetainedFragment(FragmentManager fm) {
         ResultsRetainedFragment fragment = (ResultsRetainedFragment)fm.findFragmentByTag(TAG);
