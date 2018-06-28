@@ -35,7 +35,7 @@ public class ProcessPlaylistItem {
             if(viewMediaIntent.resolveActivity(activity.getPackageManager()) != null){
                 activity.startActivity(viewMediaIntent);
             }else {
-                Toast.makeText(activity, R.string.no_app_found, Toast.LENGTH_SHORT);
+                Toast.makeText(activity, R.string.no_app_found, Toast.LENGTH_SHORT).show();
             }
         }
     }
