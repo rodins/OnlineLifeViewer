@@ -291,9 +291,9 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         String nl = "";
         Matcher m;
         // non-search page navigation links
-        m = Pattern.compile("<a\\s+href=\"(.+?)\">(.+?)</a>").matcher(nav);
-        while(m.find()) {
-            nl = m.group(1);// iterating to get last element
+        m = Pattern.compile("<a\\s+href=\"(\\S+?)\">></a>").matcher(nav);
+        if(m.find()) {
+            nl = m.group(1);
         }
 
         if(!nl.isEmpty()) {
