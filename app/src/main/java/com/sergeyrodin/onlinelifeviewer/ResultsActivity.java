@@ -359,9 +359,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         }
 
         private Result divToResult(String div) {
-            //TODO: regexp should be domain independent
             Matcher m = Pattern
-                    .compile("<a\\s+href=\"(http://www.online-life.club/\\d+?-.*?html)\"\\s*?>\\n\\s*<img\\s+src=\"(.*?)\"\\s+/>(.+?)\\n?\\s*</a>")
+                    .compile("<a\\s+href=\"(http://www.online-life.[a-z]+?/\\d+?-.*?html)\"\\s*?>\\n\\s*<img\\s+src=\"(.*?)\"\\s+/>(.+?)\\n?\\s*</a>")
                     .matcher(div);
             if(m.find()) {
                 String link = m.group(1);
