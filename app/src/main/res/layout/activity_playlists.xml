@@ -28,7 +28,7 @@
     </ListView>
 
     <ExpandableListView
-        android:id="@+id/android:list"
+        android:id="@+id/elv_playlists"
         android:drawSelectorOnTop="false"
         android:layout_width="match_parent"
         android:layout_height="match_parent">

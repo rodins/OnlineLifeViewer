@@ -5,6 +5,7 @@ import android.app.ExpandableListActivity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ExpandableListAdapter;
@@ -20,7 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PlaylistsActivity extends ExpandableListActivity {
+public class PlaylistsActivity extends AppCompatActivity {
     private final String STATE_MODE = "com.sergeyrodin.MODE";
     private final String STATE_DATA = "com.sergeyrodin.DATA";
     private boolean isPlaylists = true;
@@ -29,6 +30,7 @@ public class PlaylistsActivity extends ExpandableListActivity {
     private ProgressBar pbLoadingIndicator;
     private TextView tvLoadingError;
     private ListView lvPlaylist;
+    private ExpandableListView elvPlaylists;
 
     private AdapterView.OnItemClickListener mMessageClickedHandler = new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView parent, View v, int position, long id) {
@@ -47,6 +49,16 @@ public class PlaylistsActivity extends ExpandableListActivity {
         tvLoadingError = findViewById(R.id.playlists_loading_error);
         lvPlaylist = findViewById(R.id.lv_playlist);
         lvPlaylist.setOnItemClickListener(mMessageClickedHandler);
+
+        elvPlaylists = findViewById(R.id.elv_playlists);
+        elvPlaylists.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+            @Override
+            public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+                PlaylistItem playlistItem = mPlaylists.get(groupPosition).getItems().get(childPosition);
+                ProcessPlaylistItem.process(PlaylistsActivity.this, playlistItem);
+                return true;
+            }
+        });
 
         if(savedInstanceState != null) { //restore saved info
             isPlaylists = savedInstanceState.getBoolean(STATE_MODE);
@@ -70,6 +82,7 @@ public class PlaylistsActivity extends ExpandableListActivity {
         }
     }
 
+    //TODO: use Loader instead on AsyncTask
     private class PlaylistsAsyncTask extends AsyncTask<String, Void, String> {
 
         @Override
@@ -112,13 +125,6 @@ public class PlaylistsActivity extends ExpandableListActivity {
     }
 
     @Override
-    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-        PlaylistItem playlistItem = mPlaylists.get(groupPosition).getItems().get(childPosition);
-        ProcessPlaylistItem.process(this, playlistItem);
-        return true;
-    }
-
-    @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putBoolean(STATE_MODE, isPlaylists);
         if(isPlaylists) {
@@ -133,28 +139,28 @@ public class PlaylistsActivity extends ExpandableListActivity {
         pbLoadingIndicator.setVisibility(View.VISIBLE);
         tvLoadingError.setVisibility(View.INVISIBLE);
         lvPlaylist.setVisibility(View.INVISIBLE);
-        getExpandableListView().setVisibility(View.INVISIBLE);
+        elvPlaylists.setVisibility(View.INVISIBLE);
     }
 
     private void showPlaylistsData() {
         pbLoadingIndicator.setVisibility(View.INVISIBLE);
         tvLoadingError.setVisibility(View.INVISIBLE);
         lvPlaylist.setVisibility(View.INVISIBLE);
-        getExpandableListView().setVisibility(View.VISIBLE);
+        elvPlaylists.setVisibility(View.VISIBLE);
     }
 
     private void showPlaylistData() {
         pbLoadingIndicator.setVisibility(View.INVISIBLE);
         tvLoadingError.setVisibility(View.INVISIBLE);
         lvPlaylist.setVisibility(View.VISIBLE);
-        getExpandableListView().setVisibility(View.INVISIBLE);
+        elvPlaylists.setVisibility(View.INVISIBLE);
     }
 
     private void showLoadingError() {
         pbLoadingIndicator.setVisibility(View.INVISIBLE);
         tvLoadingError.setVisibility(View.VISIBLE);
         lvPlaylist.setVisibility(View.INVISIBLE);
-        getExpandableListView().setVisibility(View.INVISIBLE);
+        elvPlaylists.setVisibility(View.INVISIBLE);
     }
 
     private void playlistsToAdapter(List<Playlist> playlists) {
@@ -189,6 +195,6 @@ public class PlaylistsActivity extends ExpandableListActivity {
                 childFrom,
                 childTo
         );
-        setListAdapter(adapter);
+        elvPlaylists.setAdapter(adapter);
     }
 }
