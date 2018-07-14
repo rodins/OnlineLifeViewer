@@ -55,6 +55,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private final String STATE_IS_ON_POST_EXECUTE = "com.sergeyrodin.IS_ON_POST_EXECUTE";
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
     private final String TRAILERS = "Трейлеры";
+    private final int RESULTS_LOADER = 24;
 
     private String mNextLink;
     private ResultsRetainedFragment mSaveResults;
@@ -62,7 +63,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private TextView mErrorMessageTextView;
     private RecyclerView mResultsView;
     private List<Result> mResults;
-    private boolean mIsOnPostExecute = false;
+    private boolean mIsItemsAdded = false;
     private boolean mIsPage = false;
     private String mTitle;
     private Set<String> mNextLinks;
@@ -114,8 +115,24 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         if(savedInstanceState != null) {
             mNextLink = savedInstanceState.getString(STATE_NEXTLINK);
-            mIsOnPostExecute = savedInstanceState.getBoolean(STATE_IS_ON_POST_EXECUTE);
+            //mIsItemsAdded = savedInstanceState.getBoolean(STATE_IS_ON_POST_EXECUTE);
             mTitle = savedInstanceState.getString(STATE_TITLE);
+            mIsItemsAdded = false;
+            getSupportLoaderManager().initLoader(RESULTS_LOADER, null, this);
+        }else {
+            Intent intent = getIntent();
+            if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
+                mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
+            }
+
+            if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
+                String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
+                initLoader(link);
+            }else if(Intent.ACTION_SEARCH.equals(intent.getAction())) { //Called by SearchView
+                String query = getIntent().getStringExtra(SearchManager.QUERY);
+                mTitle = query;
+                initLoader(NetworkUtils.buildSearchUrl(query));
+            }
         }
 
         mSaveResults = ResultsRetainedFragment.findOrCreateRetainedFragment(getFragmentManager());
@@ -131,26 +148,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             }
         }
 
-        mResults = mSaveResults.mRetainedData;
-        if (mResults == null) {
-            mResults = new ArrayList<>();
-
-            Intent intent = getIntent();
-            if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
-                mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
-            }
-
-            // No saved data, find new info
-            if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
-                String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
-                restartLoader(link);
-            }else if(Intent.ACTION_SEARCH.equals(intent.getAction())) { //Called by SearchView
-                String query = getIntent().getStringExtra(SearchManager.QUERY);
-                mTitle = query;
-                restartLoader(NetworkUtils.buildSearchUrl(query));
-            }
-        }
-
+        mResults = new ArrayList<>();
         mResultsView.setAdapter(new ResultsAdapter(mResults,
                                this,
                                this,
@@ -159,13 +157,19 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         setTitle(mTitle);
     }
 
+    private void initLoader(String link) {
+        mIsItemsAdded = false;
+        Bundle resultsBundle = new Bundle();
+        resultsBundle.putString(RESULTS_URL_EXTRA, link);
+        getSupportLoaderManager().initLoader(RESULTS_LOADER, resultsBundle, this);
+    }
+
     private void restartLoader(String link) {
-        mIsOnPostExecute = false;
+        mIsItemsAdded = false;
         showLoadingIndicator();
         Bundle resultsBundle = new Bundle();
         resultsBundle.putString(RESULTS_URL_EXTRA, link);
         LoaderManager loaderManager = getSupportLoaderManager();
-        int RESULTS_LOADER = 24;
         loaderManager.restartLoader(RESULTS_LOADER, resultsBundle, this);
     }
 
@@ -216,7 +220,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putString(STATE_NEXTLINK, mNextLink);
-        outState.putBoolean(STATE_IS_ON_POST_EXECUTE, mIsOnPostExecute);
+        //outState.putBoolean(STATE_IS_ON_POST_EXECUTE, mIsItemsAdded);
         outState.putString(STATE_TITLE, mTitle);
 
         super.onSaveInstanceState(outState);
@@ -224,9 +228,9 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     @Override
     protected void onPause() {
-        mSaveResults.mRetainedData = mResults;
-        mSaveResults.mRetainedNextLinks = mNextLinks;
         super.onPause();
+        //mSaveResults.mRetainedData = mResults;
+        mSaveResults.mRetainedNextLinks = mNextLinks;
     }
 
     private void moveUpResultsViewBottom() {
@@ -314,24 +318,26 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @NonNull
     @Override
     public Loader<ResultsResult> onCreateLoader(int id, Bundle args) {
-        String url = args.getString(RESULTS_URL_EXTRA);
-        return new ResultsAsyncTaskLoader(this, url);
+        return new ResultsAsyncTaskLoader(this, args);
     }
 
     @Override
     public void onLoadFinished(@NonNull Loader<ResultsResult> loader, ResultsResult data) {
+        Log.d(getClass().getSimpleName(), "On load finished");
         if(data != null) {
             if (!data.results.isEmpty()) {
-                mResults.addAll(data.results);
-                ResultsAdapter adapter = (ResultsAdapter)mResultsView.getAdapter();
-                adapter.notifyDataSetChanged();
+                if(!mIsItemsAdded) {
+                    mResults.addAll(data.results);
+                    ResultsAdapter adapter = (ResultsAdapter) mResultsView.getAdapter();
+                    adapter.notifyDataSetChanged();
 
-                mIsOnPostExecute = true;
+                    mIsItemsAdded = true;
 
-                if (!data.navigation.isEmpty()) {
-                    parseNavigation(data.navigation);
+                    if (!data.navigation.isEmpty()) {
+                        parseNavigation(data.navigation);
+                    }
+                    showData();
                 }
-                showData();
             }else{
                 showErrorMessage(R.string.nothing_found);
             }
@@ -346,15 +352,18 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     static class ResultsAsyncTaskLoader extends AsyncTaskLoader<ResultsResult> {
-        private String link;
+        private Bundle args;
 
-        ResultsAsyncTaskLoader(@NonNull Context context, String link) {
+        ResultsAsyncTaskLoader(@NonNull Context context, Bundle args) {
             super(context);
-            this.link = link;
+            this.args = args;
         }
 
         @Override
         protected void onStartLoading() {
+            if(args == null) {
+                return;
+            }
             forceLoad();
         }
 
@@ -391,7 +400,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         public ResultsResult loadInBackground() {
             ResultsResult resultsResult = new ResultsResult();
             try {
-                URL url = new URL(link);
+                URL url = new URL(args.getString(RESULTS_URL_EXTRA));
                 HttpURLConnection connection = null;
                 BufferedReader in = null;
                 try {
