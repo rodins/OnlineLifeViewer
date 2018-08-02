@@ -52,10 +52,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         LoaderManager.LoaderCallbacks<ResultsResult>{
     private final static String RESULTS_URL_EXTRA = "results";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
-    private final String STATE_IS_ON_POST_EXECUTE = "com.sergeyrodin.IS_ON_POST_EXECUTE";
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
     private final String TRAILERS = "Трейлеры";
-    private final int RESULTS_LOADER = 24;
 
     private String mNextLink;
     private ResultsRetainedFragment mSaveResults;
@@ -115,10 +113,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         if(savedInstanceState != null) {
             mNextLink = savedInstanceState.getString(STATE_NEXTLINK);
-            //mIsItemsAdded = savedInstanceState.getBoolean(STATE_IS_ON_POST_EXECUTE);
             mTitle = savedInstanceState.getString(STATE_TITLE);
             mIsItemsAdded = false;
-            getSupportLoaderManager().initLoader(RESULTS_LOADER, null, this);
         }else {
             Intent intent = getIntent();
             if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
@@ -127,11 +123,11 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
             if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
                 String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
-                initLoader(link);
+                restartLoader(link);
             }else if(Intent.ACTION_SEARCH.equals(intent.getAction())) { //Called by SearchView
                 String query = getIntent().getStringExtra(SearchManager.QUERY);
                 mTitle = query;
-                initLoader(NetworkUtils.buildSearchUrl(query));
+                restartLoader(NetworkUtils.buildSearchUrl(query));
             }
         }
 
@@ -148,7 +144,11 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             }
         }
 
-        mResults = new ArrayList<>();
+        mResults = mSaveResults.mRetainedData;
+        if(mResults == null) {
+            mResults = new ArrayList<>();
+        }
+
         mResultsView.setAdapter(new ResultsAdapter(mResults,
                                this,
                                this,
@@ -157,19 +157,13 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         setTitle(mTitle);
     }
 
-    private void initLoader(String link) {
-        mIsItemsAdded = false;
-        Bundle resultsBundle = new Bundle();
-        resultsBundle.putString(RESULTS_URL_EXTRA, link);
-        getSupportLoaderManager().initLoader(RESULTS_LOADER, resultsBundle, this);
-    }
-
     private void restartLoader(String link) {
         mIsItemsAdded = false;
         showLoadingIndicator();
         Bundle resultsBundle = new Bundle();
         resultsBundle.putString(RESULTS_URL_EXTRA, link);
         LoaderManager loaderManager = getSupportLoaderManager();
+        int RESULTS_LOADER = 24;
         loaderManager.restartLoader(RESULTS_LOADER, resultsBundle, this);
     }
 
@@ -220,7 +214,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putString(STATE_NEXTLINK, mNextLink);
-        //outState.putBoolean(STATE_IS_ON_POST_EXECUTE, mIsItemsAdded);
         outState.putString(STATE_TITLE, mTitle);
 
         super.onSaveInstanceState(outState);
@@ -229,7 +222,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     protected void onPause() {
         super.onPause();
-        //mSaveResults.mRetainedData = mResults;
+        mSaveResults.mRetainedData = mResults;
         mSaveResults.mRetainedNextLinks = mNextLinks;
     }
 
@@ -323,7 +316,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     @Override
     public void onLoadFinished(@NonNull Loader<ResultsResult> loader, ResultsResult data) {
-        Log.d(getClass().getSimpleName(), "On load finished");
         if(data != null) {
             if (!data.results.isEmpty()) {
                 if(!mIsItemsAdded) {
