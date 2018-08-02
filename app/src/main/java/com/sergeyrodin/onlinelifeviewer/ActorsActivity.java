@@ -61,6 +61,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         LoaderManager.LoaderCallbacks<ActorsResult>{
     private final static String TAG = ActorsActivity.class.getSimpleName();
     private final static String ACTORS_URL_EXTRA = "actors";
+    private final int ACTORS_LOADER = 23;
 
     private RecyclerView mRvActors;
     private ProgressBar mLoadingIndicator;
@@ -70,6 +71,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     private String mJs;
     private MenuItem mActionOpen;
     private String mTitle, mResultTitle;
+    private boolean mIsOnLoadFinishedCalled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +98,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             actorsBundle.putString(ACTORS_URL_EXTRA, link);
             showLoadingIndicator();
             LoaderManager loaderManager = getSupportLoaderManager();
-            int ACTORS_LOADER = 23;
             loaderManager.initLoader(ACTORS_LOADER, actorsBundle, this);
         }
     }
@@ -184,33 +185,36 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
     @Override
     public void onLoadFinished(@NonNull Loader<ActorsResult> loader, ActorsResult data) {
-        if(data == null) {
-            showError();
-        }else {
-            if(data.actors.isEmpty()) {
-                showEmpty();
-            }else {
-                for(Actor actor: data.actors) {
-                    String title = actor.title + " " + (actor.isDirector?"(" + getString(R.string.director) + ")":"");
-                    mActors.add(new Link(title, actor.href));
-                }
-                ActorsAdapter adapter = new ActorsAdapter(mActors, this);
-                mRvActors.setAdapter(adapter);
-                showData();
-            }
-
-            if(data.country != null && data.year != null) {
-                mTitle = mResultTitle + " - " + data.country + " - " + data.year;
-                setTitle(mTitle);
-            }
-
-            if(data.js != null) {
-                mJs = data.js;
-                if(mActionOpen != null) {
-                    mActionOpen.setVisible(true);
-                }
-            }else {
+        if(!mIsOnLoadFinishedCalled) {
+            mIsOnLoadFinishedCalled = true;
+            if(data == null) {
                 showError();
+            }else {
+                if(data.actors.isEmpty()) {
+                    showEmpty();
+                }else {
+                    for(Actor actor: data.actors) {
+                        String title = actor.title + " " + (actor.isDirector?"(" + getString(R.string.director) + ")":"");
+                        mActors.add(new Link(title, actor.href));
+                    }
+                    ActorsAdapter adapter = new ActorsAdapter(mActors, this);
+                    mRvActors.setAdapter(adapter);
+                    showData();
+                }
+
+                if(data.country != null && data.year != null) {
+                    mTitle = mResultTitle + " - " + data.country + " - " + data.year;
+                    setTitle(mTitle);
+                }
+
+                if(data.js != null) {
+                    mJs = data.js;
+                    if(mActionOpen != null) {
+                        mActionOpen.setVisible(true);
+                    }
+                }else {
+                    showError();
+                }
             }
         }
     }
