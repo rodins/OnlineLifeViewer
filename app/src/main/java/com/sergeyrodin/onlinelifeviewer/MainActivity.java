@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private ExpandableListView mCategoriesList;
     private MenuItem refreshMenuItem;
     private List<Link> mCategories;
+    private boolean mIsCalledTwice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         });
 
+        mIsCalledTwice = false;
         showLoadingIndicator();
         Bundle categoriesBundle = new Bundle();
         categoriesBundle.putString(CATEGORIES_URL_EXTRA, DOMAIN);
@@ -188,12 +190,15 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public void onLoadFinished(@NonNull Loader<List<Link>> loader, List<Link> data) {
-        if(data != null && !data.isEmpty()) {
-            showResults();
-            mCategories = data;
-            categoriesToAdapter(data);
-        }else {
-            showLoadingError();
+        if(!mIsCalledTwice) {
+            mIsCalledTwice = true;
+            if(data != null && !data.isEmpty()) {
+                showResults();
+                mCategories = data;
+                categoriesToAdapter(data);
+            }else {
+                showLoadingError();
+            }
         }
     }
 
