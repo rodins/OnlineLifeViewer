@@ -1,10 +1,12 @@
 package com.sergeyrodin.onlinelifeviewer;
 
-
-import android.app.ExpandableListActivity;
+import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
@@ -21,16 +23,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PlaylistsActivity extends AppCompatActivity {
-    private final String STATE_MODE = "com.sergeyrodin.MODE";
-    private final String STATE_DATA = "com.sergeyrodin.DATA";
-    private boolean isPlaylists = true;
+public class PlaylistsActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<String> {
+    private static final String PLAYLISTS_JS_EXTRA = "playlists";
+
     private Playlist mPlaylist;
     private ArrayList<Playlist> mPlaylists;
     private ProgressBar pbLoadingIndicator;
     private TextView tvLoadingError;
     private ListView lvPlaylist;
     private ExpandableListView elvPlaylists;
+    private boolean mIsCalledTwice;
 
     private AdapterView.OnItemClickListener mMessageClickedHandler = new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView parent, View v, int position, long id) {
@@ -60,56 +62,36 @@ public class PlaylistsActivity extends AppCompatActivity {
             }
         });
 
-        if(savedInstanceState != null) { //restore saved info
-            isPlaylists = savedInstanceState.getBoolean(STATE_MODE);
-            if(isPlaylists) {
-                mPlaylists = (ArrayList<Playlist>)savedInstanceState.getSerializable(STATE_DATA);
-                playlistsToAdapter(mPlaylists);
-                showPlaylistsData();
-            }else {
-                setTitle(R.string.playlist);
-                mPlaylist = (Playlist)savedInstanceState.getSerializable(STATE_DATA);
-                PlaylistItemAdapter adapter = new PlaylistItemAdapter(PlaylistsActivity.this, mPlaylist);
-                lvPlaylist.setAdapter(adapter);
-                showPlaylistData();
-            }
-        } else {// get new info
-            Intent intent = getIntent();
-            String js = intent.getStringExtra(MainActivity.EXTRA_JS);
-            if(js != null) {
-                new PlaylistsAsyncTask().execute(js);
-            }
+        Intent intent = getIntent();
+        String js = intent.getStringExtra(MainActivity.EXTRA_JS);
+        if(js != null) {
+            mIsCalledTwice = false;
+            showLoadingIndicator();
+            Bundle playlistsBundle = new Bundle();
+            playlistsBundle.putString(PLAYLISTS_JS_EXTRA, js);
+            android.support.v4.app.LoaderManager loaderManager = getSupportLoaderManager();
+            int PLAYLISTS_LOADER = 23;
+            loaderManager.initLoader(PLAYLISTS_LOADER, playlistsBundle, this);
         }
     }
 
-    //TODO: use Loader instead on AsyncTask
-    private class PlaylistsAsyncTask extends AsyncTask<String, Void, String> {
+    @NonNull
+    @Override
+    public Loader<String> onCreateLoader(int id, Bundle args) {
+        return new PlaylistsAsyncTaskLoader(this, args);
+    }
 
-        @Override
-        protected void onPreExecute() {
-            showLoadingIndicator();
-        }
+    @Override
+    public void onLoadFinished(@NonNull Loader<String> loader, String data) {
+        if(!mIsCalledTwice) {
+            mIsCalledTwice = true;
 
-        @Override
-        protected String doInBackground(String... params) {
-            String js = params[0];
-            try{
-                return new ListParser().getPlaylistJson(js);
-            }catch (IOException e) {
-                System.err.println(e.toString());
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String ps) {
-            if (ps != null) { //playlist found
-                mPlaylists = new PlaylistsParser().getItems(ps);
+            if (data != null) { //playlist found
+                mPlaylists = new PlaylistsParser().getItems(data);
                 if (mPlaylists.size() == 0) {
                     //Add playlist to ListView
                     setTitle(R.string.playlist);
-                    isPlaylists = false;
-                    mPlaylist = new PlaylistParser().getItem(ps);
+                    mPlaylist = new PlaylistParser().getItem(data);
                     PlaylistItemAdapter adapter = new PlaylistItemAdapter(PlaylistsActivity.this, mPlaylist);
                     lvPlaylist.setAdapter(adapter);
                     showPlaylistData();
@@ -125,14 +107,8 @@ public class PlaylistsActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean(STATE_MODE, isPlaylists);
-        if(isPlaylists) {
-            outState.putSerializable(STATE_DATA, mPlaylists);
-        }else {
-            outState.putSerializable(STATE_DATA, mPlaylist);
-        }
-        super.onSaveInstanceState(outState);
+    public void onLoaderReset(@NonNull Loader<String> loader) {
+
     }
 
     private void showLoadingIndicator() {
@@ -196,5 +172,33 @@ public class PlaylistsActivity extends AppCompatActivity {
                 childTo
         );
         elvPlaylists.setAdapter(adapter);
+    }
+
+    static class PlaylistsAsyncTaskLoader extends AsyncTaskLoader<String> {
+        private Bundle args;
+
+        PlaylistsAsyncTaskLoader(Context context, Bundle args) {
+            super(context);
+            this.args = args;
+        }
+
+        @Override
+        protected void onStartLoading() {
+            if(args == null) {
+                return;
+            }
+            forceLoad();
+        }
+
+        @Override
+        public String loadInBackground() {
+            String js = args.getString(PLAYLISTS_JS_EXTRA);
+            try{
+                return new ListParser().getPlaylistJson(js);
+            }catch (IOException e) {
+                System.err.println(e.toString());
+                return null;
+            }
+        }
     }
 }

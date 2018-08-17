@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private static final String CATEGORIES_URL_EXTRA = "categories";
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private int CATEGORIES_LOADER = 22;
+    private final int CATEGORIES_LOADER = 22;
     private ProgressBar progressBar;
     private TextView tvLoadingError;
     private ExpandableListView mCategoriesList;
