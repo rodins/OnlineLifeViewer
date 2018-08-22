@@ -25,6 +25,7 @@ public class PlayDialogFragment extends DialogFragment {
             String[] items = new String[] {
                     getString(R.string.flv) + fileSize,
                     getString(R.string.mp4) + downloadSize,
+                    getString(R.string.actors_title)
             };
 
             builder.setItems(items, new DialogInterface.OnClickListener() {
@@ -37,12 +38,17 @@ public class PlayDialogFragment extends DialogFragment {
                         case 1://Mp4
                             ProcessPlaylistItem.show(getActivity(), mPsItem.getDownload());
                             break;
+                        case 2://Info
+                            ProcessPlaylistItem.startActorsActivity(getActivity(),
+                                                                    mPsItem.getInfoTitle(),
+                                                                    mPsItem.getInfoLink());
                     }
                 }
             });
-        }else if(!fileSize.isEmpty() && downloadSize.isEmpty()) {
+        }else if(!fileSize.isEmpty()) {
             String[] items = new String[] {
                     getString(R.string.flv) + fileSize,
+                    getString(R.string.actors_title)
             };
 
             builder.setItems(items, new DialogInterface.OnClickListener() {
@@ -52,12 +58,17 @@ public class PlayDialogFragment extends DialogFragment {
                         case 0:// Flv
                             ProcessPlaylistItem.show(getActivity(), mPsItem.getFile());
                             break;
+                        case 1://Info
+                            ProcessPlaylistItem.startActorsActivity(getActivity(),
+                                    mPsItem.getInfoTitle(),
+                                    mPsItem.getInfoLink());
                     }
                 }
             });
-        }else if(!downloadSize.isEmpty() && fileSize.isEmpty()) {
+        }else if(!downloadSize.isEmpty()) {
             String[] items = new String[] {
                     getString(R.string.mp4) + downloadSize,
+                    getString(R.string.actors_title)
             };
 
             builder.setItems(items, new DialogInterface.OnClickListener() {
@@ -67,11 +78,15 @@ public class PlayDialogFragment extends DialogFragment {
                         case 0://Download
                             ProcessPlaylistItem.show(getActivity(), mPsItem.getDownload());
                             break;
+                        case 1://Info
+                            ProcessPlaylistItem.startActorsActivity(getActivity(),
+                                    mPsItem.getInfoTitle(),
+                                    mPsItem.getInfoLink());
                     }
                 }
             });
-        }else if(fileSize.isEmpty() && downloadSize.isEmpty()) {
-            builder.setTitle(R.string.no_links_found);
+        }else {
+            builder.setTitle(R.string.no_links_found); //TODO: this should be Toast, not part of dialog
         }
 
         return builder.create();

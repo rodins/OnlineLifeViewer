@@ -40,6 +40,13 @@ public class ProcessPlaylistItem {
         }
     }
 
+    public static void startActorsActivity(Activity activity, String title, String link) {
+        Intent intent = new Intent(activity, ActorsActivity.class);
+        intent.putExtra(MainActivity.EXTRA_TITLE, title);
+        intent.putExtra(MainActivity.EXTRA_LINK, link);
+        activity.startActivity(intent);
+    }
+
     public static void process(Activity activity, PlaylistItem psItem) {
         if (psItem != null) {
             new SizeAsyncTask(activity.getFragmentManager()).execute(psItem);
@@ -49,7 +56,7 @@ public class ProcessPlaylistItem {
     static class SizeAsyncTask extends AsyncTask<PlaylistItem, Void, PlaylistItem> {
         private FragmentManager mFragmentManager;
 
-        public SizeAsyncTask(FragmentManager fm) {
+        SizeAsyncTask(FragmentManager fm) {
             mFragmentManager = fm;
         }
 

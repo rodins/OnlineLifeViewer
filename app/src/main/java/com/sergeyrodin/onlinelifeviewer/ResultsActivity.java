@@ -197,14 +197,15 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     public void onListItemClick(int position) {
         Result result = mResults.get(position);
         if(mActorsMenuItem.isChecked() || mTitle.contains(TRAILERS)) { // Use actors links
-            Intent intent = new Intent(this, ActorsActivity.class);
+            /*Intent intent = new Intent(this, ActorsActivity.class);
             intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
             intent.putExtra(MainActivity.EXTRA_LINK, result.link);
-            startActivity(intent);
+            startActivity(intent);*/
+            ProcessPlaylistItem.startActorsActivity(this, result.title, result.link);
         }else { // Use constant links
             try {
                 URL url = new URL(result.link);
-                new JsAsyncTask().execute(url);
+                new JsAsyncTask(result).execute(url);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
@@ -213,7 +214,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putString(STATE_NEXTLINK, mNextLink);
+        outState.putString(STATE_NEXTLINK, mNextLink); //TODO: check the need to save it
         outState.putString(STATE_TITLE, mTitle);
 
         super.onSaveInstanceState(outState);
@@ -394,7 +395,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         @Nullable
         @Override
-        public ResultsResult loadInBackground() {
+        public ResultsResult loadInBackground() { //TODO: try to implement adding each item to list, not all of them at once
             ResultsResult resultsResult = new ResultsResult();
             try {
                 URL url = new URL(args.getString(RESULTS_URL_EXTRA));
@@ -480,6 +481,11 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     class JsAsyncTask extends AsyncTask<URL, Void, String> {
+        private Result result;
+
+        JsAsyncTask(Result result) {
+            this.result = result;
+        }
 
         @Override
         protected String doInBackground(URL... urls) {
@@ -496,12 +502,16 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             if(js != null) {
                 PlaylistItem psItem = new PlaylistItemParser().getItem(js);
                 if(psItem.getComment() != null) {
+                    psItem.setInfoTitle(result.title);
+                    psItem.setInfoLink(result.link);
                     //Start process item dialog
                     ProcessPlaylistItem.process(ResultsActivity.this, psItem);
                 }else {
                     // Process activity_playlists in PlaylistsActivity
                     Intent intent = new Intent(ResultsActivity.this, PlaylistsActivity.class);
                     intent.putExtra(MainActivity.EXTRA_JS, js);
+                    intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
+                    intent.putExtra(MainActivity.EXTRA_LINK, result.link);
                     startActivity(intent);
                 }
             }else {
