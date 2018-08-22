@@ -222,7 +222,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     protected void onPause() {
         super.onPause();
-        mSaveResults.mRetainedData = mResults;
         mSaveResults.mRetainedNextLinks = mNextLinks;
     }
 
@@ -319,6 +318,12 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         if(data != null) {
             if (!data.results.isEmpty()) {
                 if(!mIsItemsAdded) {
+                    // Save results list before adding new items to it
+                    if(mSaveResults.mRetainedData == null ||
+                            mResults.size() != mSaveResults.mRetainedData.size()) {
+                        mSaveResults.mRetainedData = mResults;
+                    }
+
                     mResults.addAll(data.results);
                     ResultsAdapter adapter = (ResultsAdapter) mResultsView.getAdapter();
                     adapter.notifyDataSetChanged();
