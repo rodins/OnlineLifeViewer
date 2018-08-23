@@ -5,7 +5,11 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by root on 08.05.16.
@@ -21,73 +25,42 @@ public class PlayDialogFragment extends DialogFragment {
         String fileSize = mPsItem.getFileSize()!=null?" (" + mPsItem.getFileSize() + " " + getString(R.string.mb) + ")":"";
         String downloadSize = mPsItem.getDownloadSize()!=null?" (" + mPsItem.getDownloadSize() + " " + getString(R.string.mb) + ")":"";
 
-        if(!fileSize.isEmpty() && !downloadSize.isEmpty()) {
-            String[] items = new String[] {
-                    getString(R.string.flv) + fileSize,
-                    getString(R.string.mp4) + downloadSize,
-                    getString(R.string.actors_title)
-            };
+        List<String> itemsList = new ArrayList<>();
 
-            builder.setItems(items, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    switch(which) {
-                        case 0://Flv
-                            ProcessPlaylistItem.show(getActivity(), mPsItem.getFile());
-                            break;
-                        case 1://Mp4
-                            ProcessPlaylistItem.show(getActivity(), mPsItem.getDownload());
-                            break;
-                        case 2://Info
-                            ProcessPlaylistItem.startActorsActivity(getActivity(),
-                                                                    mPsItem.getInfoTitle(),
-                                                                    mPsItem.getInfoLink());
-                    }
-                }
-            });
-        }else if(!fileSize.isEmpty()) {
-            String[] items = new String[] {
-                    getString(R.string.flv) + fileSize,
-                    getString(R.string.actors_title)
-            };
-
-            builder.setItems(items, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    switch(which) {
-                        case 0:// Flv
-                            ProcessPlaylistItem.show(getActivity(), mPsItem.getFile());
-                            break;
-                        case 1://Info
-                            ProcessPlaylistItem.startActorsActivity(getActivity(),
-                                    mPsItem.getInfoTitle(),
-                                    mPsItem.getInfoLink());
-                    }
-                }
-            });
-        }else if(!downloadSize.isEmpty()) {
-            String[] items = new String[] {
-                    getString(R.string.mp4) + downloadSize,
-                    getString(R.string.actors_title)
-            };
-
-            builder.setItems(items, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    switch(which) {
-                        case 0://Download
-                            ProcessPlaylistItem.show(getActivity(), mPsItem.getDownload());
-                            break;
-                        case 1://Info
-                            ProcessPlaylistItem.startActorsActivity(getActivity(),
-                                    mPsItem.getInfoTitle(),
-                                    mPsItem.getInfoLink());
-                    }
-                }
-            });
+        if(!fileSize.isEmpty() && fileSize.equals(downloadSize)) {
+            itemsList.add(getString(R.string.mp4) + downloadSize);
         }else {
-            builder.setTitle(R.string.no_links_found); //TODO: this should be Toast, not part of dialog
+            if(!fileSize.isEmpty()) {
+                itemsList.add(getString(R.string.flv) + fileSize);
+            }
+
+            if(!downloadSize.isEmpty()) {
+                itemsList.add(getString(R.string.mp4) + downloadSize);
+            }
         }
+
+        if(mPsItem.getInfoTitle() != null) {
+            itemsList.add(getString(R.string.actors_title));
+        }
+
+        final String[] items = itemsList.toArray(new String[itemsList.size()]);
+
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String selection = items[which];
+
+                if(selection.contains(getString(R.string.flv))) {
+                    ProcessPlaylistItem.show(getActivity(), mPsItem.getFile());
+                }else if(selection.contains(getString(R.string.mp4))) {
+                    ProcessPlaylistItem.show(getActivity(), mPsItem.getDownload());
+                }else if(selection.contains(getString(R.string.actors_title))) {
+                    ProcessPlaylistItem.startActorsActivity(getActivity(),
+                            mPsItem.getInfoTitle(),
+                            mPsItem.getInfoLink());
+                }
+            }
+        });
 
         return builder.create();
     }

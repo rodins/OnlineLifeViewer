@@ -8,6 +8,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ExpandableListAdapter;
@@ -33,13 +34,10 @@ public class PlaylistsActivity extends AppCompatActivity implements LoaderManage
     private ListView lvPlaylist;
     private ExpandableListView elvPlaylists;
     private boolean mIsCalledTwice;
+    private String mInfoTitle;
+    private String mInfoLink;
 
-    private AdapterView.OnItemClickListener mMessageClickedHandler = new AdapterView.OnItemClickListener() {
-        public void onItemClick(AdapterView parent, View v, int position, long id) {
-            PlaylistItem playlistItem = mPlaylist.getItems().get(position);
-            ProcessPlaylistItem.process(PlaylistsActivity.this, playlistItem);
-        }
-    };
+    private AdapterView.OnItemClickListener mMessageClickedHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,8 +61,19 @@ public class PlaylistsActivity extends AppCompatActivity implements LoaderManage
         });
 
         Intent intent = getIntent();
-        String js = intent.getStringExtra(MainActivity.EXTRA_JS);
-        if(js != null) {
+
+        if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
+            mInfoTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
+            Log.d(getClass().getSimpleName(), "InfoTitle: " + mInfoTitle);
+        }
+
+        if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
+            mInfoLink = intent.getStringExtra(MainActivity.EXTRA_LINK);
+            Log.d(getClass().getSimpleName(), "InfoLink: " + mInfoLink);
+        }
+
+        if(intent.hasExtra(MainActivity.EXTRA_JS)) {
+            String js = intent.getStringExtra(MainActivity.EXTRA_JS);
             mIsCalledTwice = false;
             showLoadingIndicator();
             Bundle playlistsBundle = new Bundle();
@@ -73,6 +82,13 @@ public class PlaylistsActivity extends AppCompatActivity implements LoaderManage
             int PLAYLISTS_LOADER = 23;
             loaderManager.initLoader(PLAYLISTS_LOADER, playlistsBundle, this);
         }
+
+        mMessageClickedHandler = new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView parent, View v, int position, long id) {
+                PlaylistItem playlistItem = mPlaylist.getItems().get(position);
+                ProcessPlaylistItem.process(PlaylistsActivity.this, playlistItem);
+            }
+        };
     }
 
     @NonNull
