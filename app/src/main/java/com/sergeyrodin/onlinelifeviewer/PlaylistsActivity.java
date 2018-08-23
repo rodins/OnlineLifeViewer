@@ -9,6 +9,9 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ExpandableListAdapter;
@@ -100,6 +103,24 @@ public class PlaylistsActivity extends AppCompatActivity implements LoaderManage
     private void onPlaylistItemClick(int position) {
         PlaylistItem playlistItem = mPlaylist.getItems().get(position);
         ProcessPlaylistItem.process(PlaylistsActivity.this, playlistItem);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        if(mInfoLink != null) {
+            MenuInflater inflater = getMenuInflater();
+            inflater.inflate(R.menu.playlists, menu);
+        }
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.action_actors) {
+            ProcessPlaylistItem.startActorsActivity(this, mInfoTitle, mInfoLink);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @NonNull
