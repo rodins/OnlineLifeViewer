@@ -67,12 +67,10 @@ public class PlaylistsActivity extends AppCompatActivity implements LoaderManage
 
         if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
             mInfoTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
-            Log.d(getClass().getSimpleName(), "InfoTitle: " + mInfoTitle);
         }
 
         if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
             mInfoLink = intent.getStringExtra(MainActivity.EXTRA_LINK);
-            Log.d(getClass().getSimpleName(), "InfoLink: " + mInfoLink);
         }
 
         if(intent.hasExtra(MainActivity.EXTRA_JS)) {

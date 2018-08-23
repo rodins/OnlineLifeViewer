@@ -27,7 +27,7 @@ public class PlayDialogFragment extends DialogFragment {
 
         List<String> itemsList = new ArrayList<>();
 
-        if(!fileSize.isEmpty() && fileSize.equals(downloadSize)) {
+        if(!fileSize.isEmpty() && mPsItem.getFile().equals(mPsItem.getDownload())) {
             itemsList.add(getString(R.string.mp4) + downloadSize);
         }else {
             if(!fileSize.isEmpty()) {
