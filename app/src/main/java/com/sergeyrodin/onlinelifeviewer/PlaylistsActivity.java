@@ -85,10 +85,21 @@ public class PlaylistsActivity extends AppCompatActivity implements LoaderManage
 
         mMessageClickedHandler = new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView parent, View v, int position, long id) {
-                PlaylistItem playlistItem = mPlaylist.getItems().get(position);
-                ProcessPlaylistItem.process(PlaylistsActivity.this, playlistItem);
+                onPlaylistItemClick(position);
             }
         };
+
+        lvPlaylist.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                onPlaylistItemClick(position);
+            }
+        });
+    }
+
+    private void onPlaylistItemClick(int position) {
+        PlaylistItem playlistItem = mPlaylist.getItems().get(position);
+        ProcessPlaylistItem.process(PlaylistsActivity.this, playlistItem);
     }
 
     @NonNull
