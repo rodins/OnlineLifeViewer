@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -22,10 +23,18 @@ public class PlayDialogFragment extends DialogFragment {
         mPsItem = (PlaylistItem)getArguments().getSerializable(MainActivity.EXTRA_PSITEM);
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(mPsItem.getComment());
-        String fileSize = mPsItem.getFileSize()!=null?" (" +
-                mPsItem.getFileSize() + " " + getString(R.string.mb) + ")":"";
-        String downloadSize = mPsItem.getDownloadSize()!=null?" (" +
-                mPsItem.getDownloadSize() + " " + getString(R.string.mb) + ")":"";
+
+        String fileSize = "", downloadSize = "";
+
+        if(mPsItem.getFileSize() != null) {
+            long bytes = Long.parseLong(mPsItem.getFileSize());
+            fileSize = " (" + Formatter.formatFileSize(getActivity(), bytes) + ")";
+        }
+
+        if(mPsItem.getDownloadSize() != null) {
+            long bytes = Long.parseLong(mPsItem.getDownloadSize());
+            downloadSize = " (" + Formatter.formatFileSize(getActivity(), bytes) + ")";
+        }
 
         if(fileSize.isEmpty() && downloadSize.isEmpty()) {
             builder.setMessage(R.string.no_links_found)

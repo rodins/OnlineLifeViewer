@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
@@ -59,26 +58,19 @@ public class ProcessPlaylistItem {
             mFragmentManager = activity.getFragmentManager();
         }
 
-        private String toMegabytes(String size) {
-            if(size == null) return null;
-            int bytes = Integer.parseInt(size);
-            int megabytes = bytes/1024/1024;
-            return Integer.toString(megabytes);
-        }
-
         @Override
         protected PlaylistItem doInBackground(PlaylistItem... items) {
             PlaylistItem psItem = items[0];
             try {
                 URL file = new URL(psItem.getFile());
-                String size = toMegabytes(NetworkUtils.getLinkSize(file));
+                String size = NetworkUtils.getLinkSize(file);
                 psItem.setFileSize(size);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
             try {
                 URL download = new URL(psItem.getDownload());
-                String size = toMegabytes(NetworkUtils.getLinkSize(download));
+                String size = NetworkUtils.getLinkSize(download);
                 psItem.setDownloadSize(size);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -93,7 +85,6 @@ public class ProcessPlaylistItem {
             PlayDialogFragment playDialog = new PlayDialogFragment();
             playDialog.setArguments(args);
             playDialog.show(mFragmentManager, "playdialog");
-
         }
     }
 }
