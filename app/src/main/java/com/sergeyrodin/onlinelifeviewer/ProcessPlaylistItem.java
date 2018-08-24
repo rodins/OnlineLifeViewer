@@ -1,12 +1,12 @@
 package com.sergeyrodin.onlinelifeviewer;
 
-import android.app.Activity;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.widget.Toast;
 
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
@@ -18,7 +18,7 @@ import java.net.URL;
  * Created by root on 08.05.16.
  */
 public class ProcessPlaylistItem {
-
+    private static final String DIALOG_TAG = "playdialog";
     public static void show(Context activity, String link) {
         if(link != null && !link.isEmpty()) {
             Uri uri = Uri.parse(link);
@@ -39,23 +39,24 @@ public class ProcessPlaylistItem {
         }
     }
 
-    public static void startActorsActivity(Activity activity, String title, String link) {
+    public static void startActorsActivity(FragmentActivity activity, String title, String link) {
         Intent intent = new Intent(activity, ActorsActivity.class);
         intent.putExtra(MainActivity.EXTRA_TITLE, title);
         intent.putExtra(MainActivity.EXTRA_LINK, link);
         activity.startActivity(intent);
     }
 
-    public static void process(Activity activity, PlaylistItem psItem) {
+    public static void process(FragmentActivity activity, PlaylistItem psItem) {
         if (psItem != null) {
-            new SizeAsyncTask(activity).execute(psItem);
+            FragmentManager fm = activity.getSupportFragmentManager();
+            new SizeAsyncTask(fm).execute(psItem);
         }
     }
 
     static class SizeAsyncTask extends AsyncTask<PlaylistItem, Void, PlaylistItem> {
         private FragmentManager mFragmentManager;
-        SizeAsyncTask(Activity activity) {
-            mFragmentManager = activity.getFragmentManager();
+        SizeAsyncTask(FragmentManager fm) {
+            mFragmentManager = fm;
         }
 
         @Override
@@ -84,7 +85,8 @@ public class ProcessPlaylistItem {
             args.putSerializable(MainActivity.EXTRA_PSITEM, psItem);
             PlayDialogFragment playDialog = new PlayDialogFragment();
             playDialog.setArguments(args);
-            playDialog.show(mFragmentManager, "playdialog");
+            //TODO: fix, could be called after onSaveInstanceState
+            playDialog.show(mFragmentManager, DIALOG_TAG);
         }
     }
 }
