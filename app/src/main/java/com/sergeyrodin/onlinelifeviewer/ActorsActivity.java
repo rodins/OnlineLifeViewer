@@ -212,8 +212,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                     if(mActionOpen != null) {
                         mActionOpen.setVisible(true);
                     }
-                }else {
-                    showError();
                 }
             }
         }
