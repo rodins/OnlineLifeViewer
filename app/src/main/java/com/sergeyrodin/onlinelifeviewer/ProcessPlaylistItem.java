@@ -19,7 +19,7 @@ import java.net.URL;
  * Created by root on 08.05.16.
  */
 public class ProcessPlaylistItem {
-    private static final String TAG = ProcessPlaylistItem.class.getSimpleName();
+
     public static void show(Context activity, String link) {
         if(link != null && !link.isEmpty()) {
             Uri uri = Uri.parse(link);
@@ -49,15 +49,14 @@ public class ProcessPlaylistItem {
 
     public static void process(Activity activity, PlaylistItem psItem) {
         if (psItem != null) {
-            new SizeAsyncTask(activity.getFragmentManager()).execute(psItem);
+            new SizeAsyncTask(activity).execute(psItem);
         }
     }
 
     static class SizeAsyncTask extends AsyncTask<PlaylistItem, Void, PlaylistItem> {
         private FragmentManager mFragmentManager;
-
-        SizeAsyncTask(FragmentManager fm) {
-            mFragmentManager = fm;
+        SizeAsyncTask(Activity activity) {
+            mFragmentManager = activity.getFragmentManager();
         }
 
         private String toMegabytes(String size) {
@@ -94,6 +93,7 @@ public class ProcessPlaylistItem {
             PlayDialogFragment playDialog = new PlayDialogFragment();
             playDialog.setArguments(args);
             playDialog.show(mFragmentManager, "playdialog");
+
         }
     }
 }

@@ -22,4 +22,5 @@
     <string name="no_links_found">No links found</string>
     <string name="mb">Mb</string>
     <string name="actors">Actors</string>
+    <string name="play_dialog_ok">Ok</string>
 </resources>

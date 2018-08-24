@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">OnlineLifeViewer</string>
-    <string name="action_categories">Категории</string>
-    <string name="action_kinomult">Мультфильмы</string>
-    <string name="action_kinomultserial">Мультсериалы</string>
-    <string name="action_kinoserial">Сериалы</string>
-    <string name="action_kinotv">Телепрограммы</string>
-    <string name="action_kinonew">Новинки кино</string>
-    <string name="action_lastnews">Новые</string>
     <string name="action_refresh">Обновить</string>
     <string name="action_search">Поиск</string>
     <string name="main">Главная</string>
@@ -28,4 +21,5 @@
     <string name="no_links_found">Ссылки не найдены</string>
     <string name="mb">Мб</string>
     <string name="no_actors">Нет актёров</string>
+    <string name="play_dialog_ok">Ok</string>
 </resources>
