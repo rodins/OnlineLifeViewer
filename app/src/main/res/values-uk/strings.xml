@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">OnlineLifeViewer</string>
+    <string name="app_name">Перегляд Online Life</string>
+
     <string name="action_refresh">Оновити</string>
     <string name="action_search">Пошук</string>
+    <string name="action_settings">Налаштування</string>
+
     <string name="main">Головна</string>
     <string name="network_problem">Помилка мережі</string>
     <string name="no_app_found">Немає додатку для відкриття файлу</string>
     <string name="nothing_found">Нічого не знайдено</string>
-    <string name="playlist">Перелік</string>
-    <string name="playlists">Переліки</string>
+    <string name="playlist">Епізоди</string>
+    <string name="playlists">Сезони</string>
     <string name="results">Результати</string>
     <string name="flv">Формат .flv</string>
     <string name="mp4">Формат .mp4</string>
@@ -20,4 +23,9 @@
     <string name="mb">Мб</string>
     <string name="no_actors">Немає акторів</string>
     <string name="play_dialog_ok">Ok</string>
+
+    <!-- Actors preferences -->
+    <string name="pref_actors_label">Показувати акторів</string>
+    <string name="pref_actors_actors">Актори</string>
+    <string name="pref_actors_links">Посилання</string>
 </resources>

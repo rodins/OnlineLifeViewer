@@ -12,11 +12,9 @@
 
     <string name="main">Main</string>
     <string name="results">Results</string>
-    <string name="playlists">Playlists</string>
-    <string name="playlist">Playlist</string>
+    <string name="playlists">Seasons</string>
+    <string name="playlist">Episodes</string>
     <string name="network_problem">Network problem</string>
-    <string name="action_prev">Previous</string>
-    <string name="action_next">Next</string>
     <string name="action_categories">Categories</string>
     <string name="search_hint">Search video</string>
     <string name="actors_title">Show actors</string>
@@ -32,9 +30,9 @@
     <string name="trailers" translatable="false">Трейлеры</string>
 
     <!-- Actors preferences -->
-    <string name="pref_actors_label">Show actors on item click</string>
-    <string name="pref_actors_actors">Show actors</string>
-    <string name="pref_actors_links">Show play dialog</string>
+    <string name="pref_actors_label">Show actors</string>
+    <string name="pref_actors_actors">Actors</string>
+    <string name="pref_actors_links">Links</string>
 
     <string name="pref_actors_key" translatable="false">show_actors</string>
 
