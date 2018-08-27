@@ -99,13 +99,18 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == R.id.action_refresh) {
+        int itemId = item.getItemId();
+        if(itemId == R.id.action_refresh) {
             showLoadingIndicator();
             Bundle categoriesBundle = new Bundle();
             categoriesBundle.putString(CATEGORIES_URL_EXTRA, getString(R.string.onlinelife_domain));
             LoaderManager loaderManager = getSupportLoaderManager();
             loaderManager.restartLoader(CATEGORIES_LOADER, categoriesBundle, this);
             return true;
+        }
+        if(itemId == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
         }
         return super.onOptionsItemSelected(item);
     }

@@ -53,7 +53,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private final static String RESULTS_URL_EXTRA = "results";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
-    private final String TRAILERS = "Трейлеры";
 
     private String mNextLink;
     private ResultsRetainedFragment mSaveResults;
@@ -65,8 +64,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private boolean mIsPage = false;
     private String mTitle;
     private Set<String> mNextLinks;
-
-    private MenuItem mActorsMenuItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -172,18 +169,15 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.results_menu, menu);
 
-        mActorsMenuItem = menu.findItem(R.id.action_actors);
-        if(mTitle.contains(getString(R.string.trailers))) {
-            mActorsMenuItem.setVisible(false);
-        }
-
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == R.id.action_actors) {
-            mActorsMenuItem.setChecked(!mActorsMenuItem.isChecked());
+        int itemId = item.getItemId();
+        if(itemId == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -196,7 +190,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     public void onListItemClick(int position) {
         Result result = mResults.get(position);
-        if(mActorsMenuItem.isChecked() || mTitle.contains(getString(R.string.trailers))) { // Use actors links
+        if(mTitle.contains(getString(R.string.trailers))) { // Use actors links
             ProcessPlaylistItem.startActorsActivity(this, result.title, result.link);
         }else { // Use constant links
             try {
