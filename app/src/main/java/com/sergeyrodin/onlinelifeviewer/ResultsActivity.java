@@ -477,6 +477,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         }
     }
 
+    // TODO: think of not starting activity from AsyncTask
     class JsAsyncTask extends AsyncTask<URL, Void, String> {
         private Result result;
 
