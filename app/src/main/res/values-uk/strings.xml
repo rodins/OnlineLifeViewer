@@ -22,7 +22,6 @@
     <string name="no_links_found">Посилання не знайдені</string>
     <string name="mb">Мб</string>
     <string name="no_actors">Немає акторів</string>
-    <string name="play_dialog_ok">Ok</string>
 
     <!-- Actors preferences -->
     <string name="pref_actors_label">Показувати акторів</string>

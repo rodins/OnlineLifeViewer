@@ -23,7 +23,6 @@
     <string name="no_links_found">No links found</string>
     <string name="mb">Mb</string>
     <string name="actors">Actors</string>
-    <string name="play_dialog_ok">Ok</string>
 
     <!-- Converted some final variables to resources-->
     <string name="onlinelife_domain" translatable="false">http://online-life.club</string>

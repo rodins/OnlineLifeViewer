@@ -38,7 +38,7 @@ public class PlayDialogFragment extends DialogFragment {
 
         if(fileSize.isEmpty() && downloadSize.isEmpty()) {
             builder.setMessage(R.string.no_links_found)
-                    .setPositiveButton(R.string.play_dialog_ok, null);
+                    .setPositiveButton(android.R.string.ok, null);
         }else {
             List<String> itemsList = new ArrayList<>();
 
