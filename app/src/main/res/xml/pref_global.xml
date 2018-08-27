@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference
+        android:defaultValue="@bool/pref_actors_default_value"
+        android:key="@string/pref_actors_key"
+        android:summaryOn="@string/pref_actors_actors"
+        android:summaryOff="@string/pref_actors_links"
+        android:title="@string/pref_actors_label" />
+
+</PreferenceScreen>

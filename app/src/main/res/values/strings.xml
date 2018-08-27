@@ -30,4 +30,12 @@
     <!-- Converted some final variables to resources-->
     <string name="onlinelife_domain" translatable="false">http://online-life.club</string>
     <string name="trailers" translatable="false">Трейлеры</string>
+
+    <!-- Actors preferences -->
+    <string name="pref_actors_label">Show actors on item click</string>
+    <string name="pref_actors_actors">Show actors</string>
+    <string name="pref_actors_links">Show play dialog</string>
+
+    <string name="pref_actors_key" translatable="false">show_actors</string>
+
 </resources>
