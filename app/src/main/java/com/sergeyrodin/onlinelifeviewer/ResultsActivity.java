@@ -3,6 +3,7 @@ package com.sergeyrodin.onlinelifeviewer;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -45,7 +47,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener,
-        LoaderManager.LoaderCallbacks<ResultsActivity.ResultsResult>{
+        LoaderManager.LoaderCallbacks<ResultsActivity.ResultsResult>,
+        SharedPreferences.OnSharedPreferenceChangeListener{
     private final static String RESULTS_URL_EXTRA = "results";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
@@ -60,6 +63,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private boolean mIsPage = false;
     private String mTitle;
     private Set<String> mNextLinks;
+    private boolean mIsShowActorsOnClick;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,6 +158,17 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                                 mSpanCount));
 
         setTitle(mTitle);
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        loadClickModeFromPreferences(sharedPreferences);
+
+        // Register the listener
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+    }
+
+    private void loadClickModeFromPreferences(SharedPreferences sharedPreferences) {
+        mIsShowActorsOnClick = sharedPreferences.getBoolean(getString(R.string.pref_actors_key),
+                getResources().getBoolean(R.bool.pref_actors_default_value));
     }
 
     private void restartLoader(String link) {
@@ -197,7 +212,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     public void onListItemClick(int position) {
         Result result = mResults.get(position);
-        if(mTitle.contains(getString(R.string.trailers))) { // Use actors links
+        if(mIsShowActorsOnClick || mTitle.contains(getString(R.string.trailers))) { // Use actors links
             ProcessPlaylistItem.startActorsActivity(this, result.title, result.link);
         }else { // Use constant links
             try {
@@ -221,6 +236,14 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     protected void onPause() {
         super.onPause();
         mSaveResults.mRetainedNextLinks = mNextLinks;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Unregister ResultsActivity as an OnPreferenceChangedListener to avoid any memory leaks.
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .unregisterOnSharedPreferenceChangeListener(this);
     }
 
     private void moveUpResultsViewBottom() {
@@ -344,6 +367,13 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     public void onLoaderReset(@NonNull Loader<ResultsResult> loader) {
 
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if(key.equals(getString(R.string.pref_actors_key))) {
+            loadClickModeFromPreferences(sharedPreferences);
+        }
     }
 
     static class ResultsAsyncTaskLoader extends AsyncTaskLoader<ResultsResult> {
