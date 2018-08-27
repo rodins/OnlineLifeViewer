@@ -36,12 +36,9 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Link>> {
     public static final String EXTRA_PSITEM = "com.sergeyrodin.PSITEM";
-    public static final String EXTRA_PLAYLIST = "com.sergeyrodin.PLAYLIST";
     public static final String EXTRA_LINK = "com.sergeyrodin.LINK";
     public static final String EXTRA_JS = "com.sergeyrodin.JS";
-    public static final String EXTRA_PAGE = "com.sergeyrodin.PAGE";
     public static final String EXTRA_TITLE = "com.sergeyrodin.TITLE";
-    public static final String DOMAIN = "http://online-life.club";//TODO: domain should be
     private static final String CATEGORIES_URL_EXTRA = "categories";
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -78,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mIsCalledTwice = false;
         showLoadingIndicator();
         Bundle categoriesBundle = new Bundle();
-        categoriesBundle.putString(CATEGORIES_URL_EXTRA, DOMAIN);
+        categoriesBundle.putString(CATEGORIES_URL_EXTRA, getString(R.string.onlinelife_domain));
         LoaderManager loaderManager = getSupportLoaderManager();
         loaderManager.initLoader(CATEGORIES_LOADER, categoriesBundle, this);
     }
@@ -105,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         if(item.getItemId() == R.id.action_refresh) {
             showLoadingIndicator();
             Bundle categoriesBundle = new Bundle();
-            categoriesBundle.putString(CATEGORIES_URL_EXTRA, DOMAIN);
+            categoriesBundle.putString(CATEGORIES_URL_EXTRA, getString(R.string.onlinelife_domain));
             LoaderManager loaderManager = getSupportLoaderManager();
             loaderManager.restartLoader(CATEGORIES_LOADER, categoriesBundle, this);
             return true;
@@ -226,7 +223,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         @Override
         public List<Link> loadInBackground() {
             String categoriesUrl = args.getString(CATEGORIES_URL_EXTRA);
-            //TODO use domain from resources
             URL url;
             try {
                 url = new URL(categoriesUrl);

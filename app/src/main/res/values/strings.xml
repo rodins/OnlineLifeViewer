@@ -23,4 +23,6 @@
     <string name="mb">Mb</string>
     <string name="actors">Actors</string>
     <string name="play_dialog_ok">Ok</string>
+
+    <string name="onlinelife_domain" translatable="false">http://online-life.club</string>
 </resources>
