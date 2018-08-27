@@ -44,13 +44,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class ResultsResult{
-    List<Result> results = new ArrayList<>();
-    String navigation;
-}
-
 public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener,
-        LoaderManager.LoaderCallbacks<ResultsResult>{
+        LoaderManager.LoaderCallbacks<ResultsActivity.ResultsResult>{
     private final static String RESULTS_URL_EXTRA = "results";
     private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
@@ -520,6 +515,11 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                 Toast.makeText(ResultsActivity.this, R.string.network_problem, Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    static class ResultsResult{
+        List<Result> results = new ArrayList<>();
+        String navigation;
     }
 
 }
