@@ -40,26 +40,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class Actor {
-    String title;
-    boolean isDirector;
-    String href;
-    Actor(String title, boolean isDirector, String href) {
-        this.title = title;
-        this.isDirector = isDirector;
-        this.href = href;
-    }
-}
-
-class ActorsResult {
-    String country;
-    String year;
-    String js;
-    List<Actor> actors = new ArrayList<>();
-}
-
 public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.ListItemClickListener,
-        LoaderManager.LoaderCallbacks<ActorsResult>{
+        LoaderManager.LoaderCallbacks<ActorsActivity.ActorsResult>{
     private final static String TAG = ActorsActivity.class.getSimpleName();
     private final static String ACTORS_URL_EXTRA = "actors";
     private final int ACTORS_LOADER = 23;
@@ -191,12 +173,12 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
     @NonNull
     @Override
-    public Loader<ActorsResult> onCreateLoader(int id, @Nullable Bundle args) {
+    public Loader<ActorsActivity.ActorsResult> onCreateLoader(int id, @Nullable Bundle args) {
         return new ActorsAsyncTaskLoader(this, args);
     }
 
     @Override
-    public void onLoadFinished(@NonNull Loader<ActorsResult> loader, ActorsResult data) {
+    public void onLoadFinished(@NonNull Loader<ActorsActivity.ActorsResult> loader, ActorsActivity.ActorsResult data) {
         if(!mIsOnLoadFinishedCalled) {
             mIsOnLoadFinishedCalled = true;
             if(data == null) {
@@ -230,7 +212,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     }
 
     @Override
-    public void onLoaderReset(@NonNull Loader<ActorsResult> loader) {
+    public void onLoaderReset(@NonNull Loader<ActorsActivity.ActorsResult> loader) {
 
     }
 
@@ -328,10 +310,10 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         }
 
         @Override
-        public ActorsResult loadInBackground() {
+        public ActorsActivity.ActorsResult loadInBackground() {
             try {
                 String actorsUrl = args.getString(ACTORS_URL_EXTRA);
-                ActorsResult result = new ActorsResult();
+                ActorsActivity.ActorsResult result = new ActorsActivity.ActorsResult();
                 URL url = new URL(actorsUrl);
                 HttpURLConnection connection = null;
                 BufferedReader in = null;
@@ -412,5 +394,23 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             }
             return null;
         }
+    }
+
+    static class Actor {
+        String title;
+        boolean isDirector;
+        String href;
+        Actor(String title, boolean isDirector, String href) {
+            this.title = title;
+            this.isDirector = isDirector;
+            this.href = href;
+        }
+    }
+
+    static class ActorsResult {
+        String country;
+        String year;
+        String js;
+        List<Actor> actors = new ArrayList<>();
     }
 }
