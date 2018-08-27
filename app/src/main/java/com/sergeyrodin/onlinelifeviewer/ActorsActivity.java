@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -78,6 +79,12 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_actors);
 
+        // Add back button
+        ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         mRvActors = findViewById(R.id.rv_actors);
         mRvActors.setLayoutManager(layoutManager);
@@ -115,6 +122,11 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        if(itemId == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
         if(item.getItemId() == R.id.action_open) {
 
             if(mJs != null) {

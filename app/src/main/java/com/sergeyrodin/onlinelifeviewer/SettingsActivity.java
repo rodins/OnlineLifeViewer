@@ -22,6 +22,7 @@ public class SettingsActivity extends AppCompatActivity {
         int itemId = item.getItemId();
         if(itemId == android.R.id.home) {
             onBackPressed();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

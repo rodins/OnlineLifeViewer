@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -47,6 +48,12 @@ public class PlaylistsActivity extends AppCompatActivity implements LoaderManage
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_playlists);
         setTitle(R.string.playlists);
+
+        // Add back button
+        ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
         pbLoadingIndicator = findViewById(R.id.playlists_loading_indicator);
         tvLoadingError = findViewById(R.id.playlists_loading_error);
@@ -114,8 +121,13 @@ public class PlaylistsActivity extends AppCompatActivity implements LoaderManage
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == R.id.action_actors) {
+        int itemId = item.getItemId();
+        if(itemId == R.id.action_actors) {
             ProcessPlaylistItem.startActorsActivity(this, mInfoTitle, mInfoLink);
+            return true;
+        }
+        if(itemId == android.R.id.home) {
+            onBackPressed();
             return true;
         }
         return super.onOptionsItemSelected(item);
