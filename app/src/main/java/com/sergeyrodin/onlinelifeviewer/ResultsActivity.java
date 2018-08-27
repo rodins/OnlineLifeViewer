@@ -173,7 +173,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         inflater.inflate(R.menu.results_menu, menu);
 
         mActorsMenuItem = menu.findItem(R.id.action_actors);
-        if(mTitle.contains(TRAILERS)) {
+        if(mTitle.contains(getString(R.string.trailers))) {
             mActorsMenuItem.setVisible(false);
         }
 
@@ -196,11 +196,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     public void onListItemClick(int position) {
         Result result = mResults.get(position);
-        if(mActorsMenuItem.isChecked() || mTitle.contains(TRAILERS)) { // Use actors links
-            /*Intent intent = new Intent(this, ActorsActivity.class);
-            intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
-            intent.putExtra(MainActivity.EXTRA_LINK, result.link);
-            startActivity(intent);*/
+        if(mActorsMenuItem.isChecked() || mTitle.contains(getString(R.string.trailers))) { // Use actors links
             ProcessPlaylistItem.startActorsActivity(this, result.title, result.link);
         }else { // Use constant links
             try {

@@ -25,4 +25,5 @@
     <string name="play_dialog_ok">Ok</string>
 
     <string name="onlinelife_domain" translatable="false">http://online-life.club</string>
+    <string name="trailers" translatable="false">Трейлеры</string>
 </resources>
