@@ -13,7 +13,7 @@
     <string name="main">Main</string>
     <string name="results">Results</string>
     <string name="playlists">Seasons</string>
-    <string name="playlist">Episodes</string>
+    <string name="episodes">Episodes</string>
     <string name="network_problem">Network problem</string>
     <string name="action_categories">Categories</string>
     <string name="search_hint">Search video</string>

@@ -15,12 +15,12 @@ import java.util.List;
  * Created by root on 08.05.16.
  */
 public class PlayDialogFragment extends DialogFragment {
-    private PlaylistItem mPsItem;
+    private VideoItem mPsItem;
 
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        mPsItem = (PlaylistItem)getArguments().getSerializable(MainActivity.EXTRA_PSITEM);
+        mPsItem = (VideoItem)getArguments().getSerializable(MainActivity.EXTRA_PSITEM);
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(mPsItem.getComment());
 
@@ -66,11 +66,11 @@ public class PlayDialogFragment extends DialogFragment {
                     String selection = items[which];
 
                     if(selection.contains(getString(R.string.flv))) {
-                        ProcessPlaylistItem.show(getActivity(), mPsItem.getFile());
+                        ProcessVideoItem.show(getActivity(), mPsItem.getFile());
                     }else if(selection.contains(getString(R.string.mp4))) {
-                        ProcessPlaylistItem.show(getActivity(), mPsItem.getDownload());
+                        ProcessVideoItem.show(getActivity(), mPsItem.getDownload());
                     }else if(selection.contains(getString(R.string.actors_title))) {
-                        ProcessPlaylistItem.startActorsActivity(getActivity(),
+                        ProcessVideoItem.startActorsActivity(getActivity(),
                                 mPsItem.getInfoTitle(),
                                 mPsItem.getInfoLink());
                     }

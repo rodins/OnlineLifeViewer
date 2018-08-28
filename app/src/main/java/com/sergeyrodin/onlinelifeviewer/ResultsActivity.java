@@ -18,7 +18,6 @@ import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -213,7 +212,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     public void onListItemClick(int position) {
         Result result = mResults.get(position);
         if(mIsShowActorsOnClick || mTitle.contains(getString(R.string.trailers))) { // Use actors links
-            ProcessPlaylistItem.startActorsActivity(this, result.title, result.link);
+            ProcessVideoItem.startActorsActivity(this, result.title, result.link);
         }else { // Use constant links
             try {
                 URL url = new URL(result.link);
@@ -528,15 +527,15 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         @Override
         protected void onPostExecute(String js) {
             if(js != null) {
-                PlaylistItem psItem = new PlaylistItemParser().getItem(js);
+                VideoItem psItem = new VideoItemParser().getItem(js);
                 if(psItem.getComment() != null) {
                     psItem.setInfoTitle(result.title);
                     psItem.setInfoLink(result.link);
                     //Start process item dialog
-                    ProcessPlaylistItem.process(ResultsActivity.this, psItem);
+                    ProcessVideoItem.process(ResultsActivity.this, psItem);
                 }else {
-                    // Process activity_playlists in PlaylistsActivity
-                    Intent intent = new Intent(ResultsActivity.this, PlaylistsActivity.class);
+                    // Process activity_playlists in LinksActivity
+                    Intent intent = new Intent(ResultsActivity.this, LinksActivity.class);
                     intent.putExtra(MainActivity.EXTRA_JS, js);
                     intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
                     intent.putExtra(MainActivity.EXTRA_LINK, result.link);

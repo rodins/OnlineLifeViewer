@@ -9,10 +9,10 @@ import java.util.ArrayList;
 /**
  * Created by root on 08.05.16.
  */
-class PlaylistsParser {
-    ArrayList<Playlist> getItems(String page) {
+class SeasonsParser {
+    ArrayList<Episodes> getItems(String page) {
         //Test json parser
-        ArrayList<Playlist> playlists = new ArrayList<>();
+        ArrayList<Episodes> playlists = new ArrayList<>();
         try {
             JSONObject ps = new JSONObject(page);
             JSONArray seasons = ps.getJSONArray("playlist");
@@ -21,11 +21,11 @@ class PlaylistsParser {
                 String comment = season.getString("comment");
                 JSONArray playItems = season.optJSONArray("playlist");
                 if(playItems != null) {
-                    Playlist pl = new Playlist(comment); // Playlist title as constructor argument
+                    Episodes pl = new Episodes(comment); // Episodes title as constructor argument
                     for(int j = 0; j < playItems.length(); j++) {
                         JSONObject playItem = playItems.getJSONObject(j);
-                        PlaylistItem playlistItem = new PlaylistItem(playItem);
-                        pl.add(playlistItem);
+                        VideoItem videoItem = new VideoItem(playItem);
+                        pl.add(videoItem);
                     }
                     playlists.add(pl);
                 }

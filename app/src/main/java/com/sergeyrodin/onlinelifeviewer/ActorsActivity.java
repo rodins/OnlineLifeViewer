@@ -2,8 +2,6 @@ package com.sergeyrodin.onlinelifeviewer;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
@@ -14,7 +12,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -26,17 +23,13 @@ import com.sergeyrodin.onlinelifeviewer.utilities.Html;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -112,17 +105,17 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         if(item.getItemId() == R.id.action_open) {
 
             if(mJs != null) {
-                PlaylistItem psItem = new PlaylistItemParser().getItem(mJs);
+                VideoItem psItem = new VideoItemParser().getItem(mJs);
                 if(psItem.getComment() != null) {
                     // Trailer title
                     if(psItem.getComment().trim().isEmpty()) {
                         psItem.setComment(mTitle);
                     }
                     //Start process item dialog: select play or download item
-                    ProcessPlaylistItem.process(this, psItem);
+                    ProcessVideoItem.process(this, psItem);
                 }else {
-                    // Process activity_playlists in PlaylistsActivity
-                    Intent intent = new Intent(this, PlaylistsActivity.class);
+                    // Process activity_playlists in LinksActivity
+                    Intent intent = new Intent(this, LinksActivity.class);
                     intent.putExtra(MainActivity.EXTRA_JS, mJs);
                     startActivity(intent);
                 }
