@@ -11,7 +11,7 @@
     <string name="no_app_found">Немає додатку для відкриття файлу</string>
     <string name="nothing_found">Нічого не знайдено</string>
     <string name="episodes">Епізоди</string>
-    <string name="playlists">Сезони</string>
+    <string name="show_film">Показати фільм</string>
     <string name="results">Результати</string>
     <string name="flv">Формат .flv</string>
     <string name="mp4">Формат .mp4</string>
@@ -27,4 +27,7 @@
     <string name="pref_actors_label">Показувати акторів</string>
     <string name="pref_actors_actors">Актори</string>
     <string name="pref_actors_links">Посилання</string>
+    <string name="film">Фільм</string>
+    <string name="seasons">Сезони</string>
+    <string name="links">Посилання</string>
 </resources>

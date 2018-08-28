@@ -214,12 +214,17 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         if(mIsShowActorsOnClick || mTitle.contains(getString(R.string.trailers))) { // Use actors links
             ProcessVideoItem.startActorsActivity(this, result.title, result.link);
         }else { // Use constant links
-            try {
+            // Find links in LinksActivity
+            Intent intent = new Intent(ResultsActivity.this, LinksActivity.class);
+            intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
+            intent.putExtra(MainActivity.EXTRA_LINK, result.link);
+            startActivity(intent);
+            /*try {
                 URL url = new URL(result.link);
                 new JsAsyncTask(result).execute(url);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
-            }
+            }*/
         }
     }
 
@@ -503,47 +508,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                 e.printStackTrace();
             }
             return null;
-        }
-    }
-
-    // TODO: think of not starting activity from AsyncTask
-    class JsAsyncTask extends AsyncTask<URL, Void, String> {
-        private Result result;
-
-        JsAsyncTask(Result result) {
-            this.result = result;
-        }
-
-        @Override
-        protected String doInBackground(URL... urls) {
-            try {
-                return NetworkUtils.getConstantLinksJs(urls[0]);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String js) {
-            if(js != null) {
-                VideoItem psItem = new VideoItemParser().getItem(js);
-                if(psItem.getComment() != null) {
-                    psItem.setInfoTitle(result.title);
-                    psItem.setInfoLink(result.link);
-                    //Start process item dialog
-                    ProcessVideoItem.process(ResultsActivity.this, psItem);
-                }else {
-                    // Process activity_playlists in LinksActivity
-                    Intent intent = new Intent(ResultsActivity.this, LinksActivity.class);
-                    intent.putExtra(MainActivity.EXTRA_JS, js);
-                    intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
-                    intent.putExtra(MainActivity.EXTRA_LINK, result.link);
-                    startActivity(intent);
-                }
-            }else {
-                Toast.makeText(ResultsActivity.this, R.string.network_problem, Toast.LENGTH_SHORT).show();
-            }
         }
     }
 
