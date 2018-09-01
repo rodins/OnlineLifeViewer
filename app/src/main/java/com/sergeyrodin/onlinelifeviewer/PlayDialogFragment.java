@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AlertDialog;
 import android.text.format.Formatter;
 
@@ -20,8 +21,11 @@ public class PlayDialogFragment extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        mPsItem = (VideoItem)getArguments().getSerializable(MainActivity.EXTRA_PSITEM);
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        Bundle args = getArguments();
+        FragmentActivity activity = getActivity();
+
+        mPsItem = (VideoItem)args.getSerializable(MainActivity.EXTRA_PSITEM);
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle(mPsItem.getComment());
 
         String fileSize = "", downloadSize = "";
@@ -54,10 +58,6 @@ public class PlayDialogFragment extends DialogFragment {
                 }
             }
 
-            if(mPsItem.getInfoTitle() != null) {
-                itemsList.add(getString(R.string.actors_title));
-            }
-
             final String[] items = itemsList.toArray(new String[itemsList.size()]);
 
             builder.setItems(items, new DialogInterface.OnClickListener() {
@@ -69,10 +69,6 @@ public class PlayDialogFragment extends DialogFragment {
                         ProcessVideoItem.show(getActivity(), mPsItem.getFile());
                     }else if(selection.contains(getString(R.string.mp4))) {
                         ProcessVideoItem.show(getActivity(), mPsItem.getDownload());
-                    }else if(selection.contains(getString(R.string.actors_title))) {
-                        ProcessVideoItem.startActorsActivity(getActivity(),
-                                mPsItem.getInfoTitle(),
-                                mPsItem.getInfoLink());
                     }
                 }
             });

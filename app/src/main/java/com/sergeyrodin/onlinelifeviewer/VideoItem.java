@@ -14,8 +14,6 @@ public class VideoItem implements Serializable {
     private String _download;
     private String _fileSize;
     private String _downloadSize;
-    private String _infoTitle;
-    private String _infoLink;
 
     VideoItem() {
 
@@ -42,12 +40,6 @@ public class VideoItem implements Serializable {
     void setDownloadSize(String size) {
         _downloadSize = size;
     }
-    void setInfoTitle(String title) {
-        _infoTitle = title;
-    }
-    void setInfoLink(String link) {
-        _infoLink = link;
-    }
 
     String getComment() {
         return _comment;
@@ -63,12 +55,6 @@ public class VideoItem implements Serializable {
     }
     String getDownloadSize() {
         return _downloadSize;
-    }
-    String getInfoTitle() {
-        return _infoTitle;
-    }
-    String getInfoLink() {
-        return _infoLink;
     }
 
     public String toString() {
