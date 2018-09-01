@@ -219,12 +219,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
             intent.putExtra(MainActivity.EXTRA_LINK, result.link);
             startActivity(intent);
-            /*try {
-                URL url = new URL(result.link);
-                new JsAsyncTask(result).execute(url);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }*/
         }
     }
 

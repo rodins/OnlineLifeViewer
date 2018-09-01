@@ -37,7 +37,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         LoaderManager.LoaderCallbacks<ActorsActivity.ActorsResult>{
     private final static String TAG = ActorsActivity.class.getSimpleName();
     private final static String ACTORS_URL_EXTRA = "actors";
-    private final int ACTORS_LOADER = 23;
 
     private RecyclerView mRvActors;
     private ProgressBar mLoadingIndicator;
@@ -46,7 +45,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     private List<Link> mActors = new ArrayList<>();
     private String mJs;
     private MenuItem mActionOpen;
-    private String mTitle, mResultTitle;
+    private String mTitle, mResultTitle, mResultLink;
     private boolean mIsOnLoadFinishedCalled = false;
 
     @Override
@@ -75,11 +74,12 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         }
 
         if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
-            String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
+            mResultLink = intent.getStringExtra(MainActivity.EXTRA_LINK);
             Bundle actorsBundle = new Bundle();
-            actorsBundle.putString(ACTORS_URL_EXTRA, link);
+            actorsBundle.putString(ACTORS_URL_EXTRA, mResultLink);
             showLoadingIndicator();
             LoaderManager loaderManager = getSupportLoaderManager();
+            int ACTORS_LOADER = 23;
             loaderManager.initLoader(ACTORS_LOADER, actorsBundle, this);
         }
     }
@@ -89,9 +89,9 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.actors_menu, menu);
         mActionOpen = menu.findItem(R.id.action_open);
-        if(mJs != null) {
+        /*if(mJs != null) {
             mActionOpen.setVisible(true);
-        }
+        }*/
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -114,11 +114,16 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                     //Start process item dialog: select play or download item
                     ProcessVideoItem.process(this, psItem);
                 }else {
-                    // Process activity_playlists in LinksActivity
+                    // Process seasons in LinksActivity
                     Intent intent = new Intent(this, LinksActivity.class);
                     intent.putExtra(MainActivity.EXTRA_JS, mJs);
                     startActivity(intent);
                 }
+            }else { // Start LinksActivity in constant links mode
+                Intent intent = new Intent(this, LinksActivity.class);
+                intent.putExtra(MainActivity.EXTRA_TITLE, mResultTitle);
+                intent.putExtra(MainActivity.EXTRA_LINK, mResultLink);
+                startActivity(intent);
             }
             return true;
         }
@@ -196,9 +201,9 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
                 if(data.js != null) {
                     mJs = data.js;
-                    if(mActionOpen != null) {
-                        mActionOpen.setVisible(true);
-                    }
+                }
+                if(mActionOpen != null) {
+                    mActionOpen.setVisible(true);
                 }
             }
         }
