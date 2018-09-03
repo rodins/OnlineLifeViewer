@@ -4,6 +4,7 @@
 
     <item android:id="@+id/action_open"
           android:title="@string/open"
+          android:icon="@android:drawable/ic_menu_view"
           android:visible="false"
           app:showAsAction="ifRoom"/>
 

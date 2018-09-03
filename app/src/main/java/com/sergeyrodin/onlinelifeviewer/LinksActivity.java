@@ -22,6 +22,8 @@ import android.widget.ProgressBar;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 
+import com.sergeyrodin.onlinelifeviewer.database.AppDatabase;
+import com.sergeyrodin.onlinelifeviewer.database.SavedItem;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
 import java.io.IOException;
@@ -136,7 +138,7 @@ public class LinksActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         if(mInfoLink != null) {
             MenuInflater inflater = getMenuInflater();
-            inflater.inflate(R.menu.playlists, menu);
+            inflater.inflate(R.menu.links_menu, menu);
         }
         return super.onCreateOptionsMenu(menu);
     }
@@ -148,11 +150,26 @@ public class LinksActivity extends AppCompatActivity
             ProcessVideoItem.startActorsActivity(this, mInfoTitle, mInfoLink);
             return true;
         }
+        if(itemId == R.id.action_save) {
+            saveItem();
+            return true;
+        }
         if(itemId == android.R.id.home) {
             onBackPressed();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void saveItem() {
+        final SavedItem savedItem = new SavedItem(mInfoTitle, mInfoLink, "");
+        final AppDatabase db = AppDatabase.getsInstanse(this);
+        AppExecutors.getInstance().diskIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                db.savedItemsDao().insertSavedItem(savedItem);
+            }
+        });
     }
 
     @NonNull
