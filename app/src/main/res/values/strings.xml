@@ -37,5 +37,6 @@
     <string name="film">Film</string>
     <string name="seasons">Seasons</string>
     <string name="links">Links</string>
+    <string name="action_saved_items">Saved items</string>
 
 </resources>

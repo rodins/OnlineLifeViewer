@@ -112,6 +112,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
         }
+        if(itemId == R.id.action_saved_items) {
+            Intent intent = new Intent(this, SavedItemsActivity.class);
+            startActivity(intent);
+        }
         return super.onOptionsItemSelected(item);
     }
 

@@ -9,6 +9,12 @@
         app:actionViewClass="android.support.v7.widget.SearchView"
         app:showAsAction="collapseActionView|ifRoom" />
 
+    <item
+        android:id="@+id/action_saved_items"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="@string/action_saved_items"
+        app:showAsAction="ifRoom" />
+
     <!-- TODO: remove refresh button, implement differently -->
     <item
         android:id="@+id/action_refresh"
