@@ -21,6 +21,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.sergeyrodin.onlinelifeviewer.database.AppDatabase;
 import com.sergeyrodin.onlinelifeviewer.database.SavedItem;
@@ -51,6 +52,7 @@ public class LinksActivity extends AppCompatActivity
     private VideoItem mVideoItem;
 
     private AdapterView.OnItemClickListener mMessageClickedHandler;
+    private MenuItem mActionSave;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,10 +138,13 @@ public class LinksActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.links_menu, menu);
+        MenuItem actionActors = menu.findItem(R.id.action_actors);
         if(mInfoLink != null) {
-            MenuInflater inflater = getMenuInflater();
-            inflater.inflate(R.menu.links_menu, menu);
+            actionActors.setVisible(true);
         }
+        mActionSave = menu.findItem(R.id.action_save);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -162,6 +167,8 @@ public class LinksActivity extends AppCompatActivity
     }
 
     private void saveItem() {
+        mActionSave.setVisible(false);
+        Toast.makeText(this, R.string.item_saved, Toast.LENGTH_SHORT).show();
         final SavedItem savedItem = new SavedItem(mInfoTitle, mInfoLink, "");
         final AppDatabase db = AppDatabase.getsInstanse(this);
         AppExecutors.getInstance().diskIO().execute(new Runnable() {

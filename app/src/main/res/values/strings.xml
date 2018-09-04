@@ -39,5 +39,6 @@
     <string name="links">Links</string>
     <string name="action_saved_items">Saved items</string>
     <string name="action_save">Save</string>
+    <string name="item_saved">Item saved</string>
 
 </resources>
