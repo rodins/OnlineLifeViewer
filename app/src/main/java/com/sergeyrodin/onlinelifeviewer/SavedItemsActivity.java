@@ -8,16 +8,19 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import com.sergeyrodin.onlinelifeviewer.database.SavedItem;
 
 import java.util.List;
 
-public class SavedItemsActivity extends AppCompatActivity {
+public class SavedItemsActivity extends AppCompatActivity
+               implements SavedItemsAdapter.SavedItemClickListener {
     private static final String LOG_TAG = SavedItemsActivity.class.getSimpleName();
     private RecyclerView mRvSaveItems;
     private TextView mTvNoItems;
+    private SavedItemsAdapter mSavedItemsAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +30,8 @@ public class SavedItemsActivity extends AppCompatActivity {
         mRvSaveItems = findViewById(R.id.rv_saved_items);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         mRvSaveItems.setLayoutManager(layoutManager);
+        mSavedItemsAdapter = new SavedItemsAdapter(this);
+        mRvSaveItems.setAdapter(mSavedItemsAdapter);
 
         mTvNoItems = findViewById(R.id.tv_no_saved_items);
 
@@ -36,13 +41,19 @@ public class SavedItemsActivity extends AppCompatActivity {
             @Override
             public void onChanged(@Nullable List<SavedItem> savedItems) {
                 if(savedItems == null || savedItems.isEmpty()) {
-                    Log.d(LOG_TAG, "No items saved");
+                    mRvSaveItems.setVisibility(View.INVISIBLE);
+                    mTvNoItems.setVisibility(View.VISIBLE);
                 }else {
-                    for(SavedItem item : savedItems) {
-                        Log.d(LOG_TAG, item.getTitle());
-                    }
+                    mTvNoItems.setVisibility(View.INVISIBLE);
+                    mRvSaveItems.setVisibility(View.VISIBLE);
+                    mSavedItemsAdapter.setSavedItems(savedItems);
                 }
             }
         });
+    }
+
+    @Override
+    public void onSavedItemClick(int position) {
+        Log.d(LOG_TAG, mSavedItemsAdapter.getSavedItems().get(position).getTitle());
     }
 }

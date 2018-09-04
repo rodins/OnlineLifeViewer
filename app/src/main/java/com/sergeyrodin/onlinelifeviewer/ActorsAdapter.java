@@ -1,5 +1,6 @@
 package com.sergeyrodin.onlinelifeviewer;
 
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,15 +29,16 @@ public class ActorsAdapter extends RecyclerView.Adapter<ActorsAdapter.ActorViewH
         mListItemClickListener = listener;
     }
 
+    @NonNull
     @Override
-    public ActorViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ActorViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.categories_entry, parent, false);
         return new ActorViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(ActorViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ActorViewHolder holder, int position) {
         holder.bind(mActors.get(position).Title);
     }
 
@@ -50,7 +52,7 @@ public class ActorsAdapter extends RecyclerView.Adapter<ActorsAdapter.ActorViewH
 
         public ActorViewHolder(View itemView) {
             super(itemView);
-            mTitleView = (TextView)itemView.findViewById(R.id.entryText);
+            mTitleView = itemView.findViewById(R.id.entryText);
             itemView.setOnClickListener(this);
         }
 
