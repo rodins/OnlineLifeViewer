@@ -2,9 +2,12 @@ package com.sergeyrodin.onlinelifeviewer;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
@@ -23,6 +26,7 @@ public class SavedItemsActivity extends AppCompatActivity
     private RecyclerView mRvSaveItems;
     private TextView mTvNoItems;
     private SavedItemsAdapter mSavedItemsAdapter;
+    private boolean mIsShowActorsOnClick;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,10 +78,31 @@ public class SavedItemsActivity extends AppCompatActivity
                 });
             }
         }).attachToRecyclerView(mRvSaveItems);
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mIsShowActorsOnClick = sharedPreferences.getBoolean(getString(R.string.pref_actors_key),
+                getResources().getBoolean(R.bool.pref_actors_default_value));
     }
 
     @Override
     public void onSavedItemClick(int position) {
         Log.d(LOG_TAG, mSavedItemsAdapter.getSavedItems().get(position).getTitle());
+        SavedItem savedItem = mSavedItemsAdapter.getSavedItems().get(position);
+        // TODO: this will not always work correct on trailers in LinksActivity
+        // I have to pass additional isTrailer boolean to LinksActivity and store it
+        // in database. And here I should always open ActorsActivity on trailers.
+        // TODO: trailer is currently impossible to save as it does not open in LinksActivity.
+        // Should probably also implement saving in ActorsActivity
+        if(mIsShowActorsOnClick) { // Use actors links
+            ProcessVideoItem.startActorsActivity(this,
+                    savedItem.getTitle(),
+                    savedItem.getLink());
+        }else { // Use constant links
+            // Find links in LinksActivity
+            Intent intent = new Intent(this, LinksActivity.class);
+            intent.putExtra(MainActivity.EXTRA_TITLE, savedItem.getTitle());
+            intent.putExtra(MainActivity.EXTRA_LINK, savedItem.getLink());
+            startActivity(intent);
+        }
     }
 }
