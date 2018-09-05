@@ -40,5 +40,6 @@
     <string name="action_saved_items">Saved items</string>
     <string name="action_save">Save</string>
     <string name="item_saved">Item saved</string>
+    <string name="saved_item_icon">Saved item icon</string>
 
 </resources>

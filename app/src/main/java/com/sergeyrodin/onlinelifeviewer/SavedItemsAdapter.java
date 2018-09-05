@@ -24,8 +24,7 @@ public class SavedItemsAdapter extends RecyclerView.Adapter<SavedItemsAdapter.Sa
     public SavedItemsAdapter.SavedItemsViewHolder onCreateViewHolder(@NonNull ViewGroup parent,
                                                                      int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        // TODO: use another layout for saved items
-        View view = inflater.inflate(R.layout.categories_entry, parent, false);
+        View view = inflater.inflate(R.layout.saved_item_entry, parent, false);
         return new SavedItemsViewHolder(view);
     }
 
