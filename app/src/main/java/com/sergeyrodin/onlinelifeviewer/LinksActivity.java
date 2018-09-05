@@ -232,7 +232,6 @@ public class LinksActivity extends AppCompatActivity
                     showSeasonsData();
                 }
             }else {
-                // Show error here is almost impossible
                 showLoadingError();
             }
         }

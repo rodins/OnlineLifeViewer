@@ -25,7 +25,7 @@
         android:id="@+id/playlists_loading_error"
         android:textSize="20sp"
         android:visibility="invisible"
-        android:text="@string/network_problem"
+        android:text="@string/no_links_found"
         android:layout_gravity="center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
