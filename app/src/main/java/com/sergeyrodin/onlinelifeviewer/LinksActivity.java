@@ -1,9 +1,12 @@
 package com.sergeyrodin.onlinelifeviewer;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -53,6 +56,7 @@ public class LinksActivity extends AppCompatActivity
 
     private AdapterView.OnItemClickListener mMessageClickedHandler;
     private MenuItem mActionSave;
+    private boolean mIsItemSaved = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +96,7 @@ public class LinksActivity extends AppCompatActivity
 
         if(intent.hasExtra(MainActivity.EXTRA_LINK)) { // Called from ResultsActivity
             mInfoLink = intent.getStringExtra(MainActivity.EXTRA_LINK);
+            checkLinkSaved(mInfoLink);
             // Send link to loader
             mIsCalledTwice = false;
             showLoadingIndicator();
@@ -127,6 +132,22 @@ public class LinksActivity extends AppCompatActivity
         });
     }
 
+    private void checkLinkSaved(String link) {
+        AppDatabase db = AppDatabase.getsInstanse(this);
+        LinksViewModelFactory factory = new LinksViewModelFactory(db, link);
+        final LinksViewModel viewModel = ViewModelProviders.of(this, factory).get(LinksViewModel.class);
+        viewModel.getmSavedItem().observe(this, new Observer<SavedItem>() {
+            @Override
+            public void onChanged(@Nullable SavedItem savedItem) {
+                viewModel.getmSavedItem().removeObserver(this);
+                mIsItemSaved = savedItem != null;
+                if(mActionSave != null) {
+                    mActionSave.setVisible(!mIsItemSaved);
+                }
+            }
+        });
+    }
+
     private void onPlaylistItemClick(int position) {
         VideoItem videoItem = mEpisodes.getItems().get(position);
         ProcessVideoItem.process(LinksActivity.this, videoItem);
@@ -141,10 +162,11 @@ public class LinksActivity extends AppCompatActivity
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.links_menu, menu);
         MenuItem actionActors = menu.findItem(R.id.action_actors);
-        if(mInfoLink != null) {
-            actionActors.setVisible(true);
-        }
         mActionSave = menu.findItem(R.id.action_save);
+
+        actionActors.setVisible(mInfoLink != null);
+        mActionSave.setVisible(!mIsItemSaved);
+
         return super.onCreateOptionsMenu(menu);
     }
 

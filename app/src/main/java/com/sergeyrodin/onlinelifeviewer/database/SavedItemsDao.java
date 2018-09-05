@@ -21,4 +21,7 @@ public interface SavedItemsDao {
     @Delete
     void deleteSavedItem(SavedItem savedItem);
 
+    @Query("SELECT * FROM saved_items WHERE link =:link")
+    LiveData<SavedItem> loadSavedItemByLink(String link);
+
 }
