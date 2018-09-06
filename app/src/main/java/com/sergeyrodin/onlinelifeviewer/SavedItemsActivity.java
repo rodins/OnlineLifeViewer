@@ -20,6 +20,7 @@ import com.sergeyrodin.onlinelifeviewer.database.SavedItem;
 
 import java.util.List;
 
+// TODO: display images
 public class SavedItemsActivity extends AppCompatActivity
                implements SavedItemsAdapter.SavedItemClickListener {
     private static final String LOG_TAG = SavedItemsActivity.class.getSimpleName();
