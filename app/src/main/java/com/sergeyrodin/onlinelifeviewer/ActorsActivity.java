@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -44,9 +45,9 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
     private List<Link> mActors = new ArrayList<>();
     private String mJs;
-    private MenuItem mActionOpen;
     private String mTitle, mResultTitle, mResultLink;
     private boolean mIsOnLoadFinishedCalled = false;
+    private FloatingActionButton mFabButtonLinks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,17 +83,46 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             int ACTORS_LOADER = 23;
             loaderManager.initLoader(ACTORS_LOADER, actorsBundle, this);
         }
+
+        mFabButtonLinks = findViewById(R.id.fab_links);
+
+        mFabButtonLinks.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                actionOpenClicked();
+            }
+        });
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.actors_menu, menu);
-        mActionOpen = menu.findItem(R.id.action_open);
-        /*if(mJs != null) {
-            mActionOpen.setVisible(true);
-        }*/
         return super.onCreateOptionsMenu(menu);
+    }
+
+    private void actionOpenClicked() {
+        if(mJs != null) {
+            VideoItem psItem = new VideoItemParser().getItem(mJs);
+            if(psItem.getComment() != null) {
+                // Trailer title
+                if(psItem.getComment().trim().isEmpty()) {
+                    psItem.setComment(mTitle);
+                }
+                //Start process item dialog: select play or download item
+                ProcessVideoItem.process(this, psItem);
+            }else {
+                // Process seasons in LinksActivity
+                Intent intent = new Intent(this, LinksActivity.class);
+                intent.putExtra(MainActivity.EXTRA_JS, mJs);
+                startActivity(intent);
+            }
+        }else { // Start LinksActivity in constant links mode
+            Intent intent = new Intent(this, LinksActivity.class);
+            intent.putExtra(MainActivity.EXTRA_TITLE, mResultTitle);
+            intent.putExtra(MainActivity.EXTRA_LINK, mResultLink);
+            startActivity(intent);
+        }
     }
 
     @Override
@@ -100,31 +130,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         int itemId = item.getItemId();
         if(itemId == android.R.id.home) {
             onBackPressed();
-            return true;
-        }
-        if(item.getItemId() == R.id.action_open) {
-
-            if(mJs != null) {
-                VideoItem psItem = new VideoItemParser().getItem(mJs);
-                if(psItem.getComment() != null) {
-                    // Trailer title
-                    if(psItem.getComment().trim().isEmpty()) {
-                        psItem.setComment(mTitle);
-                    }
-                    //Start process item dialog: select play or download item
-                    ProcessVideoItem.process(this, psItem);
-                }else {
-                    // Process seasons in LinksActivity
-                    Intent intent = new Intent(this, LinksActivity.class);
-                    intent.putExtra(MainActivity.EXTRA_JS, mJs);
-                    startActivity(intent);
-                }
-            }else { // Start LinksActivity in constant links mode
-                Intent intent = new Intent(this, LinksActivity.class);
-                intent.putExtra(MainActivity.EXTRA_TITLE, mResultTitle);
-                intent.putExtra(MainActivity.EXTRA_LINK, mResultLink);
-                startActivity(intent);
-            }
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -202,9 +207,8 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                 if(data.js != null) {
                     mJs = data.js;
                 }
-                if(mActionOpen != null) {
-                    mActionOpen.setVisible(true);
-                }
+
+                mFabButtonLinks.setVisibility(View.VISIBLE);
             }
         }
     }

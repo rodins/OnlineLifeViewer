@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -130,6 +131,19 @@ public class LinksActivity extends AppCompatActivity
                 onPlaylistItemClick(position);
             }
         });
+
+        FloatingActionButton fabButtonActors = findViewById(R.id.fab_actors);
+
+        if(mInfoLink == null) {
+            fabButtonActors.setVisibility(View.INVISIBLE);
+        }
+
+        fabButtonActors.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ProcessVideoItem.startActorsActivity(LinksActivity.this, mInfoTitle, mInfoLink);
+            }
+        });
     }
 
     private void checkLinkSaved(String link) {
@@ -161,22 +175,14 @@ public class LinksActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.links_menu, menu);
-        MenuItem actionActors = menu.findItem(R.id.action_actors);
         mActionSave = menu.findItem(R.id.action_save);
-
-        actionActors.setVisible(mInfoLink != null);
         mActionSave.setVisible(!mIsItemSaved);
-
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
-        if(itemId == R.id.action_actors) {
-            ProcessVideoItem.startActorsActivity(this, mInfoTitle, mInfoLink);
-            return true;
-        }
         if(itemId == R.id.action_save) {
             saveItem();
             return true;
