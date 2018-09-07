@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private ExpandableListView mCategoriesList;
     private MenuItem refreshMenuItem;
     private List<Link> mCategories;
+    private CategoriesViewModel mCategoriesViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,8 +61,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        CategoriesViewModel categoriesViewModel = ViewModelProviders.of(this).get(CategoriesViewModel.class);
-        categoriesViewModel.getCategoriesData().observe(this, new Observer<CategoriesData>() {
+        mCategoriesViewModel = ViewModelProviders.of(this).get(CategoriesViewModel.class);
+        mCategoriesViewModel.getCategoriesData().observe(this, new Observer<CategoriesData>() {
             @Override
             public void onChanged(@Nullable CategoriesData categoriesData) {
                 if(categoriesData != null) {
@@ -100,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
         if(itemId == R.id.action_refresh) {
-            //TODO: implement refresh using ViewModel
+            mCategoriesViewModel.refresh();
             return true;
         }
         if(itemId == R.id.action_settings) {

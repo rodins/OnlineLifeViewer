@@ -25,42 +25,46 @@ public class CategoriesRepo {
         //TODO: store categories in database
         if(categoriesData == null) {
             categoriesData = new MutableLiveData<>();
-            categoriesData.setValue(new CategoriesData(true, null, false));
-            AppExecutors.getInstance().networkIO().execute(new Runnable() {
-                @Override
-                public void run() {
-                    getCategoriesFromNet();
-                }
-            });
-
+            getCategoriesFromNet();
         }
         return categoriesData;
     }
 
+    public void refresh() {
+        getCategoriesFromNet();
+    }
+
     private void getCategoriesFromNet() {
-        URL url;
-        try {
-            url = new URL(CATEGORIES_URL);
-            HttpURLConnection connection = null;
-            BufferedReader in = null;
-            try {
-                connection = (HttpURLConnection)url.openConnection();
-                InputStream stream = connection.getInputStream();
-                in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
-                String html = CategoriesParser.getCategoriesPart(in);
-                List<Link> categories = CategoriesParser.parseCategories(html);
-                categoriesData.postValue(new CategoriesData(false, categories, false));
-            }finally {
-                if(in != null) {
-                    in.close();
-                }
-                if(connection != null) {
-                    connection.disconnect();
+        // Show loading indicator
+        categoriesData.setValue(new CategoriesData(true, null, false));
+        AppExecutors.getInstance().networkIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                URL url;
+                try {
+                    url = new URL(CATEGORIES_URL);
+                    HttpURLConnection connection = null;
+                    BufferedReader in = null;
+                    try {
+                        connection = (HttpURLConnection)url.openConnection();
+                        InputStream stream = connection.getInputStream();
+                        in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
+                        String html = CategoriesParser.getCategoriesPart(in);
+                        List<Link> categories = CategoriesParser.parseCategories(html);
+                        categoriesData.postValue(new CategoriesData(false, categories, false));
+                    }finally {
+                        if(in != null) {
+                            in.close();
+                        }
+                        if(connection != null) {
+                            connection.disconnect();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    categoriesData.postValue(new CategoriesData(false, null, true));
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            categoriesData.postValue(new CategoriesData(false, null, true));
-        }
+        });
     }
 }

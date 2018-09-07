@@ -21,4 +21,8 @@ public class CategoriesViewModel extends AndroidViewModel {
         }
         return categoriesData;
     }
+
+    public void refresh() {
+        categoriesRepo.refresh();
+    }
 }
