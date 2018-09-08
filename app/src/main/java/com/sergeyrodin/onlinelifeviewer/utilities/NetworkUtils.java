@@ -132,14 +132,9 @@ public class NetworkUtils {
         }
     }
 
-    public static String getConstantLinksJs(URL url) {
-        try {
-            String id = getLinkId(url.toString());
-            return getResponseFromHttpUrl(buildJsonUrl(id), buildRefererUrl(id));
-        }catch (IOException e) {
-            Log.d(TAG, e.getMessage());
-        }
-        return "";
+    public static String getConstantLinksJs(URL url) throws IOException {
+        String id = getLinkId(url.toString());
+        return getResponseFromHttpUrl(buildJsonUrl(id), buildRefererUrl(id));
     }
 
     public static String getResponseFromHttpUrl(URL url, String referer) throws IOException {
@@ -165,14 +160,10 @@ public class NetworkUtils {
     public static String getLinkSize(URL url) {
         try {
             HttpURLConnection connection = null;
-            BufferedReader in = null;
             try {
                 connection = (HttpURLConnection)url.openConnection();
                 return connection.getHeaderField("content-length");
             }finally {
-                if(in != null) {
-                    in.close();
-                }
                 if(connection != null) {
                     connection.disconnect();
                 }

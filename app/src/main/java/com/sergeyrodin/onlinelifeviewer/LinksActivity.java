@@ -2,15 +2,10 @@ package com.sergeyrodin.onlinelifeviewer;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -29,28 +24,20 @@ import android.widget.Toast;
 
 import com.sergeyrodin.onlinelifeviewer.database.AppDatabase;
 import com.sergeyrodin.onlinelifeviewer.database.SavedItem;
-import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class LinksActivity extends AppCompatActivity
-        implements LoaderManager.LoaderCallbacks<LinksActivity.LinksLoadingResult> {
-    private static final String LINKS_EXTRA = "playlists";
-    private static final String JS_EXTRA = "js";
-
-    private Episodes mEpisodes;
-    private ArrayList<Episodes> mSeasons;
+public class LinksActivity extends AppCompatActivity {
+    private Season mSeason;
+    private List<Season> mSeasons;
     private ProgressBar pbLoadingIndicator;
     private Button btnFilm;
     private TextView tvLoadingError;
     private ListView lvEpisodes;
     private ExpandableListView elvSeasons;
-    private boolean mIsCalledTwice;
     private String mInfoTitle;
     private String mInfoLink;
     private VideoItem mVideoItem;
@@ -97,26 +84,13 @@ public class LinksActivity extends AppCompatActivity
 
         if(intent.hasExtra(MainActivity.EXTRA_LINK)) { // Called from ResultsActivity
             mInfoLink = intent.getStringExtra(MainActivity.EXTRA_LINK);
-            checkLinkSaved(mInfoLink);
-            // Send link to loader
-            mIsCalledTwice = false;
-            showLoadingIndicator();
-            Bundle linksBundle = new Bundle();
-            linksBundle.putString(LINKS_EXTRA, mInfoLink);
-            android.support.v4.app.LoaderManager loaderManager = getSupportLoaderManager();
-            int LINKS_LOADER = 23;
-            loaderManager.initLoader(LINKS_LOADER, linksBundle, this);
+            setupViewModel(mInfoLink, null);
         }
 
         if(intent.hasExtra(MainActivity.EXTRA_JS)) { // Called from ActorsActivity
             String js = intent.getStringExtra(MainActivity.EXTRA_JS);
-            mIsCalledTwice = false;
-            showLoadingIndicator();
-            Bundle linksBundle = new Bundle();
-            linksBundle.putString(JS_EXTRA, js);
-            android.support.v4.app.LoaderManager loaderManager = getSupportLoaderManager();
-            int LINKS_LOADER = 23;
-            loaderManager.initLoader(LINKS_LOADER, linksBundle, this);
+            // TODO: check if link is saved does not work here. Fix.
+            setupViewModel(mInfoLink, js);
         }
 
         mMessageClickedHandler = new AdapterView.OnItemClickListener() {
@@ -146,9 +120,9 @@ public class LinksActivity extends AppCompatActivity
         });
     }
 
-    private void checkLinkSaved(String link) {
+    private void setupViewModel(String link, String js) {
         AppDatabase db = AppDatabase.getsInstanse(this);
-        LinksViewModelFactory factory = new LinksViewModelFactory(db, link);
+        LinksViewModelFactory factory = new LinksViewModelFactory(db, link, js);
         final LinksViewModel viewModel = ViewModelProviders.of(this, factory).get(LinksViewModel.class);
         viewModel.getmSavedItem().observe(this, new Observer<SavedItem>() {
             @Override
@@ -160,10 +134,39 @@ public class LinksActivity extends AppCompatActivity
                 }
             }
         });
+        viewModel.getLinkData().observe(this, new Observer<LinkData>() {
+            @Override
+            public void onChanged(@Nullable LinkData linkData) {
+                if(linkData != null) {
+                    if(linkData.isLoading()) {
+                        showLoadingIndicator();
+                    }else if(linkData.getVideoItem() != null) {
+                        mVideoItem = linkData.getVideoItem();
+                        setTitle(R.string.film);
+                        btnFilm.setText(mInfoTitle);
+                        showFilmData();
+                    }else if(linkData.getSeason() != null) {
+                        //Add episodes to ListView
+                        setTitle(R.string.season);
+                        mSeason = linkData.getSeason();
+                        EpisodesAdapter adapter = new EpisodesAdapter(LinksActivity.this, mSeason);
+                        lvEpisodes.setAdapter(adapter);
+                        showEpisodesData();
+                    }else if(linkData.getSeasons() != null) {
+                        mSeasons = linkData.getSeasons();
+                        setTitle(R.string.seasons);
+                        seasonsToAdapter(mSeasons);
+                        showSeasonsData();
+                    }else if(linkData.isError()) {
+                        showLoadingError();
+                    }
+                }
+            }
+        });
     }
 
     private void onPlaylistItemClick(int position) {
-        VideoItem videoItem = mEpisodes.getItems().get(position);
+        VideoItem videoItem = mSeason.getItems().get(position);
         ProcessVideoItem.process(LinksActivity.this, videoItem);
     }
 
@@ -207,47 +210,6 @@ public class LinksActivity extends AppCompatActivity
         });
     }
 
-    @NonNull
-    @Override
-    public Loader<LinksLoadingResult> onCreateLoader(int id, Bundle args) {
-        return new LinksAsyncTaskLoader(this, args);
-    }
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<LinksLoadingResult> loader,
-                               LinksLoadingResult data) {
-        if(!mIsCalledTwice) {
-            mIsCalledTwice = true;
-            mVideoItem = new VideoItemParser().getItem(data.js);
-            if(mVideoItem.getComment() != null) { // film found
-                setTitle(R.string.film);
-                btnFilm.setText(mInfoTitle);
-                showFilmData();
-            }else if (data.seasonsJson != null) { // seasons json found
-                mSeasons = new SeasonsParser().getItems(data.seasonsJson);
-                if (mSeasons.size() == 0) { // episodes parsed
-                    //Add episodes to ListView
-                    setTitle(R.string.episodes);
-                    mEpisodes = new EpisodesParser().getItem(data.seasonsJson);
-                    EpisodesAdapter adapter = new EpisodesAdapter(LinksActivity.this, mEpisodes);
-                    lvEpisodes.setAdapter(adapter);
-                    showEpisodesData();
-                } else { // seasons parsed
-                    setTitle(R.string.seasons);
-                    seasonsToAdapter(mSeasons);
-                    showSeasonsData();
-                }
-            }else {
-                showLoadingError();
-            }
-        }
-    }
-
-    @Override
-    public void onLoaderReset(@NonNull Loader<LinksLoadingResult> loader) {
-
-    }
-
     private void showLoadingIndicator() {
         pbLoadingIndicator.setVisibility(View.VISIBLE);
         tvLoadingError.setVisibility(View.INVISIBLE);
@@ -288,15 +250,15 @@ public class LinksActivity extends AppCompatActivity
         btnFilm.setVisibility(View.INVISIBLE);
     }
 
-    private void seasonsToAdapter(List<Episodes> playlists) {
+    private void seasonsToAdapter(List<Season> seasons) {
         List<Map<String, String>> groupData = new ArrayList<>();
         List<List<Map<String, String>>> childData = new ArrayList<>();
-        for(Episodes episodes : playlists) {
+        for(Season season : seasons) {
             Map<String, String> map = new HashMap<>();
-            map.put("entryText", episodes.getTitle());
+            map.put("entryText", season.getTitle());
             groupData.add(map);
             List<Map<String, String>> groupList = new ArrayList<>();
-            for(VideoItem videoItem : episodes.getItems()) {
+            for(VideoItem videoItem : season.getItems()) {
                 Map<String, String> childMap = new HashMap<>();
                 childMap.put("entryTextSubcategories", videoItem.getComment());
                 groupList.add(childMap);
@@ -321,55 +283,5 @@ public class LinksActivity extends AppCompatActivity
                 childTo
         );
         elvSeasons.setAdapter(adapter);
-    }
-
-    static class LinksAsyncTaskLoader extends AsyncTaskLoader<LinksLoadingResult> {
-        private Bundle args;
-
-        LinksAsyncTaskLoader(Context context, Bundle args) {
-            super(context);
-            this.args = args;
-        }
-
-        @Override
-        protected void onStartLoading() {
-            if(args == null) {
-                return;
-            }
-            forceLoad();
-        }
-
-        @Override
-        public LinksLoadingResult loadInBackground() {
-            String link = args.getString(LINKS_EXTRA);
-            URL url;
-            String js;
-            try{
-                if(link != null) {
-                    url = new URL(link);
-                    js = NetworkUtils.getConstantLinksJs(url); // js from constant links
-                }else {
-                    js = args.getString(JS_EXTRA); // js from actors activity
-                }
-                if(js != null) {
-                    String seasonsJson = new SeasonsJsonParser().getSeasonsJson(js);
-                    return new LinksLoadingResult(js, seasonsJson);
-                }else {
-                    return null;
-                }
-            }catch (IOException e) {
-                System.err.println(e.toString());
-                return null;
-            }
-        }
-    }
-
-    static class LinksLoadingResult {
-        final String js;
-        final String seasonsJson;
-        LinksLoadingResult(String js, String seasonsJson) {
-            this.js = js;
-            this.seasonsJson = seasonsJson;
-        }
     }
 }

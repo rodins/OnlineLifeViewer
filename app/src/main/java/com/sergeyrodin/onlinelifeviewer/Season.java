@@ -7,10 +7,10 @@ import java.util.List;
 /**
  * Created by root on 08.05.16.
  */
-class Episodes implements Serializable {
+class Season {
     private String _title;
     private List<VideoItem> _items = new ArrayList<>();
-    Episodes(String t) {
+    Season(String t) {
         _title = t;
     }
     public void add(VideoItem item) {

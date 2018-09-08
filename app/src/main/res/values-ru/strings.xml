@@ -9,7 +9,7 @@
     <string name="network_problem">Проблема сети</string>
     <string name="no_app_found">Нет приложения для открытия файла</string>
     <string name="nothing_found">Ничего не найдено</string>
-    <string name="episodes">Эпизоды</string>
+    <string name="season">Эпизоды</string>
     <string name="show_film">Показать фильм</string>
     <string name="results">Результаты</string>
     <string name="flv">Формат .flv</string>

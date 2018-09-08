@@ -13,8 +13,8 @@ import android.widget.TextView;
  */
 public class EpisodesAdapter extends ArrayAdapter<VideoItem> {
     private View[] views;
-    public EpisodesAdapter(Activity activity, Episodes episodes) {
-        super(activity, R.layout.playlist_entry, episodes.getItems());
+    public EpisodesAdapter(Activity activity, Season season) {
+        super(activity, R.layout.playlist_entry, season.getItems());
         views = new View[getCount()];
     }
 

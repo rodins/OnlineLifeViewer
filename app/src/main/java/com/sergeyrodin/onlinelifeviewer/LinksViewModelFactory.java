@@ -8,11 +8,12 @@ import com.sergeyrodin.onlinelifeviewer.database.AppDatabase;
 
 public class LinksViewModelFactory extends ViewModelProvider.NewInstanceFactory {
     private AppDatabase mDb;
-    private String mLink;
+    private String mLink, mJs;
 
-    public LinksViewModelFactory(AppDatabase db, String link) {
+    public LinksViewModelFactory(AppDatabase db, String link, String js) {
         mDb = db;
         mLink = link;
+        mJs = js;
     }
 
     // Note: This can be reused with minor modifications
@@ -20,6 +21,6 @@ public class LinksViewModelFactory extends ViewModelProvider.NewInstanceFactory 
     @Override
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         //noinspection unchecked
-        return (T) new LinksViewModel(mDb, mLink);
+        return (T) new LinksViewModel(mDb, mLink, mJs);
     }
 }
