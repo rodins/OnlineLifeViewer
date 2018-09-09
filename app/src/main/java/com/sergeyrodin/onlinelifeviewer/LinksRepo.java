@@ -2,6 +2,7 @@ package com.sergeyrodin.onlinelifeviewer;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
+import android.text.TextUtils;
 
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
@@ -25,7 +26,6 @@ public class LinksRepo {
     }
 
     private void getLinksFromNet() {
-        // TODO: fix trailers error
         linkData.setValue( // Show loading indicator
                 new LinkData(true,
                         null,
@@ -41,7 +41,7 @@ public class LinksRepo {
                         url = new URL(link);
                         js = NetworkUtils.getConstantLinksJs(url); // js from constant links
                     }
-                    if(js != null) {
+                    if(js != null && !TextUtils.isEmpty(js.trim())) {
                         VideoItem videoItem = new VideoItemParser().getItem(js);
                         if(videoItem.getComment() != null) { // Film found
                             // Set film data
@@ -73,6 +73,13 @@ public class LinksRepo {
                                 }
                             }
                         }
+                    }else {
+                        // Set error data
+                        linkData.postValue(new LinkData(false,
+                                null,
+                                null,
+                                null,
+                                true));
                     }
                 }catch (IOException e) {
                     // Set error data
