@@ -118,6 +118,8 @@ public class LinksActivity extends AppCompatActivity {
                 ProcessVideoItem.startActorsActivity(LinksActivity.this, mInfoTitle, mInfoLink);
             }
         });
+
+        showLoadingIndicator();
     }
 
     private void setupViewModel(String link, String js) {
@@ -138,9 +140,7 @@ public class LinksActivity extends AppCompatActivity {
             @Override
             public void onChanged(@Nullable LinkData linkData) {
                 if(linkData != null) {
-                    if(linkData.isLoading()) {
-                        showLoadingIndicator();
-                    }else if(linkData.getVideoItem() != null) {
+                    if(linkData.getVideoItem() != null) {
                         mVideoItem = linkData.getVideoItem();
                         setTitle(R.string.film);
                         btnFilm.setText(mInfoTitle);

@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-public class LinksRepo {
+class LinksRepo {
     private String link, js;
     private MutableLiveData<LinkData> linkData;
 
@@ -20,21 +20,16 @@ public class LinksRepo {
         linkData = new MutableLiveData<>();
     }
 
-    public LiveData<LinkData> getLinkData() {
+    LiveData<LinkData> getLinkData() {
         getLinksFromNet();
         return linkData;
     }
 
     private void getLinksFromNet() {
-        linkData.setValue( // Show loading indicator
-                new LinkData(true,
-                        null,
-                        null,
-                        null,
-                        false));
         AppExecutors.getInstance().networkIO().execute(new Runnable() {
             @Override
             public void run() {
+                LinkData data = new LinkData();
                 URL url;
                 try{
                     if(link != null) {
@@ -44,51 +39,26 @@ public class LinksRepo {
                     if(js != null && !TextUtils.isEmpty(js.trim())) {
                         VideoItem videoItem = new VideoItemParser().getItem(js);
                         if(videoItem.getComment() != null) { // Film found
-                            // Set film data
-                            linkData.postValue(new LinkData(false,
-                                    null,
-                                    null,
-                                    videoItem,
-                                    false));
+                            data.setVideoItem(videoItem);
                         }else {
                             String seasonsJson = new SeasonsJsonParser().getSeasonsJson(js);
                             if(seasonsJson != null) {
                                 List<Season> seasons = new SeasonsParser().getItems(seasonsJson);
                                 if (seasons.size() == 0) { // episodes parsed
-                                    //Add episodes to ListView
                                     Season season = new EpisodesParser().getItem(seasonsJson);
-                                    // Set season data
-                                    linkData.postValue(new LinkData(false,
-                                            null,
-                                            season,
-                                            null,
-                                            false));
+                                    data.setSeason(season);
                                 } else { // seasons parsed
-                                    // Set seasons data
-                                    linkData.postValue(new LinkData(false,
-                                            seasons,
-                                            null,
-                                            null,
-                                            false));
+                                    data.setSeasons(seasons);
                                 }
                             }
                         }
                     }else {
-                        // Set error data
-                        linkData.postValue(new LinkData(false,
-                                null,
-                                null,
-                                null,
-                                true));
+                        data.setError();
                     }
                 }catch (IOException e) {
-                    // Set error data
-                    linkData.postValue(new LinkData(false,
-                            null,
-                            null,
-                            null,
-                            true));
+                    data.setError();
                 }
+                linkData.postValue(data);
             }
         });
     }
