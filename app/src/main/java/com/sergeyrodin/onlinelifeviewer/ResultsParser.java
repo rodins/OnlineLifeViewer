@@ -1,5 +1,7 @@
 package com.sergeyrodin.onlinelifeviewer;
 
+import android.util.Log;
+
 import com.sergeyrodin.onlinelifeviewer.utilities.Html;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
@@ -113,7 +115,7 @@ class ResultsParser {
 
     private Result divToResult(String div) {
         Matcher m = Pattern
-                .compile("<a\\s+href=\"(http://www.online-life.[a-z]+?/\\d+?-.*?html)\"\\s*?>\\n\\s*<img\\s+src=\"(.*?)\"\\s+/>(.+?)\\n?\\s*</a>")
+                .compile("<a\\s+href=\"(.+?)\"\\s*?>\\n\\s*<img\\s+src=\"(.*?)\"\\s+/>(.+?)\\n?\\s*</a>")
                 .matcher(div);
         if(m.find()) {
             String link = m.group(1);
