@@ -20,6 +20,7 @@ import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -129,7 +130,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             }
         }
 
-        createViewModel(mLink);
+        createViewModel();
 
         mResultsView.setAdapter(new ResultsAdapter(mResults,
                                this,
@@ -145,11 +146,11 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         sharedPreferences.registerOnSharedPreferenceChangeListener(this);
     }
 
-    private void createViewModel(String link) {
+    private void createViewModel() {
         showLoadingIndicator();
         mViewModel = ViewModelProviders.of(this).get(ResultsViewModel.class);
         mResults = mViewModel.getResults();
-        mViewModel.getResultsData(link).observe(this, new Observer<ResultsData>() {
+        mViewModel.getResultsData(mLink).observe(this, new Observer<ResultsData>() {
             @Override
             public void onChanged(@Nullable ResultsData resultsData) {
                 isLoadStarted = false;
