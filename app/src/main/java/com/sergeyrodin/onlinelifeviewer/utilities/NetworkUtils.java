@@ -45,10 +45,6 @@ public class NetworkUtils {
     private final static String ZC = "1";
 
     public static String buildSearchUrl(String query) {
-        return buildSearchUrl(query, 0);
-    }
-
-    public static String buildSearchUrl(String query, int page) {
         String story = "";
 
         try {
@@ -66,14 +62,15 @@ public class NetworkUtils {
         //Only need this to be able to use story encoded in windows-1251 as appendQueryParameter only uses UTF-8
         builtUri = Uri.parse(builtUri.toString() + "&" + PARAM_STORY + "=" + story);
 
-        // add paging to url
-        if(page > 0) {
-            builtUri = builtUri.buildUpon()
-                               .appendQueryParameter(PARAM_SEARCH_START, page + "")
-                               .build();
-        }
-
         return builtUri.toString();
+    }
+
+    public static String buildNextLink(String startUrl, String page) {
+        Uri builtUri = Uri.parse(startUrl);
+        return builtUri.buildUpon()
+                       .appendQueryParameter(PARAM_SEARCH_START, page)
+                       .build()
+                       .toString();
     }
 
     private static String getLinkId(String link) {

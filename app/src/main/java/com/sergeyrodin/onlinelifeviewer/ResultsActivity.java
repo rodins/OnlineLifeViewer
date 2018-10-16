@@ -1,6 +1,8 @@
 package com.sergeyrodin.onlinelifeviewer;
 
 import android.app.SearchManager;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -46,22 +48,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener,
-        LoaderManager.LoaderCallbacks<ResultsActivity.ResultsResult>,
         SharedPreferences.OnSharedPreferenceChangeListener{
-    private final static String RESULTS_URL_EXTRA = "results";
-    private final String STATE_NEXTLINK = "com.sergeyrodin.NEXTLINK";
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
+    private final String STATE_LINK = "com.sergeyrodin.LINK";
 
-    private String mNextLink;
-    private ResultsRetainedFragment mSaveResults;
+    private ResultsViewModel mViewModel;
     private ProgressBar mLoadingIndicator;
     private TextView mErrorMessageTextView;
     private RecyclerView mResultsView;
     private List<Result> mResults;
-    private boolean mIsItemsAdded = false;
     private boolean mIsPage = false;
-    private String mTitle;
-    private Set<String> mNextLinks;
+    private boolean isLoadStarted = false;
+    private String mTitle, mLink;
     private boolean mIsShowActorsOnClick;
 
     @Override
@@ -96,13 +94,11 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 if(!recyclerView.canScrollVertically(1)) {
-                    if(mNextLink != null && !mNextLink.isEmpty()) {
-                        if(!mNextLinks.contains(mNextLink)) {
-                            mIsPage = true;
-                            mNextLinks.add(mNextLink);
-                            //Log.d(getClass().getSimpleName(), "Next link: " + mNextLink);
-                            restartLoader(mNextLink);
-                        }
+                    if(!isLoadStarted) {
+                        isLoadStarted = true;
+                        mIsPage = true;
+                        showLoadingIndicator();
+                        mViewModel.loadNextPage();
                     }
                 }
             }
@@ -111,45 +107,29 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mLoadingIndicator = findViewById(R.id.results_loading_indicator);
         mErrorMessageTextView = findViewById(R.id.results_loading_error);
 
-        mTitle = getString(R.string.results);
-
         if(savedInstanceState != null) {
-            mNextLink = savedInstanceState.getString(STATE_NEXTLINK);
             mTitle = savedInstanceState.getString(STATE_TITLE);
-            mIsItemsAdded = false;
+            mLink = savedInstanceState.getString(STATE_LINK);
         }else {
-            Intent intent = getIntent();
+            mTitle = getString(R.string.results);
+        }
+
+        Intent intent = getIntent();
+        if(intent != null) {
             if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
                 mTitle = intent.getStringExtra(MainActivity.EXTRA_TITLE);
             }
 
             if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
-                String link = intent.getStringExtra(MainActivity.EXTRA_LINK);
-                restartLoader(link);
+                mLink = intent.getStringExtra(MainActivity.EXTRA_LINK);
             }else if(Intent.ACTION_SEARCH.equals(intent.getAction())) { //Called by SearchView
                 String query = getIntent().getStringExtra(SearchManager.QUERY);
                 mTitle = query;
-                restartLoader(NetworkUtils.buildSearchUrl(query));
+                mLink = NetworkUtils.buildSearchUrl(query);
             }
         }
 
-        mSaveResults = ResultsRetainedFragment.findOrCreateRetainedFragment(getFragmentManager());
-        mNextLinks = mSaveResults.mRetainedNextLinks;
-        if(mNextLinks == null) {
-             mNextLinks = new HashSet<>();
-        }
-
-        if(mNextLink != null && !mNextLink.isEmpty()) {
-            // In restarted activity mNextLink should't be in mNextLinks
-            if(mNextLinks.contains(mNextLink)) {
-                mNextLinks.remove(mNextLink);
-            }
-        }
-
-        mResults = mSaveResults.mRetainedData;
-        if(mResults == null) {
-            mResults = new ArrayList<>();
-        }
+        createViewModel(mLink);
 
         mResultsView.setAdapter(new ResultsAdapter(mResults,
                                this,
@@ -165,19 +145,33 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         sharedPreferences.registerOnSharedPreferenceChangeListener(this);
     }
 
+    private void createViewModel(String link) {
+        showLoadingIndicator();
+        mViewModel = ViewModelProviders.of(this).get(ResultsViewModel.class);
+        mResults = mViewModel.getResults();
+        mViewModel.getResultsData(link).observe(this, new Observer<ResultsData>() {
+            @Override
+            public void onChanged(@Nullable ResultsData resultsData) {
+                isLoadStarted = false;
+                if(resultsData != null && !resultsData.isError()) {
+                    if(!resultsData.getResults().isEmpty()) {
+                        mResults.addAll(resultsData.getResults());
+                        ResultsAdapter adapter = (ResultsAdapter) mResultsView.getAdapter();
+                        adapter.notifyDataSetChanged();
+                        showData();
+                    }else {
+                        showErrorMessage(R.string.nothing_found);
+                    }
+                }else {
+                    showErrorMessage(R.string.network_problem);
+                }
+            }
+        });
+    }
+
     private void loadClickModeFromPreferences(SharedPreferences sharedPreferences) {
         mIsShowActorsOnClick = sharedPreferences.getBoolean(getString(R.string.pref_actors_key),
                 getResources().getBoolean(R.bool.pref_actors_default_value));
-    }
-
-    private void restartLoader(String link) {
-        mIsItemsAdded = false;
-        showLoadingIndicator();
-        Bundle resultsBundle = new Bundle();
-        resultsBundle.putString(RESULTS_URL_EXTRA, link);
-        LoaderManager loaderManager = getSupportLoaderManager();
-        int RESULTS_LOADER = 24;
-        loaderManager.restartLoader(RESULTS_LOADER, resultsBundle, this);
     }
 
     @Override
@@ -203,11 +197,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         return super.onOptionsItemSelected(item);
     }
 
-    private String getSearchLink(int page) {
-        String query = getIntent().getStringExtra(SearchManager.QUERY);
-        return NetworkUtils.buildSearchUrl(query, page);
-    }
-
     @Override
     public void onListItemClick(int position) {
         Result result = mResults.get(position);
@@ -224,16 +213,9 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putString(STATE_NEXTLINK, mNextLink); //TODO: check the need to save it
         outState.putString(STATE_TITLE, mTitle);
-
+        outState.putString(STATE_LINK, mLink);
         super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mSaveResults.mRetainedNextLinks = mNextLinks;
     }
 
     @Override
@@ -301,213 +283,10 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mErrorMessageTextView.setVisibility(View.INVISIBLE);
     }
 
-    private void parseNavigation(String nav) {
-        mNextLink = "";
-        String nl = "";
-        Matcher m;
-        // non-search page navigation links
-        m = Pattern.compile("<a\\s+href=\"(\\S+?)\">></a>").matcher(nav);
-        if(m.find()) {
-            nl = m.group(1);
-        }
-
-        if(!nl.isEmpty()) {
-            mNextLink = nl;
-        }else {
-            // search page navigation links
-            m = Pattern.compile("<a\\s+name=\"nextlink\".+?onclick=\".+?(\\d+).+?\">></a>").matcher(nav);
-            if(m.find()) {
-                nl = m.group(1);
-            }
-
-            if(!nl.isEmpty()) {
-                mNextLink = getSearchLink(Integer.parseInt(nl)); //forming next search link
-            }
-        }
-    }
-
-    @NonNull
-    @Override
-    public Loader<ResultsResult> onCreateLoader(int id, Bundle args) {
-        return new ResultsAsyncTaskLoader(this, args);
-    }
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<ResultsResult> loader, ResultsResult data) {
-        if(data != null) {
-            if (!data.results.isEmpty()) {
-                if(!mIsItemsAdded) {
-                    // Save results list before adding new items to it
-                    if(mSaveResults.mRetainedData == null ||
-                            mResults.size() != mSaveResults.mRetainedData.size()) {
-                        mSaveResults.mRetainedData = mResults;
-                    }
-
-                    mResults.addAll(data.results);
-                    ResultsAdapter adapter = (ResultsAdapter) mResultsView.getAdapter();
-                    adapter.notifyDataSetChanged();
-
-                    mIsItemsAdded = true;
-
-                    if (!data.navigation.isEmpty()) {
-                        parseNavigation(data.navigation);
-                    }
-                    showData();
-                }
-            }else{
-                showErrorMessage(R.string.nothing_found);
-            }
-        }else {
-            showErrorMessage(R.string.network_problem);
-        }
-    }
-
-    @Override
-    public void onLoaderReset(@NonNull Loader<ResultsResult> loader) {
-
-    }
-
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if(key.equals(getString(R.string.pref_actors_key))) {
             loadClickModeFromPreferences(sharedPreferences);
         }
     }
-
-    static class ResultsAsyncTaskLoader extends AsyncTaskLoader<ResultsResult> {
-        private Bundle args;
-
-        ResultsAsyncTaskLoader(@NonNull Context context, Bundle args) {
-            super(context);
-            this.args = args;
-        }
-
-        @Override
-        protected void onStartLoading() {
-            if(args == null) {
-                return;
-            }
-            forceLoad();
-        }
-
-        private Result divToResult(String div) {
-            Matcher m = Pattern
-                    .compile("<a\\s+href=\"(http://www.online-life.[a-z]+?/\\d+?-.*?html)\"\\s*?>\\n\\s*<img\\s+src=\"(.*?)\"\\s+/>(.+?)\\n?\\s*</a>")
-                    .matcher(div);
-            if(m.find()) {
-                String link = m.group(1);
-                String image = m.group(2);
-                image = image.substring(0, image.indexOf("&"));
-                String title = Html.unescape(m.group(3));
-                return new Result(title, image, link);
-            }
-            return null;
-        }
-
-        private Result divToMobileResult(String div) {
-            Matcher m = Pattern
-                    .compile("<a\\s+href=\"(.*?)\".*?src=\"(.*?)\".*?\">(.+?)</span>")
-                    .matcher(div);
-            if(m.find()) {
-                String link = m.group(1);
-                String image = m.group(2);
-                image = image.substring(0, image.indexOf("&"));
-                String title = Html.unescape(m.group(3));
-                return new Result(title, image, link);
-            }
-            return null;
-        }
-
-        @Nullable
-        @Override
-        public ResultsResult loadInBackground() { //TODO: try to implement adding each item to list, not all of them at once
-            ResultsResult resultsResult = new ResultsResult();
-            try {
-                URL url = new URL(args.getString(RESULTS_URL_EXTRA));
-                HttpURLConnection connection = null;
-                BufferedReader in = null;
-                try {
-                    connection = (HttpURLConnection)url.openConnection();
-                    InputStream stream = connection.getInputStream();
-                    in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
-                    String line;
-                    String div = "";
-                    boolean div_found = false;
-                    boolean div_mobile_found = false;
-                    boolean div_nav_found = false;
-                    while((line = in.readLine()) != null){
-                        if(line.contains("class=\"custom-poster\"") && !div_found) {
-                            div_found = true;
-                        }
-                        if(line.contains("</a>") && div_found) {
-                            div_found = false;
-                            div += line;
-                            Result result = divToResult(div);
-                            if(result != null) {
-                                resultsResult.results.add(result);
-                            }
-                            div = "";
-                        }
-                        if(div_found) {
-                            div += line + "\n";
-                        }
-
-                        if(line.contains("class=\"slider-item\"")) {
-                            div_mobile_found = true;
-                            div = "";
-                            continue;
-                        }
-
-                        if(line.contains("</a>") && div_mobile_found) {
-                            div_mobile_found = false;
-                            Result result = divToMobileResult(div);
-                            if(result != null) {
-                                resultsResult.results.add(result);
-                            }
-                        }
-
-                        if(div_mobile_found) {
-                            if(!line.contains("<div") && !line.contains("</div>")) {
-                                div += line;
-                            }
-                        }
-
-                        if(line.contains("class=\"navigation\"")) {
-                            div_nav_found = true;
-                            div = "";
-                            continue;
-                        }
-
-                        if(line.contains("</div>") && div_nav_found) {
-                            div += line.trim();
-                            resultsResult.navigation = div;
-                            return resultsResult;
-                        }
-
-                        if(div_nav_found) {
-                            div += line.trim();
-                        }
-                    }
-                    resultsResult.navigation = "";
-                    return resultsResult;
-                }finally {
-                    if(in != null) {
-                        in.close();
-                    }
-                    if(connection != null) {
-                        connection.disconnect();
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-    }
-
-    static class ResultsResult{
-        List<Result> results = new ArrayList<>();
-        String navigation;
-    }
-
 }

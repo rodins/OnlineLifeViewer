@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -123,6 +124,7 @@ public class LinksActivity extends AppCompatActivity {
     }
 
     private void setupViewModel(String link, String js) {
+        Log.d(getClass().getSimpleName(), "Setup view model call");
         AppDatabase db = AppDatabase.getsInstanse(this);
         LinksViewModelFactory factory = new LinksViewModelFactory(db, link, js);
         final LinksViewModel viewModel = ViewModelProviders.of(this, factory).get(LinksViewModel.class);
