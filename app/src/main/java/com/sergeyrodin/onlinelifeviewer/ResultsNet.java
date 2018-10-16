@@ -43,8 +43,9 @@ class ResultsNet {
                         in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
                         parser.parse(in);
                         ResultsData data = parser.getData();
-                        resultsData.postValue(data);
                         nextLink = parser.getNextLink();
+                        data.setNextLink(!nextLink.isEmpty());
+                        resultsData.postValue(data);
                     }finally {
                         if(in != null) {
                             in.close();

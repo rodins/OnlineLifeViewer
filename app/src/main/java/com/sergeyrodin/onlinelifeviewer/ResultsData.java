@@ -5,10 +5,11 @@ import java.util.List;
 
 class ResultsData {
     private List<Result> results;
-    private boolean isError;
+    private boolean isError, isNextLink;
     ResultsData() {
         results = new ArrayList<>();
         isError = false;
+        isNextLink = false;
     }
 
     public void add(Result result) {
@@ -25,5 +26,13 @@ class ResultsData {
 
     public boolean isError() {
         return isError;
+    }
+
+    public void setNextLink(boolean isNextLink) {
+        this.isNextLink = isNextLink;
+    }
+
+    public boolean isNextLink() {
+        return isNextLink;
     }
 }

@@ -60,6 +60,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private List<Result> mResults;
     private boolean mIsPage = false;
     private boolean isLoadStarted = false;
+    private boolean isNextLink = false;
     private String mTitle, mLink;
     private boolean mIsShowActorsOnClick;
 
@@ -95,7 +96,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 if(!recyclerView.canScrollVertically(1)) {
-                    if(!isLoadStarted) {
+                    if(!isLoadStarted && isNextLink) {
                         isLoadStarted = true;
                         mIsPage = true;
                         showLoadingIndicator();
@@ -163,6 +164,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                     }else {
                         showErrorMessage(R.string.nothing_found);
                     }
+                    isNextLink = resultsData.isNextLink();
                 }else {
                     showErrorMessage(R.string.network_problem);
                 }

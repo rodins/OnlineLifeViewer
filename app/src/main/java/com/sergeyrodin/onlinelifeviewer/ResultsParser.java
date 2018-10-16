@@ -27,6 +27,7 @@ class ResultsParser {
     }
 
     void parse(BufferedReader in) throws IOException {
+        nextLink = "";
         data = new ResultsData();
         String line;
         String div = "";
@@ -89,7 +90,6 @@ class ResultsParser {
     }
 
     private void parseNavigation(String nav) {
-        nextLink = "";
         String nl = "";
         Matcher m;
         // non-search page navigation links
