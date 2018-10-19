@@ -3,6 +3,7 @@ package com.sergeyrodin.onlinelifeviewer;
 import android.app.SearchManager;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.arch.paging.PagedList;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -53,16 +54,13 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
     private final String STATE_LINK = "com.sergeyrodin.LINK";
 
-    private ResultsViewModel mViewModel;
     private ProgressBar mLoadingIndicator;
     private TextView mErrorMessageTextView;
     private RecyclerView mResultsView;
-    private List<Result> mResults;
     private boolean mIsPage = false;
-    private boolean isLoadStarted = false;
-    private boolean isNextLink = false;
     private String mTitle, mLink;
     private boolean mIsShowActorsOnClick;
+    private int mSpanCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +78,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         Configuration configuration = getResources().getConfiguration();
         int screenWidthDp = configuration.screenWidthDp;
         int RESULT_WIDTH = 190;
-        int mSpanCount = screenWidthDp / RESULT_WIDTH;
+        mSpanCount = screenWidthDp / RESULT_WIDTH;
 
         if(mSpanCount <= 2) {
             LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -91,20 +89,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         }
 
         mResultsView.setHasFixedSize(false);
-
-        mResultsView.addOnScrollListener(new RecyclerView.OnScrollListener(){
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                if(!recyclerView.canScrollVertically(1)) {
-                    if(!isLoadStarted && isNextLink) {
-                        isLoadStarted = true;
-                        mIsPage = true;
-                        showLoadingIndicator();
-                        mViewModel.loadNextPage();
-                    }
-                }
-            }
-        });
 
         mLoadingIndicator = findViewById(R.id.results_loading_indicator);
         mErrorMessageTextView = findViewById(R.id.results_loading_error);
@@ -133,11 +117,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         createViewModel();
 
-        mResultsView.setAdapter(new ResultsAdapter(mResults,
-                               this,
-                               this,
-                                mSpanCount));
-
         setTitle(mTitle);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -149,25 +128,17 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     private void createViewModel() {
         showLoadingIndicator();
-        mViewModel = ViewModelProviders.of(this).get(ResultsViewModel.class);
-        mResults = mViewModel.getResults();
-        mViewModel.getResultsData(mLink).observe(this, new Observer<ResultsData>() {
+        ResultsViewModel viewModel = ViewModelProviders.of(this).get(ResultsViewModel.class);
+
+        viewModel.getLiveData(mLink).observe(this, new Observer<PagedList<Result>>() {
             @Override
-            public void onChanged(@Nullable ResultsData resultsData) {
-                isLoadStarted = false;
-                if(resultsData != null && !resultsData.isError()) {
-                    if(!resultsData.getResults().isEmpty()) {
-                        mResults.addAll(resultsData.getResults());
-                        ResultsAdapter adapter = (ResultsAdapter) mResultsView.getAdapter();
-                        adapter.notifyDataSetChanged();
-                        showData();
-                    }else {
-                        showErrorMessage(R.string.nothing_found);
-                    }
-                    isNextLink = resultsData.isNextLink();
-                }else {
-                    showErrorMessage(R.string.network_problem);
-                }
+            public void onChanged(@Nullable PagedList<Result> results) {
+                ResultsAdapter adapter = new ResultsAdapter(ResultsActivity.this,
+                                                                  ResultsActivity.this,
+                                                                          mSpanCount);
+                adapter.submitList(results);
+                mResultsView.setAdapter(adapter);
+                showData();
             }
         });
     }
@@ -201,8 +172,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     @Override
-    public void onListItemClick(int position) {
-        Result result = mResults.get(position);
+    public void onListItemClick(Result result) {
         if(mIsShowActorsOnClick || mTitle.contains(getString(R.string.trailers))) { // Use actors links
             ProcessVideoItem.startActorsActivity(this, result.title, result.link);
         }else { // Use constant links

@@ -7,14 +7,16 @@ import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class ResultsParser {
-    private ResultsData data;
+    private List<Result> data;
     private String startLink, nextLink;
 
-    ResultsData getData() {
+    List<Result> getData() {
         return data;
     }
 
@@ -27,8 +29,8 @@ class ResultsParser {
     }
 
     void parse(BufferedReader in) throws IOException {
-        nextLink = "";
-        data = new ResultsData();
+        nextLink = null;
+        data = new ArrayList<>();
         String line;
         String div = "";
         boolean div_found = false;
@@ -90,7 +92,7 @@ class ResultsParser {
     }
 
     private void parseNavigation(String nav) {
-        String nl = "";
+        String nl = null;
         Matcher m;
         // non-search page navigation links
         m = Pattern.compile("<a\\s+href=\"(\\S+?)\">></a>").matcher(nav);
@@ -98,7 +100,7 @@ class ResultsParser {
             nl = m.group(1);
         }
 
-        if(!nl.isEmpty()) {
+        if(nl != null && !nl.isEmpty()) {
             nextLink = nl;
         }else {
             // search page navigation links
@@ -107,7 +109,7 @@ class ResultsParser {
                 nl = m.group(1);
             }
 
-            if(!nl.isEmpty()) {
+            if(nl != null && !nl.isEmpty()) {
                 nextLink = NetworkUtils.buildNextLink(startLink, nl); //forming next search link
             }
         }
