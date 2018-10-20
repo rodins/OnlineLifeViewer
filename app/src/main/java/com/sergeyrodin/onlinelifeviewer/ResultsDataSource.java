@@ -4,6 +4,7 @@ import android.arch.paging.PageKeyedDataSource;
 import android.support.annotation.NonNull;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -21,26 +22,23 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
         parser.setStartLink(startLink);
     }
 
-    private void getDataFromNet(String link) {
+    private void getDataFromNet(String link) throws IOException {
+        parser.init();
+        URL url = new URL(link);
+        HttpURLConnection connection = null;
+        BufferedReader in = null;
         try {
-            URL url = new URL(link);
-            HttpURLConnection connection = null;
-            BufferedReader in = null;
-            try {
-                connection = (HttpURLConnection)url.openConnection();
-                InputStream stream = connection.getInputStream();
-                in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
-                parser.parse(in);
-            }finally {
-                if(in != null) {
-                    in.close();
-                }
-                if(connection != null) {
-                    connection.disconnect();
-                }
+            connection = (HttpURLConnection)url.openConnection();
+            InputStream stream = connection.getInputStream();
+            in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
+            parser.parse(in);
+        }finally {
+            if(in != null) {
+                in.close();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            if(connection != null) {
+                connection.disconnect();
+            }
         }
     }
 
@@ -49,10 +47,15 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
         AppExecutors.getInstance().networkIO().execute(new Runnable() {
             @Override
             public void run() {
-                getDataFromNet(startLink);
-                List<Result> data = parser.getData();
-                String nextLink = parser.getNextLink();
-                callback.onResult(data, null, nextLink);
+                try {
+                    getDataFromNet(startLink);
+                    List<Result> data = parser.getData();
+                    String nextLink = parser.getNextLink();
+                    callback.onResult(data, null, nextLink);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    invalidate();
+                }
             }
         });
     }
@@ -64,9 +67,14 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
 
     @Override
     public void loadAfter(@NonNull LoadParams<String> params, @NonNull LoadCallback<String, Result> callback) {
-        getDataFromNet(params.key);
-        List<Result> data = parser.getData();
-        String nextLink = parser.getNextLink();
-        callback.onResult(data, nextLink);
+        try {
+            getDataFromNet(params.key);
+            List<Result> data = parser.getData();
+            String nextLink = parser.getNextLink();
+            callback.onResult(data, nextLink);
+        }catch(IOException e) {
+            e.printStackTrace();
+            invalidate();
+        }
     }
 }

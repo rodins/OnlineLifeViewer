@@ -28,9 +28,12 @@ class ResultsParser {
         return nextLink;
     }
 
-    void parse(BufferedReader in) throws IOException {
+    void init() {
         nextLink = null;
         data = new ArrayList<>();
+    }
+
+    void parse(BufferedReader in) throws IOException {
         String line;
         String div = "";
         boolean div_found = false;
