@@ -5,8 +5,8 @@ import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 import android.arch.paging.PagedList;
 
-class ResultsViewModel extends ViewModel {
-    MutableLiveData<PagedList<Result>> liveData;
+public class ResultsViewModel extends ViewModel {
+    private MutableLiveData<PagedList<Result>> liveData;
 
     LiveData<PagedList<Result>> getLiveData(String link) {
         if(liveData == null) {
