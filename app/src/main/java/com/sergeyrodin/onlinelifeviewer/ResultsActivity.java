@@ -60,6 +60,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private String mTitle, mLink;
     private boolean mIsShowActorsOnClick;
     private int mSpanCount;
+    private ResultsViewModel viewModel;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +93,14 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
         mLoadingIndicator = findViewById(R.id.results_loading_indicator);
         mErrorMessageTextView = findViewById(R.id.results_loading_error);
+        mErrorMessageTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(viewModel != null) {
+                    viewModel.retry();
+                }
+            }
+        });
 
         if(savedInstanceState != null) {
             mTitle = savedInstanceState.getString(STATE_TITLE);
@@ -126,7 +136,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     private void createViewModel() {
-        ResultsViewModel viewModel = ViewModelProviders.of(this).get(ResultsViewModel.class);
+        viewModel = ViewModelProviders.of(this).get(ResultsViewModel.class);
         viewModel.getLiveData(mLink).observe(this, new Observer<PagedList<Result>>() {
             @Override
             public void onChanged(@Nullable PagedList<Result> results) {

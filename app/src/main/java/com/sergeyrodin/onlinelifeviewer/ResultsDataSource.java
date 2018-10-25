@@ -17,6 +17,10 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
     private String startLink;
     private ResultsParser parser;
     MutableLiveData<State> state;
+    private LoadInitialParams<String> initialParams;
+    private LoadInitialCallback<String, Result> initialCallback;
+    private LoadParams<String> afterParams;
+    private LoadCallback<String, Result> afterCallback;
 
     public ResultsDataSource(String startLink) {
         this.startLink = startLink;
@@ -46,7 +50,7 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
     }
 
     @Override
-    public void loadInitial(@NonNull LoadInitialParams<String> params, @NonNull final LoadInitialCallback<String, Result> callback) {
+    public void loadInitial(@NonNull final LoadInitialParams<String> params, @NonNull final LoadInitialCallback<String, Result> callback) {
         AppExecutors.getInstance().networkIO().execute(new Runnable() {
             @Override
             public void run() {
@@ -60,7 +64,8 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
                 } catch (IOException e) {
                     e.printStackTrace();
                     updateState(State.ERROR_INIT);
-                    invalidate();
+                    initialParams = params;
+                    initialCallback = callback;
                 }
             }
         });
@@ -83,7 +88,29 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
         }catch(IOException e) {
             e.printStackTrace();
             updateState(State.ERROR_AFTER);
-            invalidate();
+            afterParams = params;
+            afterCallback = callback;
+        }
+    }
+
+    public void retry() {
+        if(state != null) {
+            State stateValue = state.getValue();
+            if(stateValue != null) {
+                switch (stateValue) {
+                    case ERROR_INIT:
+                        loadInitial(initialParams, initialCallback);
+                        break;
+                    case ERROR_AFTER:
+                        AppExecutors.getInstance().networkIO().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                loadAfter(afterParams, afterCallback);
+                            }
+                        });
+                        break;
+                }
+            }
         }
     }
 
