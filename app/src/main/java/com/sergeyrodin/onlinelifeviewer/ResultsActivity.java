@@ -127,7 +127,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     private void createViewModel() {
         ResultsViewModel viewModel = ViewModelProviders.of(this).get(ResultsViewModel.class);
-
         viewModel.getLiveData(mLink).observe(this, new Observer<PagedList<Result>>() {
             @Override
             public void onChanged(@Nullable PagedList<Result> results) {

@@ -23,7 +23,8 @@ public class ResultsViewModel extends ViewModel {
     private void getPagedList(String link) {
         ResultsDataSource dataSource = new ResultsDataSource(link);
         state = dataSource.state;
-        PagedList.Config config = new PagedList.Config.Builder().setPageSize(20)
+        // Think about how to get page size.
+        PagedList.Config config = new PagedList.Config.Builder().setPageSize(5)
                                                                 .setEnablePlaceholders(false)
                                                                 .build();
         PagedList<Result> results = new PagedList.Builder<>(dataSource, config)
