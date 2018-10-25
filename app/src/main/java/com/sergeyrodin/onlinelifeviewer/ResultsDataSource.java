@@ -1,5 +1,6 @@
 package com.sergeyrodin.onlinelifeviewer;
 
+import android.arch.core.util.Function;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.paging.PageKeyedDataSource;
 import android.support.annotation.NonNull;
@@ -17,10 +18,7 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
     private String startLink;
     private ResultsParser parser;
     MutableLiveData<State> state;
-    private LoadInitialParams<String> initialParams;
-    private LoadInitialCallback<String, Result> initialCallback;
-    private LoadParams<String> afterParams;
-    private LoadCallback<String, Result> afterCallback;
+    private Function<Void, Void> retryFunction;
 
     public ResultsDataSource(String startLink) {
         this.startLink = startLink;
@@ -64,8 +62,13 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
                 } catch (IOException e) {
                     e.printStackTrace();
                     updateState(State.ERROR_INIT);
-                    initialParams = params;
-                    initialCallback = callback;
+                    retryFunction = new Function<Void, Void>() {
+                        @Override
+                        public Void apply(Void input) {
+                            loadInitial(params, callback);
+                            return null;
+                        }
+                    };
                 }
             }
         });
@@ -77,7 +80,7 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
     }
 
     @Override
-    public void loadAfter(@NonNull LoadParams<String> params, @NonNull LoadCallback<String, Result> callback) {
+    public void loadAfter(@NonNull final LoadParams<String> params, @NonNull final LoadCallback<String, Result> callback) {
         try {
             updateState(State.LOADING_AFTER);
             getDataFromNet(params.key);
@@ -88,8 +91,19 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
         }catch(IOException e) {
             e.printStackTrace();
             updateState(State.ERROR_AFTER);
-            afterParams = params;
-            afterCallback = callback;
+            retryFunction = new Function<Void, Void>() {
+
+                @Override
+                public Void apply(Void input) {
+                    AppExecutors.getInstance().networkIO().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadAfter(params, callback);
+                        }
+                    });
+                    return null;
+                }
+            };
         }
     }
 
@@ -99,16 +113,8 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
             if(stateValue != null) {
                 switch (stateValue) {
                     case ERROR_INIT:
-                        loadInitial(initialParams, initialCallback);
-                        break;
                     case ERROR_AFTER:
-                        AppExecutors.getInstance().networkIO().execute(new Runnable() {
-                            @Override
-                            public void run() {
-                                loadAfter(afterParams, afterCallback);
-                            }
-                        });
-                        break;
+                        retryFunction.apply(null);
                 }
             }
         }
