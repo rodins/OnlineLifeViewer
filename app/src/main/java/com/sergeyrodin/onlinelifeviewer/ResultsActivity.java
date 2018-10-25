@@ -138,7 +138,25 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                                                                           mSpanCount);
                 adapter.submitList(results);
                 mResultsView.setAdapter(adapter);
-                showData();
+            }
+        });
+
+        viewModel.getState().observe(this, new Observer<State>() {
+            @Override
+            public void onChanged(@Nullable State state) {
+                if(state != null) {
+                    switch(state) {
+                        case LOADING:
+                            showLoadingIndicator();
+                            break;
+                        case DONE:
+                            showData();
+                            break;
+                        case ERROR:
+                            showErrorMessage(R.string.network_problem);
+                            break;
+                    }
+                }
             }
         });
     }

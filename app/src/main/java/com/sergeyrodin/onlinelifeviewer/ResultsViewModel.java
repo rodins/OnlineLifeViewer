@@ -7,6 +7,7 @@ import android.arch.paging.PagedList;
 
 public class ResultsViewModel extends ViewModel {
     private MutableLiveData<PagedList<Result>> liveData;
+    private LiveData<State> state;
 
     LiveData<PagedList<Result>> getLiveData(String link) {
         if(liveData == null) {
@@ -15,8 +16,13 @@ public class ResultsViewModel extends ViewModel {
         return liveData;
     }
 
-    void getPagedList(String link) {
+    LiveData<State> getState() {
+        return state;
+    }
+
+    private void getPagedList(String link) {
         ResultsDataSource dataSource = new ResultsDataSource(link);
+        state = dataSource.state;
         PagedList.Config config = new PagedList.Config.Builder().setPageSize(20)
                                                                 .setEnablePlaceholders(false)
                                                                 .build();

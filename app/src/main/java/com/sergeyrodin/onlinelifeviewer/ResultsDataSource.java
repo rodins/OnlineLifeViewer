@@ -1,5 +1,6 @@
 package com.sergeyrodin.onlinelifeviewer;
 
+import android.arch.lifecycle.MutableLiveData;
 import android.arch.paging.PageKeyedDataSource;
 import android.support.annotation.NonNull;
 
@@ -15,11 +16,14 @@ import java.util.List;
 public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
     private String startLink;
     private ResultsParser parser;
+    MutableLiveData<State> state;
 
     public ResultsDataSource(String startLink) {
         this.startLink = startLink;
         parser = new ResultsParser();
         parser.setStartLink(startLink);
+        state = new MutableLiveData<>();
+        updateState(State.LOADING);
     }
 
     private void getDataFromNet(String link) throws IOException {
@@ -48,12 +52,15 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
             @Override
             public void run() {
                 try {
+                    updateState(State.LOADING);
                     getDataFromNet(startLink);
+                    updateState(State.DONE);
                     List<Result> data = parser.getData();
                     String nextLink = parser.getNextLink();
                     callback.onResult(data, null, nextLink);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    updateState(State.ERROR);
                     invalidate();
                 }
             }
@@ -68,13 +75,20 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
     @Override
     public void loadAfter(@NonNull LoadParams<String> params, @NonNull LoadCallback<String, Result> callback) {
         try {
+            updateState(State.LOADING);
             getDataFromNet(params.key);
+            updateState(State.DONE);
             List<Result> data = parser.getData();
             String nextLink = parser.getNextLink();
             callback.onResult(data, nextLink);
         }catch(IOException e) {
             e.printStackTrace();
+            updateState(State.ERROR);
             invalidate();
         }
+    }
+
+    private void updateState(State state) {
+        this.state.postValue(state);
     }
 }
