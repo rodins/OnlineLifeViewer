@@ -57,7 +57,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private ProgressBar mLoadingIndicator;
     private TextView mErrorMessageTextView;
     private RecyclerView mResultsView;
-    private boolean mIsPage = false;
     private String mTitle, mLink;
     private boolean mIsShowActorsOnClick;
     private int mSpanCount;
@@ -127,7 +126,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     private void createViewModel() {
-        showLoadingIndicator();
         ResultsViewModel viewModel = ViewModelProviders.of(this).get(ResultsViewModel.class);
 
         viewModel.getLiveData(mLink).observe(this, new Observer<PagedList<Result>>() {
@@ -146,14 +144,20 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             public void onChanged(@Nullable State state) {
                 if(state != null) {
                     switch(state) {
-                        case LOADING:
-                            showLoadingIndicator();
+                        case LOADING_INIT:
+                            showLoadingIndicatorInit();
+                            break;
+                        case LOADING_AFTER:
+                            showLoadingIndicatorAfter();
                             break;
                         case DONE:
                             showData();
                             break;
-                        case ERROR:
-                            showErrorMessage(R.string.network_problem);
+                        case ERROR_INIT:
+                            showErrorMessageInit(R.string.network_problem);
+                            break;
+                        case ERROR_AFTER:
+                            showErrorMessageAfter(R.string.network_problem);
                             break;
                     }
                 }
@@ -242,27 +246,32 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mErrorMessageTextView.setLayoutParams(params);
     }
 
-    private void showErrorMessage(int id){
+    private void showErrorMessageInit(int id){
         mErrorMessageTextView.setText(id);
         mLoadingIndicator.setVisibility(View.INVISIBLE);
-        if(mIsPage) {
-            mResultsView.setVisibility(View.VISIBLE);
-            moveUpResultsViewBottom();
-            moveErrorMessageToBottom();
-        }else {
-            mResultsView.setVisibility(View.INVISIBLE);
-        }
+        mResultsView.setVisibility(View.INVISIBLE);
         mErrorMessageTextView.setVisibility(View.VISIBLE);
     }
 
-    private void showLoadingIndicator() {
-        if(mIsPage) {
-            mResultsView.setVisibility(View.VISIBLE);
-            moveUpResultsViewBottom();
-            moveLoadingIndicatorToBottom();
-        }else {
-            mResultsView.setVisibility(View.INVISIBLE);
-        }
+    private void showErrorMessageAfter(int id) {
+        mErrorMessageTextView.setText(id);
+        mLoadingIndicator.setVisibility(View.INVISIBLE);
+        mResultsView.setVisibility(View.VISIBLE);
+        moveUpResultsViewBottom();
+        moveErrorMessageToBottom();
+        mErrorMessageTextView.setVisibility(View.VISIBLE);
+    }
+
+    private void showLoadingIndicatorInit() {
+        mResultsView.setVisibility(View.INVISIBLE);
+        mLoadingIndicator.setVisibility(View.VISIBLE);
+        mErrorMessageTextView.setVisibility(View.INVISIBLE);
+    }
+
+    private void showLoadingIndicatorAfter() {
+        mResultsView.setVisibility(View.VISIBLE);
+        moveUpResultsViewBottom();
+        moveLoadingIndicatorToBottom();
         mLoadingIndicator.setVisibility(View.VISIBLE);
         mErrorMessageTextView.setVisibility(View.INVISIBLE);
     }

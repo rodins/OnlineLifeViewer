@@ -23,7 +23,6 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
         parser = new ResultsParser();
         parser.setStartLink(startLink);
         state = new MutableLiveData<>();
-        updateState(State.LOADING);
     }
 
     private void getDataFromNet(String link) throws IOException {
@@ -52,7 +51,7 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
             @Override
             public void run() {
                 try {
-                    updateState(State.LOADING);
+                    updateState(State.LOADING_INIT);
                     getDataFromNet(startLink);
                     updateState(State.DONE);
                     List<Result> data = parser.getData();
@@ -60,7 +59,7 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
                     callback.onResult(data, null, nextLink);
                 } catch (IOException e) {
                     e.printStackTrace();
-                    updateState(State.ERROR);
+                    updateState(State.ERROR_INIT);
                     invalidate();
                 }
             }
@@ -75,7 +74,7 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
     @Override
     public void loadAfter(@NonNull LoadParams<String> params, @NonNull LoadCallback<String, Result> callback) {
         try {
-            updateState(State.LOADING);
+            updateState(State.LOADING_AFTER);
             getDataFromNet(params.key);
             updateState(State.DONE);
             List<Result> data = parser.getData();
@@ -83,7 +82,7 @@ public class ResultsDataSource extends PageKeyedDataSource<String, Result> {
             callback.onResult(data, nextLink);
         }catch(IOException e) {
             e.printStackTrace();
-            updateState(State.ERROR);
+            updateState(State.ERROR_AFTER);
             invalidate();
         }
     }
