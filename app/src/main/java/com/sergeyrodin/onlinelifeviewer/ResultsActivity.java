@@ -15,6 +15,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
@@ -53,10 +54,12 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         SharedPreferences.OnSharedPreferenceChangeListener{
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
     private final String STATE_LINK = "com.sergeyrodin.LINK";
+    private final String LOG_TAG = getClass().getSimpleName();
 
     private ProgressBar mLoadingIndicator;
     private TextView mErrorMessageTextView;
     private RecyclerView mResultsView;
+    private SwipeRefreshLayout mSwipeRefresh;
     private String mTitle, mLink;
     private boolean mIsShowActorsOnClick;
     private int mSpanCount;
@@ -74,7 +77,15 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        mResultsView = findViewById(R.id.rv_results);
+        mResultsView = findViewById(R.id.list);
+
+        mSwipeRefresh = findViewById(R.id.swipe_refresh);
+        mSwipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refresh();
+            }
+        });
 
         Configuration configuration = getResources().getConfiguration();
         int screenWidthDp = configuration.screenWidthDp;
@@ -163,10 +174,10 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
                             showData();
                             break;
                         case ERROR_INIT:
-                            showErrorMessageInit(R.string.network_problem);
+                            showErrorMessageInit();
                             break;
                         case ERROR_AFTER:
-                            showErrorMessageAfter(R.string.network_problem);
+                            showErrorMessageAfter();
                             break;
                     }
                 }
@@ -177,6 +188,10 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private void loadClickModeFromPreferences(SharedPreferences sharedPreferences) {
         mIsShowActorsOnClick = sharedPreferences.getBoolean(getString(R.string.pref_actors_key),
                 getResources().getBoolean(R.bool.pref_actors_default_value));
+    }
+
+    private void refresh() {
+        viewModel.refresh(mLink);
     }
 
     @Override
@@ -193,6 +208,11 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         if(itemId == R.id.action_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
+            return true;
+        }
+        if(itemId == R.id.action_refresh) {
+            mSwipeRefresh.setRefreshing(true);
+            refresh();
             return true;
         }
         if(itemId == android.R.id.home) {
@@ -255,15 +275,18 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mErrorMessageTextView.setLayoutParams(params);
     }
 
-    private void showErrorMessageInit(int id){
-        mErrorMessageTextView.setText(id);
+    private void showErrorMessageInit(){
+        if(mSwipeRefresh.isRefreshing()) {
+            mSwipeRefresh.setRefreshing(false);
+        }
+        mErrorMessageTextView.setText(R.string.network_problem);
         mLoadingIndicator.setVisibility(View.INVISIBLE);
         mResultsView.setVisibility(View.INVISIBLE);
         mErrorMessageTextView.setVisibility(View.VISIBLE);
     }
 
-    private void showErrorMessageAfter(int id) {
-        mErrorMessageTextView.setText(id);
+    private void showErrorMessageAfter() {
+        mErrorMessageTextView.setText(R.string.network_problem);
         mLoadingIndicator.setVisibility(View.INVISIBLE);
         mResultsView.setVisibility(View.VISIBLE);
         moveUpResultsViewBottom();
@@ -272,8 +295,13 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     private void showLoadingIndicatorInit() {
-        mResultsView.setVisibility(View.INVISIBLE);
-        mLoadingIndicator.setVisibility(View.VISIBLE);
+        if(mSwipeRefresh.isRefreshing()) {
+            mResultsView.setVisibility(View.VISIBLE);
+            mLoadingIndicator.setVisibility(View.INVISIBLE);
+        }else {
+            mResultsView.setVisibility(View.INVISIBLE);
+            mLoadingIndicator.setVisibility(View.VISIBLE);
+        }
         mErrorMessageTextView.setVisibility(View.INVISIBLE);
     }
 
@@ -286,6 +314,9 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     }
 
     private void showData() {
+        if(mSwipeRefresh.isRefreshing()) {
+            mSwipeRefresh.setRefreshing(false);
+        }
         mLoadingIndicator.setVisibility(View.INVISIBLE);
         mResultsView.setPadding(0, 0, 0, 0);
         mResultsView.setVisibility(View.VISIBLE);
