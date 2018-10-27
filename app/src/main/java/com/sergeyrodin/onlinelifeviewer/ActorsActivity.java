@@ -19,6 +19,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.sergeyrodin.onlinelifeviewer.database.AppDatabase;
+import com.sergeyrodin.onlinelifeviewer.database.SavedItem;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +35,9 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     private String mPlayerLink;
     private String mTitle, mResultTitle, mResultLink;
     private FloatingActionButton mFabButtonLinks;
+
+    private MenuItem mActionSave;
+    private boolean mIsItemSaved = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,8 +66,9 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
         if(intent.hasExtra(MainActivity.EXTRA_LINK)) {
             mResultLink = intent.getStringExtra(MainActivity.EXTRA_LINK);
-            ActorsViewModelFactory factory = new ActorsViewModelFactory(mResultLink);
-            ActorsViewModel viewModel = ViewModelProviders.of(this, factory).get(ActorsViewModel.class);
+            AppDatabase db = AppDatabase.getsInstanse(this);
+            ActorsViewModelFactory factory = new ActorsViewModelFactory(db, mResultLink);
+            final ActorsViewModel viewModel = ViewModelProviders.of(this, factory).get(ActorsViewModel.class);
             viewModel.getActorsData().observe(this, new Observer<ActorsData>() {
                 @Override
                 public void onChanged(@Nullable ActorsData actorsData) {
@@ -100,6 +107,17 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                     }
                 }
             });
+
+            viewModel.getSavedItem().observe(this, new Observer<SavedItem>() {
+                @Override
+                public void onChanged(@Nullable SavedItem savedItem) {
+                    viewModel.getSavedItem().removeObserver(this);
+                    mIsItemSaved = savedItem != null;
+                    if(mActionSave != null) {
+                        mActionSave.setVisible(!mIsItemSaved);
+                    }
+                }
+            });
         }
 
         mFabButtonLinks = findViewById(R.id.fab_links);
@@ -116,6 +134,10 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.actors_menu, menu);
+
+        mActionSave = menu.findItem(R.id.action_save);
+        mActionSave.setVisible(!mIsItemSaved);
+
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -157,6 +179,11 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
+        if(itemId == R.id.action_save) {
+            saveItem();
+            return true;
+        }
+
         if(itemId == android.R.id.home) {
             onBackPressed();
             return true;
@@ -201,5 +228,18 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         intent.putExtra(MainActivity.EXTRA_TITLE, title);
         intent.putExtra(MainActivity.EXTRA_LINK, link);
         startActivity(intent);
+    }
+
+    private void saveItem() {
+        mActionSave.setVisible(false);
+        Toast.makeText(this, R.string.item_saved, Toast.LENGTH_SHORT).show();
+        final SavedItem savedItem = new SavedItem(mResultTitle, mResultLink, "");
+        final AppDatabase db = AppDatabase.getsInstanse(this);
+        AppExecutors.getInstance().diskIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                db.savedItemsDao().insertSavedItem(savedItem);
+            }
+        });
     }
 }
