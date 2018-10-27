@@ -104,10 +104,7 @@ public class MainActivity extends AppCompatActivity {
             mCategoriesViewModel.refresh();
             return true;
         }
-        if(itemId == R.id.action_settings) {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
-        }
+
         if(itemId == R.id.action_saved_items) {
             Intent intent = new Intent(this, SavedItemsActivity.class);
             startActivity(intent);

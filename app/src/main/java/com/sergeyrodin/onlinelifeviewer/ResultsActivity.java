@@ -50,8 +50,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener,
-        SharedPreferences.OnSharedPreferenceChangeListener{
+public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener {
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
     private final String STATE_LINK = "com.sergeyrodin.LINK";
     private final String LOG_TAG = getClass().getSimpleName();
@@ -61,10 +60,8 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     private RecyclerView mResultsView;
     private SwipeRefreshLayout mSwipeRefresh;
     private String mTitle, mLink;
-    private boolean mIsShowActorsOnClick;
     private int mSpanCount;
     private ResultsViewModel viewModel;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,12 +135,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         createViewModel();
 
         setTitle(mTitle);
-
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        loadClickModeFromPreferences(sharedPreferences);
-
-        // Register the listener
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
     }
 
     private void createViewModel() {
@@ -185,11 +176,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         });
     }
 
-    private void loadClickModeFromPreferences(SharedPreferences sharedPreferences) {
-        mIsShowActorsOnClick = sharedPreferences.getBoolean(getString(R.string.pref_actors_key),
-                getResources().getBoolean(R.bool.pref_actors_default_value));
-    }
-
     private void refresh() {
         viewModel.refresh(mLink);
     }
@@ -205,11 +191,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
-        if(itemId == R.id.action_settings) {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
-            return true;
-        }
+
         if(itemId == R.id.action_refresh) {
             mSwipeRefresh.setRefreshing(true);
             refresh();
@@ -224,16 +206,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     @Override
     public void onListItemClick(Result result) {
-        //TODO: use actors activity only and remove settings
-        if(mIsShowActorsOnClick || mTitle.contains(getString(R.string.trailers))) { // Use actors links
-            ProcessVideoItem.startActorsActivity(this, result.title, result.link);
-        }else { // Use constant links
-            // Find links in LinksActivity
-            Intent intent = new Intent(ResultsActivity.this, LinksActivity.class);
-            intent.putExtra(MainActivity.EXTRA_TITLE, result.title);
-            intent.putExtra(MainActivity.EXTRA_LINK, result.link);
-            startActivity(intent);
-        }
+        ProcessVideoItem.startActorsActivity(this, result.title, result.link);
     }
 
     @Override
@@ -241,14 +214,6 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         outState.putString(STATE_TITLE, mTitle);
         outState.putString(STATE_LINK, mLink);
         super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // Unregister ResultsActivity as an OnPreferenceChangedListener to avoid any memory leaks.
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .unregisterOnSharedPreferenceChangeListener(this);
     }
 
     private void moveUpResultsViewBottom() {
@@ -322,12 +287,5 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mResultsView.setPadding(0, 0, 0, 0);
         mResultsView.setVisibility(View.VISIBLE);
         mErrorMessageTextView.setVisibility(View.INVISIBLE);
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if(key.equals(getString(R.string.pref_actors_key))) {
-            loadClickModeFromPreferences(sharedPreferences);
-        }
     }
 }
