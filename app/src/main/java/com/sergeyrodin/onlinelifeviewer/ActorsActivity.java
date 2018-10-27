@@ -3,6 +3,7 @@ package com.sergeyrodin.onlinelifeviewer;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
+import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
@@ -16,6 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +29,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     private TextView mErrorTextView;
 
     private List<Link> mActors = new ArrayList<>();
-    private String mJs;
+    private String mPlayerLink;
     private String mTitle, mResultTitle, mResultLink;
     private FloatingActionButton mFabButtonLinks;
 
@@ -90,8 +92,8 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                             setTitle(mTitle);
                         }
 
-                        if(actorsData.getJs() != null) {
-                            mJs = actorsData.getJs();
+                        if(actorsData.getPlayerLink() != null) {
+                            mPlayerLink = actorsData.getPlayerLink();
                         }
 
                         mFabButtonLinks.setVisibility(View.VISIBLE);
@@ -118,8 +120,19 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     }
 
     private void actionOpenClicked() {
-        if(mJs != null) {
-            VideoItem psItem = new VideoItemParser().getItem(mJs);
+        if(mPlayerLink != null) {
+            Uri uri = Uri.parse(mPlayerLink);
+            Intent viewMediaIntent = new Intent();
+            viewMediaIntent.setAction(Intent.ACTION_VIEW);
+            viewMediaIntent.setData(uri);
+            viewMediaIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            if(viewMediaIntent.resolveActivity(getPackageManager()) != null){
+                startActivity(viewMediaIntent);
+            }else {
+                Toast.makeText(this, R.string.no_app_found, Toast.LENGTH_SHORT).show();
+            }
+
+            /*VideoItem psItem = new VideoItemParser().getItem(mJs);
             if(psItem.getComment() != null) {
                 // Trailer title
                 if(psItem.getComment().trim().isEmpty()) {
@@ -132,7 +145,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                 Intent intent = new Intent(this, LinksActivity.class);
                 intent.putExtra(MainActivity.EXTRA_JS, mJs);
                 startActivity(intent);
-            }
+            }*/
         }else { // Start LinksActivity in constant links mode
             Intent intent = new Intent(this, LinksActivity.class);
             intent.putExtra(MainActivity.EXTRA_TITLE, mResultTitle);

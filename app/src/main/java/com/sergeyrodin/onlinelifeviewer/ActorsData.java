@@ -7,7 +7,7 @@ class ActorsData {
     private boolean isLoading;
     private String country;
     private String year;
-    private String js;
+    private String playerLink;
     private List<Actor> actors;
     private boolean isError;
 
@@ -18,7 +18,7 @@ class ActorsData {
         actors = new ArrayList<>();
     }
 
-    public boolean isLoading() {
+    boolean isLoading() {
         return isLoading;
     }
 
@@ -26,35 +26,35 @@ class ActorsData {
         return actors;
     }
 
-    public boolean isError() {
+    boolean isError() {
         return isError;
     }
 
-    public String getCountry() {
+    String getCountry() {
         return country;
     }
 
-    public void setCountry(String country) {
+    void setCountry(String country) {
         this.country = country;
     }
 
-    public String getYear() {
+    String getYear() {
         return year;
     }
 
-    public void setYear(String year) {
+    void setYear(String year) {
         this.year = year;
     }
 
-    public String getJs() {
-        return js;
+    String getPlayerLink() {
+        return playerLink;
     }
 
-    public void setJs(String js) {
-        this.js = js;
+    void setPlayerLink(String playerLink) {
+        this.playerLink = playerLink;
     }
 
-    public void setActors(List<Actor> actors) {
+    void setActors(List<Actor> actors) {
         this.actors = actors;
     }
 }

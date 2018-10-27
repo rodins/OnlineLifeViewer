@@ -224,6 +224,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     @Override
     public void onListItemClick(Result result) {
+        //TODO: use actors activity only and remove settings
         if(mIsShowActorsOnClick || mTitle.contains(getString(R.string.trailers))) { // Use actors links
             ProcessVideoItem.startActorsActivity(this, result.title, result.link);
         }else { // Use constant links
