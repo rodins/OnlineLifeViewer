@@ -4,25 +4,16 @@ import android.app.SearchManager;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.arch.paging.PagedList;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -31,29 +22,13 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.sergeyrodin.onlinelifeviewer.utilities.Html;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ResultsActivity extends AppCompatActivity implements ResultsAdapter.ListItemClickListener {
     private final String STATE_TITLE = "com.sergeyrodin.TITLE";
     private final String STATE_LINK = "com.sergeyrodin.LINK";
-    private final String LOG_TAG = getClass().getSimpleName();
 
     private ProgressBar mLoadingIndicator;
     private TextView mErrorMessageTextView;
@@ -206,7 +181,7 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
 
     @Override
     public void onListItemClick(Result result) {
-        ProcessVideoItem.startActorsActivity(this, result.title, result.link);
+        startActorsActivity(result.title, result.link);
     }
 
     @Override
@@ -287,5 +262,12 @@ public class ResultsActivity extends AppCompatActivity implements ResultsAdapter
         mResultsView.setPadding(0, 0, 0, 0);
         mResultsView.setVisibility(View.VISIBLE);
         mErrorMessageTextView.setVisibility(View.INVISIBLE);
+    }
+
+    private void startActorsActivity(String title, String link) {
+        Intent intent = new Intent(this, ActorsActivity.class);
+        intent.putExtra(MainActivity.EXTRA_TITLE, title);
+        intent.putExtra(MainActivity.EXTRA_LINK, link);
+        startActivity(intent);
     }
 }

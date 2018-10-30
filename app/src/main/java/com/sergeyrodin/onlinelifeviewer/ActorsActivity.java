@@ -153,26 +153,6 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             }else {
                 Toast.makeText(this, R.string.no_app_found, Toast.LENGTH_SHORT).show();
             }
-
-            /*VideoItem psItem = new VideoItemParser().getItem(mJs);
-            if(psItem.getComment() != null) {
-                // Trailer title
-                if(psItem.getComment().trim().isEmpty()) {
-                    psItem.setComment(mTitle);
-                }
-                //Start process item dialog: select play or download item
-                ProcessVideoItem.process(this, psItem);
-            }else {
-                // Process seasons in LinksActivity
-                Intent intent = new Intent(this, LinksActivity.class);
-                intent.putExtra(MainActivity.EXTRA_JS, mJs);
-                startActivity(intent);
-            }*/
-        }else { // Start LinksActivity in constant links mode
-            Intent intent = new Intent(this, LinksActivity.class);
-            intent.putExtra(MainActivity.EXTRA_TITLE, mResultTitle);
-            intent.putExtra(MainActivity.EXTRA_LINK, mResultLink);
-            startActivity(intent);
         }
     }
 

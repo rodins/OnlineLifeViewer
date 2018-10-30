@@ -1,29 +1,21 @@
 package com.sergeyrodin.onlinelifeviewer.utilities;
 
 import android.net.Uri;
-import android.util.Log;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by sergey on 30.11.17.
  */
 
 public class NetworkUtils {
-    final static String ONLINE_LIFE_BASE_URL = "http://online-life.club";
-    final static String TAG = NetworkUtils.class.getSimpleName();
+    final static String ONLINE_LIFE_BASE_URL = "http://onlinelife.club";
 
     private final static String PARAM_DO = "do";
     private final static String PARAM_SUBACTION = "subaction";
@@ -32,12 +24,6 @@ public class NetworkUtils {
     private final static String PARAM_SEARCH_START = "search_start";
     private final static String search = "search";
     private final static String simple = "simple";
-
-    private final static String JSON_BASE_URL = "http://play.cidwo.com";
-    private final static String PATH_JSON = "js.php";
-    private final static String PARAM_ID = "id";
-    private final static String PATH_PLAYER = "player.php";
-    private final static String PARAM_NEWS_ID = "newsid";
 
     private final static String PARAM_IMAGE_WIDTH = "w";
     private final static String PARAM_IMAGE_HEIGHT = "h";
@@ -73,32 +59,6 @@ public class NetworkUtils {
                        .toString();
     }
 
-    private static String getLinkId(String link) {
-        Matcher m = Pattern
-                .compile("/(\\d+?)-")
-                .matcher(link);
-        if(m.find()){
-            return m.group(1);
-        }
-        return  "";
-    }
-
-    private static URL buildJsonUrl(String id) throws MalformedURLException {
-        Uri builtUri = Uri.parse(JSON_BASE_URL).buildUpon()
-                .appendPath(PATH_JSON)
-                .appendQueryParameter(PARAM_ID, id)
-                .build();
-        return new URL(builtUri.toString());
-    }
-
-    private static String buildRefererUrl(String id) {
-        Uri builtUri = Uri.parse(JSON_BASE_URL).buildUpon()
-                .appendPath(PATH_PLAYER)
-                .appendQueryParameter(PARAM_NEWS_ID, id)
-                .build();
-        return builtUri.toString();
-    }
-
     public static String buildImageStringUrl(String image, int w, int h) {
         String width = Integer.toString(w);
         String height = Integer.toString(h);
@@ -108,30 +68,6 @@ public class NetworkUtils {
                 .appendQueryParameter(PARAM_IMAGE_ZC, ZC)
                 .build();
         return builtUri.toString();
-    }
-
-    public static String getResponseFromHttpUrl(URL url) throws IOException{
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-        try {
-            InputStream in = urlConnection.getInputStream();
-
-            Scanner scanner = new Scanner(in);
-            scanner.useDelimiter("\\A");
-
-            boolean hasInput = scanner.hasNext();
-            if(hasInput) {
-                return scanner.next();
-            }else {
-                return null;
-            }
-        }finally {
-            urlConnection.disconnect();
-        }
-    }
-
-    public static String getConstantLinksJs(URL url) throws IOException {
-        String id = getLinkId(url.toString());
-        return getResponseFromHttpUrl(buildJsonUrl(id), buildRefererUrl(id));
     }
 
     public static String getResponseFromHttpUrl(URL url, String referer) throws IOException {
@@ -152,22 +88,5 @@ public class NetworkUtils {
         }finally {
             urlConnection.disconnect();
         }
-    }
-
-    public static String getLinkSize(URL url) {
-        try {
-            HttpURLConnection connection = null;
-            try {
-                connection = (HttpURLConnection)url.openConnection();
-                return connection.getHeaderField("content-length");
-            }finally {
-                if(connection != null) {
-                    connection.disconnect();
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 }

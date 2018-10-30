@@ -3,15 +3,12 @@ package com.sergeyrodin.onlinelifeviewer;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -23,7 +20,6 @@ import java.util.List;
 // TODO: display images
 public class SavedItemsActivity extends AppCompatActivity
                implements SavedItemsAdapter.SavedItemClickListener {
-    private static final String LOG_TAG = SavedItemsActivity.class.getSimpleName();
     private RecyclerView mRvSaveItems;
     private TextView mTvNoItems;
     private SavedItemsAdapter mSavedItemsAdapter;
@@ -83,8 +79,13 @@ public class SavedItemsActivity extends AppCompatActivity
     @Override
     public void onSavedItemClick(int position) {
         SavedItem savedItem = mSavedItemsAdapter.getSavedItems().get(position);
-        ProcessVideoItem.startActorsActivity(this,
-                savedItem.getTitle(),
-                savedItem.getLink());
+        startActorsActivity(savedItem.getTitle(), savedItem.getLink());
+    }
+
+    private void startActorsActivity(String title, String link) {
+        Intent intent = new Intent(this, ActorsActivity.class);
+        intent.putExtra(MainActivity.EXTRA_TITLE, title);
+        intent.putExtra(MainActivity.EXTRA_LINK, link);
+        startActivity(intent);
     }
 }
