@@ -5,9 +5,11 @@ import android.arch.lifecycle.MutableLiveData;
 
 class ActorsRepo {
     private MutableLiveData<ActorsData> actorsData;
+    private MutableLiveData<State> state;
 
     ActorsRepo() {
         actorsData = new MutableLiveData<>();
+        state = new MutableLiveData<>();
     }
 
     public LiveData<ActorsData> getActorsData(String link) {
@@ -15,16 +17,26 @@ class ActorsRepo {
         return actorsData;
     }
 
+    LiveData<State> getState() {
+        return state;
+    }
+
     private void getActorsDataFromNet(final String link) {
-        actorsData.setValue(new ActorsData(true,false));
+        state.setValue(State.LOADING_INIT);
         AppExecutors.getInstance().networkIO().execute(new Runnable() {
             @Override
             public void run() {
                 try {
                     ActorsData data = new ActorsParser().parse(link);
-                    actorsData.postValue(data);
+                    if(data.getActors().isEmpty()) {
+                        state.postValue(State.EMPTY);
+                    }else {
+                        actorsData.postValue(data);
+                        state.postValue(State.DONE);
+                    }
                 } catch (Exception e) {
-                    actorsData.postValue(new ActorsData(false, true));
+                    e.printStackTrace();
+                    state.postValue(State.ERROR_INIT);
                 }
             }
         });

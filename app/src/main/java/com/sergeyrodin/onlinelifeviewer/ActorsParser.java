@@ -23,7 +23,7 @@ class ActorsParser {
     private final String LOG_TAG = getClass().getSimpleName();
 
     ActorsData parse(String link) throws IOException{
-        ActorsData result = new ActorsData(false, false);
+        ActorsData result = new ActorsData();
         URL url = new URL(link);
         HttpURLConnection connection = null;
         BufferedReader in = null;
@@ -47,7 +47,7 @@ class ActorsParser {
                     continue;
                 }
                 if(spanFound && !line.contains("span")) {
-                    result.getActors().addAll(parseAnchors(line, isDirector));
+                    result.setActors(parseAnchors(line, isDirector));
                 }
                 if(line.contains("</span>") && spanFound) {
                     spanFound = false;

@@ -18,14 +18,18 @@ public class ActorsViewModel extends ViewModel {
         actorsRepo = new ActorsRepo();
     }
 
-    public LiveData<ActorsData> getActorsData() {
+    LiveData<ActorsData> getActorsData() {
         if(actorsData == null) {
             actorsData = actorsRepo.getActorsData(link);
         }
         return actorsData;
     }
 
-    public LiveData<SavedItem> getSavedItem() {
+    LiveData<State> getState() {
+        return actorsRepo.getState();
+    }
+
+    LiveData<SavedItem> getSavedItem() {
         return db.savedItemsDao().loadSavedItemByLink(link);
     }
 }

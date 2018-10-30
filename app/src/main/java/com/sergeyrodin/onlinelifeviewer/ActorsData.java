@@ -4,30 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 class ActorsData {
-    private boolean isLoading;
     private String country;
     private String year;
     private String playerLink;
     private List<Actor> actors;
-    private boolean isError;
-
-    ActorsData(boolean isLoading,
-               boolean isError) {
-        this.isLoading = isLoading;
-        this.isError = isError;
-        actors = new ArrayList<>();
-    }
-
-    boolean isLoading() {
-        return isLoading;
-    }
 
     public List<Actor> getActors() {
         return actors;
-    }
-
-    boolean isError() {
-        return isError;
     }
 
     String getCountry() {

@@ -72,26 +72,14 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             viewModel.getActorsData().observe(this, new Observer<ActorsData>() {
                 @Override
                 public void onChanged(@Nullable ActorsData actorsData) {
-                    if(actorsData == null) {
-                        return;
-                    }
-                    if(actorsData.isLoading()) {
-                        showLoadingIndicator();
-                    }else if(actorsData.isError()) {
-                        showError();
-                    }else {
-                        if(actorsData.getActors().isEmpty()) {
-                            showEmpty();
-                        }else {
-                            for(Actor actor: actorsData.getActors()) {
-                                String title = actor.title + " " + (actor.isDirector?"(" + getString(R.string.director) + ")":"");
-                                mActors.add(new Link(title, actor.href));
-                            }
-                            ActorsAdapter adapter = new ActorsAdapter(mActors,
-                                    ActorsActivity.this);
-                            mRvActors.setAdapter(adapter);
-                            showData();
+                    if(actorsData != null) {
+                        for(Actor actor: actorsData.getActors()) {
+                            String title = actor.title + " " + (actor.isDirector?"(" + getString(R.string.director) + ")":"");
+                            mActors.add(new Link(title, actor.href));
                         }
+                        ActorsAdapter adapter = new ActorsAdapter(mActors,
+                                ActorsActivity.this);
+                        mRvActors.setAdapter(adapter);
 
                         if(actorsData.getCountry() != null && actorsData.getYear() != null) {
                             mTitle = mResultTitle + " - " + actorsData.getCountry() + " - " +
@@ -104,6 +92,28 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                         }
 
                         mFabButtonLinks.setVisibility(View.VISIBLE);
+                    }
+                }
+            });
+
+            viewModel.getState().observe(this, new Observer<State>() {
+                @Override
+                public void onChanged(@Nullable State state) {
+                    if(state != null) {
+                        switch(state) {
+                            case LOADING_INIT:
+                                showLoadingIndicator();
+                                break;
+                            case DONE:
+                                showData();
+                                break;
+                            case EMPTY:
+                                showEmpty();
+                                break;
+                            case ERROR_INIT:
+                                showError();
+                                break;
+                        }
                     }
                 }
             });
