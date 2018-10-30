@@ -164,6 +164,11 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             return true;
         }
 
+        if(itemId == R.id.action_open) {
+            actionOpenClicked();
+            return true;
+        }
+
         if(itemId == android.R.id.home) {
             onBackPressed();
             return true;

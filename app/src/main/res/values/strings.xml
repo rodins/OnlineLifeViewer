@@ -41,5 +41,6 @@
     <string name="action_save">Save</string>
     <string name="item_saved">Item saved</string>
     <string name="saved_item_icon">Saved item icon</string>
+    <string name="action_open">Open</string>
 
 </resources>
