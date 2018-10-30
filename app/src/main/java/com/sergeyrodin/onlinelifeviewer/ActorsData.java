@@ -7,7 +7,7 @@ class ActorsData {
     private String country;
     private String year;
     private String playerLink;
-    private List<Actor> actors;
+    private List<Actor> actors = new ArrayList<>();
 
     public List<Actor> getActors() {
         return actors;

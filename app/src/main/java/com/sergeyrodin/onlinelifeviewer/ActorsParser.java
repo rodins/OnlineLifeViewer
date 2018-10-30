@@ -55,7 +55,6 @@ class ActorsParser {
                 }
 
                 if(line.contains("info_data")) {
-
                     if(line.contains("</span>")) {
                         if(line.contains("<li>")) {
                             result.setYear(parseYear(line));
