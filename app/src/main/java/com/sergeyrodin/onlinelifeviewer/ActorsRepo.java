@@ -3,16 +3,25 @@ package com.sergeyrodin.onlinelifeviewer;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.Charset;
+
 class ActorsRepo {
     private MutableLiveData<ActorsData> actorsData;
     private MutableLiveData<State> state;
+    private ActorsParser parser;
 
     ActorsRepo() {
         actorsData = new MutableLiveData<>();
         state = new MutableLiveData<>();
+        parser = new ActorsParser();
     }
 
-    public LiveData<ActorsData> getActorsData(String link) {
+    LiveData<ActorsData> getActorsData(String link) {
         getActorsDataFromNet(link);
         return actorsData;
     }
@@ -27,12 +36,27 @@ class ActorsRepo {
             @Override
             public void run() {
                 try {
-                    ActorsData data = new ActorsParser().parse(link);
-                    if(data.getActors().isEmpty()) {
-                        state.postValue(State.EMPTY);
-                    }else {
-                        actorsData.postValue(data);
-                        state.postValue(State.DONE);
+                    URL url = new URL(link);
+                    HttpURLConnection connection = null;
+                    BufferedReader in = null;
+                    try {
+                        connection = (HttpURLConnection) url.openConnection();
+                        InputStream stream = connection.getInputStream();
+                        in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
+                        ActorsData data = parser.parse(in, link);
+                        if (data.getActors().isEmpty()) {
+                            state.postValue(State.EMPTY);
+                        }else {
+                            actorsData.postValue(data);
+                            state.postValue(State.DONE);
+                        }
+                    }finally {
+                        if(in != null) {
+                            in.close();
+                        }
+                        if(connection != null) {
+                            connection.disconnect();
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

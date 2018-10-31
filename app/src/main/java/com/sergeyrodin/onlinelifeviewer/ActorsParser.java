@@ -1,103 +1,81 @@
 package com.sergeyrodin.onlinelifeviewer;
 
-import android.util.Log;
-
 import com.sergeyrodin.onlinelifeviewer.utilities.Html;
 import com.sergeyrodin.onlinelifeviewer.utilities.NetworkUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class ActorsParser {
-    private final String LOG_TAG = getClass().getSimpleName();
 
-    ActorsData parse(String link) throws IOException{
+    ActorsData parse(BufferedReader in, String link) throws IOException{
         ActorsData result = new ActorsData();
-        URL url = new URL(link);
-        HttpURLConnection connection = null;
-        BufferedReader in = null;
         boolean spanFound = false;
         boolean isDirector = false;
         boolean infoDataFound = false;
         boolean countryFound = false;
-        try {
-            connection = (HttpURLConnection)url.openConnection();
-            InputStream stream = connection.getInputStream();
-            in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
-            String line;
-            while((line = in.readLine()) != null){
-                if(line.contains("Режиссеры") && !spanFound) {
-                    spanFound = true;
-                    isDirector = true;
-                    continue;
-                }
-                if(line.contains("В ролях") && !spanFound) {
-                    spanFound = true;
-                    continue;
-                }
-                if(spanFound && !line.contains("span")) {
-                    result.setActors(parseAnchors(line, isDirector));
-                }
-                if(line.contains("</span>") && spanFound) {
-                    spanFound = false;
-                    isDirector = false;
-                }
 
-                if(line.contains("info_data")) {
-                    if(line.contains("</span>")) {
-                        if(line.contains("<li>")) {
-                            result.setYear(parseYear(line));
-                        }
-                    }else {
-                        infoDataFound = true;
+        String line;
+        while((line = in.readLine()) != null){
+            if(line.contains("Режиссеры") && !spanFound) {
+                spanFound = true;
+                isDirector = true;
+                continue;
+            }
+            if(line.contains("В ролях") && !spanFound) {
+                spanFound = true;
+                continue;
+            }
+            if(spanFound && !line.contains("span")) {
+                result.setActors(parseAnchors(line, isDirector));
+            }
+            if(line.contains("</span>") && spanFound) {
+                spanFound = false;
+                isDirector = false;
+            }
+
+            if(line.contains("info_data")) {
+                if(line.contains("</span>")) {
+                    if(line.contains("<li>")) {
+                        result.setYear(parseYear(line));
                     }
-                    continue;
+                }else {
+                    infoDataFound = true;
                 }
+                continue;
+            }
 
-                if(line.contains("</span>") && infoDataFound) {
-                    infoDataFound = false;
-                }
+            if(line.contains("</span>") && infoDataFound) {
+                infoDataFound = false;
+            }
 
-                if(infoDataFound) {
-                    if(!line.contains("<")) {
-                        if(!countryFound) {
-                            result.setCountry(line.trim());
-                            countryFound = true;
-                        }
+            if(infoDataFound) {
+                if(!line.contains("<")) {
+                    if(!countryFound) {
+                        result.setCountry(line.trim());
+                        countryFound = true;
                     }
-                }
-
-                if(line.contains("<iframe")) {
-                    String iframeLink = parseIframe(line);
-                    if(iframeLink != null) {
-                        String playerCode = loadPlayerCode(iframeLink, link);
-                        //Log.d(LOG_TAG, playerCode);
-                        String playerLink = parsePlayerCode(playerCode);
-                        result.setPlayerLink(playerLink);
-                    }
-                    return result;
                 }
             }
-            return result;
-        }finally {
-            if(in != null) {
-                in.close();
-            }
-            if(connection != null) {
-                connection.disconnect();
+
+            if(line.contains("<iframe")) {
+                String iframeLink = parseIframe(line);
+                if(iframeLink != null) {
+                    String playerCode = loadPlayerCode(iframeLink, link);
+                    String playerLink = parsePlayerCode(playerCode);
+                    result.setPlayerLink(playerLink);
+                }
+                return result;
             }
         }
+        return result;
     }
 
     private List<Actor> parseAnchors(String line, boolean isDirector) {
