@@ -10,27 +10,27 @@ public class ActorsViewModel extends ViewModel {
     private String link;
     private AppDatabase db;
     private LiveData<ActorsData> actorsData;
-    private ActorsRepo actorsRepo;
+    private ActorsDataSource actorsDataSource;
 
     ActorsViewModel(AppDatabase db, String link) {
         this.link = link;
         this.db = db;
-        actorsRepo = new ActorsRepo();
+        actorsDataSource = new ActorsDataSource();
     }
 
     LiveData<ActorsData> getActorsData() {
         if(actorsData == null) {
-            actorsData = actorsRepo.getActorsData(link);
+            actorsData = actorsDataSource.getActorsData(link);
         }
         return actorsData;
     }
 
     void retry() {
-        actorsRepo.getActorsDataFromNet(link);
+        actorsDataSource.getActorsDataFromNet(link);
     }
 
     LiveData<State> getState() {
-        return actorsRepo.getState();
+        return actorsDataSource.getState();
     }
 
     LiveData<SavedItem> getSavedItem() {

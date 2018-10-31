@@ -10,12 +10,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 
-class ActorsRepo {
+class ActorsDataSource {
     private MutableLiveData<ActorsData> actorsData;
     private MutableLiveData<State> state;
     private ActorsParser parser;
 
-    ActorsRepo() {
+    ActorsDataSource() {
         actorsData = new MutableLiveData<>();
         state = new MutableLiveData<>();
         parser = new ActorsParser();
