@@ -14,7 +14,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class ActorsParser {
-
     ActorsData parse(BufferedReader in, String link) throws IOException{
         ActorsData result = new ActorsData();
         boolean spanFound = false;
@@ -34,7 +33,7 @@ class ActorsParser {
                 continue;
             }
             if(spanFound && !line.contains("span")) {
-                result.setActors(parseAnchors(line, isDirector));
+                result.getActors().addAll(parseAnchors(line, isDirector));
             }
             if(line.contains("</span>") && spanFound) {
                 spanFound = false;

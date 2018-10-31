@@ -36,8 +36,4 @@ class ActorsData {
     void setPlayerLink(String playerLink) {
         this.playerLink = playerLink;
     }
-
-    void setActors(List<Actor> actors) {
-        this.actors = actors;
-    }
 }
