@@ -31,7 +31,6 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private TextView tvLoadingError;
     private ExpandableListView mCategoriesList;
-    private MenuItem refreshMenuItem;
     private List<Link> mCategories;
     private CategoriesViewModel mCategoriesViewModel;
 
@@ -42,6 +41,13 @@ public class MainActivity extends AppCompatActivity {
 
         progressBar = findViewById(R.id.loading_indicator);
         tvLoadingError = findViewById(R.id.loading_error);
+        tvLoadingError.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCategoriesViewModel.retry();
+            }
+        });
+
         mCategoriesList = findViewById(R.id.categories_list);
 
         mCategoriesList.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
@@ -102,18 +108,12 @@ public class MainActivity extends AppCompatActivity {
                     searchManager.getSearchableInfo(getComponentName()));
         }
 
-        refreshMenuItem = menu.findItem(R.id.action_refresh);
-
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
-        if(itemId == R.id.action_refresh) {
-            mCategoriesViewModel.refresh();
-            return true;
-        }
 
         if(itemId == R.id.action_saved_items) {
             Intent intent = new Intent(this, SavedItemsActivity.class);
@@ -133,27 +133,18 @@ public class MainActivity extends AppCompatActivity {
         mCategoriesList.setVisibility(View.INVISIBLE);
         tvLoadingError.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.VISIBLE);
-        if(refreshMenuItem != null) {
-            refreshMenuItem.setVisible(false);
-        }
     }
 
     private void showResults() {
         mCategoriesList.setVisibility(View.VISIBLE);
         tvLoadingError.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.INVISIBLE);
-        if(refreshMenuItem != null) {
-            refreshMenuItem.setVisible(false);
-        }
     }
 
     private void showLoadingError() {
         mCategoriesList.setVisibility(View.INVISIBLE);
         tvLoadingError.setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.INVISIBLE);
-        if(refreshMenuItem != null) {
-            refreshMenuItem.setVisible(true);
-        }
     }
 
     private void categoriesToAdapter(List<Link> categories) {

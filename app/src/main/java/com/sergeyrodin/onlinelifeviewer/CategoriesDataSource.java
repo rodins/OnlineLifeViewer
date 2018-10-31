@@ -36,7 +36,7 @@ public class CategoriesDataSource {
         return state;
     }
 
-    void refresh() {
+    void retry() {
         getCategoriesFromNet();
     }
 

@@ -15,12 +15,4 @@
         android:title="@string/action_saved_items"
         app:showAsAction="ifRoom" />
 
-    <!-- TODO: remove refresh button, implement differently -->
-    <item
-        android:id="@+id/action_refresh"
-        android:icon="@mipmap/ic_action_refresh"
-        android:visible="false"
-        android:title="@string/action_refresh"
-        app:showAsAction="never" />
-
 </menu>

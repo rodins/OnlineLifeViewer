@@ -28,7 +28,7 @@ public class CategoriesViewModel extends AndroidViewModel {
         return categoriesDataSource.getState();
     }
 
-    void refresh() {
-        categoriesDataSource.refresh();
+    void retry() {
+        categoriesDataSource.retry();
     }
 }

@@ -13,7 +13,7 @@ public class ResultsViewModel extends ViewModel {
     private MutableLiveData<ResultsDataSource> dataSourceLiveData;
 
     public ResultsViewModel() {
-        // This live data needed for transformations. To set state from new data source after refresh
+        // This live data needed for transformations. To set state from new data source after retry
         dataSourceLiveData = new MutableLiveData<>();
     }
 
