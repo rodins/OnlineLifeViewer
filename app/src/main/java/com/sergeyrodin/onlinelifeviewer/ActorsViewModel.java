@@ -25,6 +25,10 @@ public class ActorsViewModel extends ViewModel {
         return actorsData;
     }
 
+    void retry() {
+        actorsRepo.getActorsDataFromNet(link);
+    }
+
     LiveData<State> getState() {
         return actorsRepo.getState();
     }

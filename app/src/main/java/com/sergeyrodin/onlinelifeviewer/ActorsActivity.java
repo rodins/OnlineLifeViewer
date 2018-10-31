@@ -38,6 +38,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
 
     private MenuItem mActionSave;
     private boolean mIsItemSaved = true;
+    private ActorsViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +56,14 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
         mRvActors.setLayoutManager(layoutManager);
         mLoadingIndicator = findViewById(R.id.actors_loading_indicator);
         mErrorTextView = findViewById(R.id.actors_loading_error);
+        mErrorTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(viewModel != null) {
+                    viewModel.retry();
+                }
+            }
+        });
 
         Intent intent = getIntent();
         if(intent.hasExtra(MainActivity.EXTRA_TITLE)) {
@@ -68,7 +77,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
             mResultLink = intent.getStringExtra(MainActivity.EXTRA_LINK);
             AppDatabase db = AppDatabase.getsInstanse(this);
             ActorsViewModelFactory factory = new ActorsViewModelFactory(db, mResultLink);
-            final ActorsViewModel viewModel = ViewModelProviders.of(this, factory).get(ActorsViewModel.class);
+            viewModel = ViewModelProviders.of(this, factory).get(ActorsViewModel.class);
             viewModel.getActorsData().observe(this, new Observer<ActorsData>() {
                 @Override
                 public void onChanged(@Nullable ActorsData actorsData) {

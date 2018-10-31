@@ -21,7 +21,7 @@ class ActorsRepo {
         return state;
     }
 
-    private void getActorsDataFromNet(final String link) {
+    void getActorsDataFromNet(final String link) {
         state.setValue(State.LOADING_INIT);
         AppExecutors.getInstance().networkIO().execute(new Runnable() {
             @Override
