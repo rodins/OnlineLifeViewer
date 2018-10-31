@@ -36,7 +36,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     private String mTitle, mResultTitle, mResultLink;
     private FloatingActionButton mFabButtonLinks;
 
-    private MenuItem mActionSave;
+    private MenuItem mActionSave, mActionOpen;
     private boolean mIsItemSaved = true;
     private ActorsViewModel viewModel;
 
@@ -101,6 +101,7 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
                         }
 
                         mFabButtonLinks.setVisibility(View.VISIBLE);
+                        mActionOpen.setVisible(true);
                     }
                 }
             });
@@ -153,6 +154,8 @@ public class ActorsActivity extends AppCompatActivity implements ActorsAdapter.L
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.actors_menu, menu);
+
+        mActionOpen = menu.findItem(R.id.action_open);
 
         mActionSave = menu.findItem(R.id.action_save);
         mActionSave.setVisible(!mIsItemSaved);
