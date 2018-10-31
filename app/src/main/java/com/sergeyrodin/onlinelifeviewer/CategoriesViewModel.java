@@ -9,26 +9,26 @@ import java.util.List;
 
 public class CategoriesViewModel extends AndroidViewModel {
     private LiveData<List<Link>> categoriesData;
-    private CategoriesRepo categoriesRepo;
+    private CategoriesDataSource categoriesDataSource;
 
     public CategoriesViewModel(@NonNull Application application) {
         super(application);
         String categoriesUrl = application.getString(R.string.onlinelife_domain);
-        categoriesRepo = new CategoriesRepo(categoriesUrl);
+        categoriesDataSource = new CategoriesDataSource(categoriesUrl);
     }
 
     LiveData<List<Link>> getCategoriesData() {
         if(categoriesData == null) {
-            categoriesData = categoriesRepo.getCategoriesData();
+            categoriesData = categoriesDataSource.getCategoriesData();
         }
         return categoriesData;
     }
 
     LiveData<State> getState() {
-        return categoriesRepo.getState();
+        return categoriesDataSource.getState();
     }
 
     void refresh() {
-        categoriesRepo.refresh();
+        categoriesDataSource.refresh();
     }
 }

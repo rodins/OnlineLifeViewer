@@ -13,12 +13,12 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
 
-public class CategoriesRepo {
+public class CategoriesDataSource {
     private MutableLiveData<List<Link>> categoriesData;
     private MutableLiveData<State> state;
     private final String CATEGORIES_URL;
 
-    CategoriesRepo(String categoriesUrl){
+    CategoriesDataSource(String categoriesUrl){
         CATEGORIES_URL = categoriesUrl;
         state = new MutableLiveData<>();
     }
