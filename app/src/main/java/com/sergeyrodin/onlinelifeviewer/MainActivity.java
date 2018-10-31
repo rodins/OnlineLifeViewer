@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -26,11 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-    public static final String EXTRA_PSITEM = "com.sergeyrodin.PSITEM";
     public static final String EXTRA_LINK = "com.sergeyrodin.LINK";
-    public static final String EXTRA_JS = "com.sergeyrodin.JS";
     public static final String EXTRA_TITLE = "com.sergeyrodin.TITLE";
-    private static final String TAG = MainActivity.class.getSimpleName();
 
     private ProgressBar progressBar;
     private TextView tvLoadingError;
@@ -62,18 +58,30 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mCategoriesViewModel = ViewModelProviders.of(this).get(CategoriesViewModel.class);
-        mCategoriesViewModel.getCategoriesData().observe(this, new Observer<CategoriesData>() {
+        mCategoriesViewModel.getCategoriesData().observe(this, new Observer<List<Link>>() {
             @Override
-            public void onChanged(@Nullable CategoriesData categoriesData) {
-                if(categoriesData != null) {
-                    if(categoriesData.isLoading()) {
-                        showLoadingIndicator();
-                    }else if(categoriesData.isError()) {
-                        showLoadingError();
-                    }else if(categoriesData.getCategories() != null) {
-                        showResults();
-                        mCategories = categoriesData.getCategories();
-                        categoriesToAdapter(mCategories);
+            public void onChanged(@Nullable List<Link> categories) {
+                if(categories != null) {
+                    mCategories = categories;
+                    categoriesToAdapter(mCategories);
+                }
+            }
+        });
+
+        mCategoriesViewModel.getState().observe(this, new Observer<State>() {
+            @Override
+            public void onChanged(@Nullable State state) {
+                if(state != null) {
+                    switch(state) {
+                        case LOADING_INIT:
+                            showLoadingIndicator();
+                            break;
+                        case DONE:
+                            showResults();
+                            break;
+                        case ERROR_INIT:
+                            showLoadingError();
+                            break;
                     }
                 }
             }
@@ -89,8 +97,10 @@ public class MainActivity extends AppCompatActivity {
         SearchManager searchManager =
                 (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         SearchView searchView = (SearchView)menu.findItem(R.id.action_search).getActionView();
-        searchView.setSearchableInfo(
-                searchManager.getSearchableInfo(getComponentName()));
+        if(searchManager != null) {
+            searchView.setSearchableInfo(
+                    searchManager.getSearchableInfo(getComponentName()));
+        }
 
         refreshMenuItem = menu.findItem(R.id.action_refresh);
 
@@ -150,16 +160,18 @@ public class MainActivity extends AppCompatActivity {
         List<Map<String, String>> groupData = new ArrayList<>();
         List<List<Map<String, String>>> childData = new ArrayList<>();
         for(Link category : categories) {
-            Map<String, String> map = new HashMap<>();
-            map.put("entryText", category.Title);
-            groupData.add(map);
-            List<Map<String, String>> groupList = new ArrayList<>();
-            for(Link subcategory : category.Links) {
-                Map<String, String> childMap = new HashMap<>();
-                childMap.put("entryTextSubcategories", subcategory.Title);
-                groupList.add(childMap);
+            if(category.Links != null) {
+                Map<String, String> map = new HashMap<>();
+                map.put("entryText", category.Title);
+                groupData.add(map);
+                List<Map<String, String>> groupList = new ArrayList<>();
+                for(Link subcategory : category.Links) {
+                    Map<String, String> childMap = new HashMap<>();
+                    childMap.put("entryTextSubcategories", subcategory.Title);
+                    groupList.add(childMap);
+                }
+                childData.add(groupList);
             }
-            childData.add(groupList);
         }
 
         String[] groupFrom = {"entryText"};

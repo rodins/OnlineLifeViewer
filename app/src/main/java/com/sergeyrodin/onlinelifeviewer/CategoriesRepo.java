@@ -14,14 +14,16 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 public class CategoriesRepo {
-    private MutableLiveData<CategoriesData> categoriesData;
+    private MutableLiveData<List<Link>> categoriesData;
+    private MutableLiveData<State> state;
     private final String CATEGORIES_URL;
 
     CategoriesRepo(String categoriesUrl){
         CATEGORIES_URL = categoriesUrl;
+        state = new MutableLiveData<>();
     }
 
-    LiveData<CategoriesData> getCategoriesData() {
+    LiveData<List<Link>> getCategoriesData() {
         //TODO: store categories in database
         if(categoriesData == null) {
             categoriesData = new MutableLiveData<>();
@@ -30,18 +32,22 @@ public class CategoriesRepo {
         return categoriesData;
     }
 
-    public void refresh() {
+    LiveData<State> getState() {
+        return state;
+    }
+
+    void refresh() {
         getCategoriesFromNet();
     }
 
     private void getCategoriesFromNet() {
         // Show loading indicator
-        categoriesData.setValue(new CategoriesData(true, null, false));
         AppExecutors.getInstance().networkIO().execute(new Runnable() {
             @Override
             public void run() {
                 URL url;
                 try {
+                    state.postValue(State.LOADING_INIT);
                     url = new URL(CATEGORIES_URL);
                     HttpURLConnection connection = null;
                     BufferedReader in = null;
@@ -51,7 +57,8 @@ public class CategoriesRepo {
                         in = new BufferedReader(new InputStreamReader(stream, Charset.forName("windows-1251")));
                         String html = CategoriesParser.getCategoriesPart(in);
                         List<Link> categories = CategoriesParser.parseCategories(html);
-                        categoriesData.postValue(new CategoriesData(false, categories, false));
+                        categoriesData.postValue(categories);
+                        state.postValue(State.DONE);
                     }finally {
                         if(in != null) {
                             in.close();
@@ -62,7 +69,7 @@ public class CategoriesRepo {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    categoriesData.postValue(new CategoriesData(false, null, true));
+                    state.postValue(State.ERROR_INIT);
                 }
             }
         });

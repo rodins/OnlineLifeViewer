@@ -5,8 +5,10 @@ import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.support.annotation.NonNull;
 
+import java.util.List;
+
 public class CategoriesViewModel extends AndroidViewModel {
-    private LiveData<CategoriesData> categoriesData;
+    private LiveData<List<Link>> categoriesData;
     private CategoriesRepo categoriesRepo;
 
     public CategoriesViewModel(@NonNull Application application) {
@@ -15,14 +17,18 @@ public class CategoriesViewModel extends AndroidViewModel {
         categoriesRepo = new CategoriesRepo(categoriesUrl);
     }
 
-    public LiveData<CategoriesData> getCategoriesData() {
+    LiveData<List<Link>> getCategoriesData() {
         if(categoriesData == null) {
             categoriesData = categoriesRepo.getCategoriesData();
         }
         return categoriesData;
     }
 
-    public void refresh() {
+    LiveData<State> getState() {
+        return categoriesRepo.getState();
+    }
+
+    void refresh() {
         categoriesRepo.refresh();
     }
 }
